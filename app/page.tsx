@@ -8,7 +8,7 @@ import { ethers } from 'ethers';
 // ==========================================
 // ⚠️ 1. COLLEZ L'ADRESSE DE VOTRE USINE ICI
 // ==========================================
-const FACTORY_ADDRESS = "0x3073FE168C46DA80b400Ef75BCaF148553fe4F04";
+const FACTORY_ADDRESS = "0xc67FFF60EaE0150A2ebe4f4a40643A27209444DA";
 
 // ==========================================
 // ⚠️ 2. COLLEZ L'ABI DE FORGENIXFACTORY ICI
@@ -176,7 +176,7 @@ export default function Home() {
       // On se connecte à VOTRE usine déjà déployée
       const factoryContract = new ethers.Contract(FACTORY_ADDRESS, FACTORY_ABI, signer);
       
-      const fee = ethers.parseEther("0.00001");
+      const fee = ethers.parseEther("0.00003");
       let tx;
 
       // On appelle la bonne fonction selon l'onglet choisi
@@ -293,7 +293,7 @@ export default function Home() {
             <div className="bg-slate-950/50 border border-slate-800 rounded-xl p-6 flex flex-col items-center">
               <div className="flex justify-between w-full mb-6 text-sm">
                 <span className="text-slate-400">Frais de service Forgenix</span>
-                <span className="text-indigo-400 font-bold">0.0001 ETH</span>
+                <span className="text-indigo-400 font-bold">0.00003 ETH</span>
               </div>
 
               {!isConnected ? (
