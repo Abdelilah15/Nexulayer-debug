@@ -3,39 +3,9 @@ import React, { useState, useEffect } from 'react';
 import { useAccount } from 'wagmi';
 import { ethers } from 'ethers';
 
-// Vos constantes Web3
-const FACTORY_ADDRESS = "0x2e4a6467C53103Ea0113A46c67b5D99912B6c60a";
+// ⚠️ À REMPLACER PAR VOTRE NOUVELLE ADRESSE ET VOTRE NOUVEL ABI APRÈS LE DÉPLOIEMENT
+const FACTORY_ADDRESS = "0x1204FABcbc9d04d334ED731F5089b0478764C1c3";
 const FACTORY_ABI = [
-  {
-    "inputs": [],
-    "stateMutability": "nonpayable",
-    "type": "constructor"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "contractAddress",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "string",
-        "name": "contractType",
-        "type": "string"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "creator",
-        "type": "address"
-      }
-    ],
-    "name": "ContractCreated",
-    "type": "event"
-  },
   {
     "inputs": [
       {
@@ -66,6 +36,11 @@ const FACTORY_ABI = [
         "internalType": "string",
         "name": "symbol",
         "type": "string"
+      },
+      {
+        "internalType": "uint256",
+        "name": "supply",
+        "type": "uint256"
       }
     ],
     "name": "createNFT",
@@ -110,6 +85,83 @@ const FACTORY_ABI = [
   },
   {
     "inputs": [],
+    "stateMutability": "nonpayable",
+    "type": "constructor"
+  },
+  {
+    "inputs": [],
+    "name": "FailedDeployment",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "balance",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "needed",
+        "type": "uint256"
+      }
+    ],
+    "name": "InsufficientBalance",
+    "type": "error"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "contractAddress",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "contractType",
+        "type": "string"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "creator",
+        "type": "address"
+      }
+    ],
+    "name": "ContractCreated",
+    "type": "event"
+  },
+  {
+    "inputs": [],
+    "name": "messageImplementation",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "nftImplementation",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "ownerFeeAddress",
     "outputs": [
       {
@@ -133,6 +185,19 @@ const FACTORY_ABI = [
     ],
     "stateMutability": "view",
     "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "tokenImplementation",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
   }
 ];
 
@@ -140,23 +205,29 @@ export default function Forger({ initialTab }: { initialTab: string }) {
     const { isConnected } = useAccount();
     const [activeTab, setActiveTab] = useState(initialTab);
 
-    // Synchroniser l'onglet avec l'URL
-    useEffect(() => {
-        setActiveTab(initialTab);
-    }, [initialTab]);
-
     // États globaux
     const [isLoading, setIsLoading] = useState(false);
     const [txHash, setTxHash] = useState('');
     const [error, setError] = useState('');
+    const [explorerUrl, setExplorerUrl] = useState('https://sepolia.basescan.org');
+
+    // Synchroniser l'onglet et nettoyer les messages de la transaction précédente
+    useEffect(() => {
+        setActiveTab(initialTab);
+        setTxHash('');
+        setError('');
+    }, [initialTab]);
 
     // États des formulaires
     const [msgText, setMsgText] = useState('GM Base!');
+    
     const [tokenName, setTokenName] = useState('Mon Token');
     const [tokenSymbol, setTokenSymbol] = useState('MTK');
     const [tokenSupply, setTokenSupply] = useState('10000');
+    
     const [nftName, setNftName] = useState('Ma Collection');
     const [nftSymbol, setNftSymbol] = useState('MCN');
+    const [nftSupply, setNftSupply] = useState('10'); // <-- Quantité pour NFT intégrée
 
     const handleCreate = async () => {
         setIsLoading(true);
@@ -166,10 +237,18 @@ export default function Forger({ initialTab }: { initialTab: string }) {
         try {
             if (!window.ethereum) throw new Error("Portefeuille non détecté");
             const provider = new ethers.BrowserProvider(window.ethereum as any);
+            
+            // Détection intelligente du réseau (Mainnet vs Sepolia)
+            const network = await provider.getNetwork();
+            if (Number(network.chainId) === 8453) {
+                setExplorerUrl('https://basescan.org');
+            } else {
+                setExplorerUrl('https://sepolia.basescan.org');
+            }
+
             const signer = await provider.getSigner();
             const factoryContract = new ethers.Contract(FACTORY_ADDRESS, FACTORY_ABI, signer);
             
-            // Commission ajustée à 0.00003 ETH
             const fee = ethers.parseEther("0.00003");
             let tx;
 
@@ -178,7 +257,8 @@ export default function Forger({ initialTab }: { initialTab: string }) {
             } else if (activeTab === 'token') {
                 tx = await factoryContract.createToken(tokenName, tokenSymbol, tokenSupply, { value: fee });
             } else if (activeTab === 'nft') {
-                tx = await factoryContract.createNFT(nftName, nftSymbol, { value: fee });
+                // Le NFT utilise maintenant nftSupply !
+                tx = await factoryContract.createNFT(nftName, nftSymbol, nftSupply, { value: fee });
             }
 
             const receipt = await tx.wait();
@@ -203,6 +283,7 @@ export default function Forger({ initialTab }: { initialTab: string }) {
                             <input type="text" value={msgText} onChange={(e) => setMsgText(e.target.value)} className="w-full bg-slate-950 border border-slate-700 rounded-lg p-4 text-white focus:outline-none focus:border-indigo-500" placeholder="Ex: GM Base!" />
                         </div>
                     )}
+                    
                     {activeTab === 'token' && (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in duration-500">
                             <div>
@@ -219,6 +300,7 @@ export default function Forger({ initialTab }: { initialTab: string }) {
                             </div>
                         </div>
                     )}
+
                     {activeTab === 'nft' && (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in duration-500">
                             <div>
@@ -228,6 +310,10 @@ export default function Forger({ initialTab }: { initialTab: string }) {
                             <div>
                                 <label className="block text-sm font-medium text-slate-400 mb-2">Symbole</label>
                                 <input type="text" value={nftSymbol} onChange={(e) => setNftSymbol(e.target.value)} className="w-full bg-slate-950 border border-slate-700 rounded-lg p-4 text-white focus:outline-none focus:border-indigo-500" placeholder="Ex: BAPE" />
+                            </div>
+                            <div className="md:col-span-2">
+                                <label className="block text-sm font-medium text-slate-400 mb-2">Quantité de NFTs à générer</label>
+                                <input type="number" value={nftSupply} onChange={(e) => setNftSupply(e.target.value)} className="w-full bg-slate-950 border border-slate-700 rounded-lg p-4 text-white focus:outline-none focus:border-indigo-500" placeholder="Ex: 10" />
                             </div>
                         </div>
                     )}
@@ -253,7 +339,7 @@ export default function Forger({ initialTab }: { initialTab: string }) {
                 {txHash && (
                     <div className="mt-6 p-4 bg-emerald-900/20 border border-emerald-500/30 rounded-xl text-emerald-400 text-center">
                         🎉 Création réussie ! <br />
-                        <a href={`https://sepolia.basescan.org/tx/${txHash}`} target="_blank" rel="noreferrer" className="underline hover:text-emerald-300 font-medium mt-2 inline-block">Voir sur Basescan</a>
+                        <a href={`${explorerUrl}/tx/${txHash}`} target="_blank" rel="noreferrer" className="underline hover:text-emerald-300 font-medium mt-2 inline-block">View on Explorer</a>
                     </div>
                 )}
                 {error && <div className="mt-6 p-4 bg-red-900/20 border border-red-500/30 rounded-xl text-red-400 text-sm text-center">❌ {error}</div>}
