@@ -235,8 +235,11 @@ export default function Forger({ initialTab }: { initialTab: string }) {
         setTxHash('');
 
         try {
-            if (!window.ethereum) throw new Error("Portefeuille non détecté");
-            const provider = new ethers.BrowserProvider(window.ethereum as any);
+            // Astuce TypeScript pour Vercel : on force le type de window
+            const win = window as any;
+            if (!win.ethereum) throw new Error("Portefeuille non détecté");
+            
+            const provider = new ethers.BrowserProvider(win.ethereum);
             
             // Détection intelligente du réseau (Mainnet vs Sepolia)
             const network = await provider.getNetwork();
@@ -257,14 +260,16 @@ export default function Forger({ initialTab }: { initialTab: string }) {
             } else if (activeTab === 'token') {
                 tx = await factoryContract.createToken(tokenName, tokenSymbol, tokenSupply, { value: fee });
             } else if (activeTab === 'nft') {
-                // Le NFT utilise maintenant nftSupply !
                 tx = await factoryContract.createNFT(nftName, nftSymbol, nftSupply, { value: fee });
             }
 
             const receipt = await tx.wait();
             setTxHash(receipt.hash);
-        } catch (err: any) {
-            console.error(err);
+            
+        } catch (error: unknown) { // Vercel exige 'unknown' au lieu de 'any'
+            console.error(error);
+            // On convertit proprement l'erreur pour la lire
+            const err = error as { reason?: string; message?: string };
             setError(err.reason || err.message || "Une erreur est survenue lors de la transaction.");
         } finally {
             setIsLoading(false);
