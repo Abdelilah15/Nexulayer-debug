@@ -392,15 +392,14 @@ export default function Forger({ initialTab }: { initialTab: string }) {
                 {/* Zone de Partage */}
                 <div className="bg-slate-950 border border-slate-800 rounded-xl p-5 mb-6">
                   <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Share your achievement</p>
-                  <textarea
-                    readOnly
-                    className="w-full bg-slate-900/50 border border-slate-800 rounded-lg p-3 text-sm text-slate-300 resize-none outline-none mb-4"
-                    rows={5}
-                    value={shareText}
-                  />
+                  
+                  {/* Utilisation d'un Div avec 'whitespace-pre-wrap' pour un auto-ajustement parfait sans scrollbar */}
+                  <div className="w-full bg-slate-900/50 border border-slate-800 rounded-lg p-4 text-sm text-slate-300 mb-4 whitespace-pre-wrap break-words leading-relaxed">
+                    {shareText}
+                  </div>
 
                   {/* Boutons de réseaux sociaux */}
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 ">
                     <button
                       onClick={() => {
                         navigator.clipboard.writeText(shareText);
