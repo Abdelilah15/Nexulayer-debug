@@ -12,6 +12,7 @@ interface UserProfile {
   username: string;
   role: string;
   address: string;
+  avatar?: string;
 }
 
 export default function Topbar({ title }: TopbarProps) {
@@ -36,32 +37,51 @@ export default function Topbar({ title }: TopbarProps) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+
+
   // 3. SYNCHRONISATION AVEC LA BASE DE DONNÉES
   useEffect(() => {
-    const syncDatabase = async () => {
-      // Si le wallet est connecté, on contacte notre API
-      if (isConnected && address) {
-        try {
-          const response = await fetch('/api/user', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ address: address })
-          });
-
-          if (response.ok) {
-            const data = await response.json();
-            setUserProfile(data); // On sauvegarde les infos dans l'état React
-          }
-        } catch (error) {
-          console.error("Erreur de synchronisation du profil", error);
-        }
-      } else {
-        // Si le wallet se déconnecte, on vide le profil
-        setUserProfile(null);
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
       }
-    };
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
-    syncDatabase();
+  // NOUVEAU : On sépare la fonction de chargement pour pouvoir l'appeler à la demande
+  const fetchUser = async () => {
+    if (isConnected && address) {
+      try {
+        const response = await fetch('/api/user', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ address: address })
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setUserProfile(data);
+        }
+      } catch (error) {
+        console.error("Erreur de synchronisation du profil", error);
+      }
+    } else {
+      setUserProfile(null);
+    }
+  };
+
+  // Chargement normal au lancement
+  useEffect(() => {
+    fetchUser();
+  }, [isConnected, address]);
+
+  // NOUVEAU : Le système d'écoute ! Dès qu'il entend 'profileUpdated', il recharge les données.
+  useEffect(() => {
+    window.addEventListener('profileUpdated', fetchUser);
+    return () => {
+      window.removeEventListener('profileUpdated', fetchUser);
+    };
   }, [isConnected, address]);
 
   return (
@@ -96,21 +116,21 @@ export default function Topbar({ title }: TopbarProps) {
 
                 return (
                   <div className="flex items-center gap-4 relative" ref={dropdownRef}>
-
-                    {/* CASE 1 : COMPTE (Bouton Profil) */}
                     <div className="relative">
                       <button
                         onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                         type="button"
                         className={`flex items-center gap-3 border transition-all py-1.5 pl-4 pr-1.5 rounded-full text-slate-200 ${isDropdownOpen ? 'bg-slate-800 border-slate-500' : 'bg-slate-900 border-slate-700 hover:border-slate-500'}`}
                       >
-                        {/* Affiche le Nom d'utilisateur (venant de la DB) ou l'adresse brute par défaut */}
                         <span className="font-medium text-sm tracking-wide">
                           {userProfile?.username || account.displayName}
                         </span>
 
                         <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-500 to-cyan-400 border-2 border-slate-950 flex items-center justify-center overflow-hidden shadow-inner">
-                          {account.ensAvatar ? (
+                          {/* NOUVEAU : Affichage de l'avatar de la base de données ! */}
+                          {userProfile?.avatar ? (
+                            <img src={userProfile.avatar} alt="Profile" className="w-full h-full object-cover" />
+                          ) : account.ensAvatar ? (
                             <img src={account.ensAvatar} alt="ENS Avatar" className="w-full h-full object-cover" />
                           ) : (
                             <i className="fi fi-rr-user text-white text-xs mt-1"></i>
@@ -118,11 +138,8 @@ export default function Topbar({ title }: TopbarProps) {
                         </div>
                       </button>
 
-                      {/* LE MENU DÉROULANT */}
                       {isDropdownOpen && (
                         <div className="absolute right-0 mt-3 w-64 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
-
-                          {/* NOUVEAU : En-tête enrichi avec les données de l'API */}
                           <div className="px-4 py-3 border-b border-slate-800/80 mb-2 bg-slate-900/50">
                             <div className="flex justify-between items-center mb-1">
                               <p className="text-xs text-slate-500 uppercase tracking-wider">Mon Profil</p>
@@ -138,12 +155,13 @@ export default function Topbar({ title }: TopbarProps) {
                             </p>
                           </div>
 
-                          <button 
-                          onClick={() => {
-                            router.push('/Profile')
-                            setIsDropdownOpen(false)
-                          }}
-                          className="w-full text-left px-4 py-2.5 text-sm text-slate-300 hover:bg-slate-800 hover:text-white transition-colors flex items-center gap-3">
+                          <button
+                            onClick={() => {
+                              router.push('/profile');
+                              setIsDropdownOpen(false);
+                            }}
+                            className="w-full text-left px-4 py-2.5 text-sm text-slate-300 hover:bg-slate-800 hover:text-white transition-colors flex items-center gap-3"
+                          >
                             <i className="fi fi-rr-user text-slate-400"></i> My profile
                           </button>
                           <button className="w-full text-left px-4 py-2.5 text-sm text-slate-300 hover:bg-slate-800 hover:text-white transition-colors flex items-center gap-3">
@@ -165,7 +183,6 @@ export default function Topbar({ title }: TopbarProps) {
                       )}
                     </div>
 
-                    {/* CASE 2 : RÉSEAU CONNECTÉ */}
                     <button onClick={openChainModal} type="button" className="flex items-center gap-2 bg-slate-900 border border-slate-700 hover:border-slate-500 py-2 px-4 rounded-xl transition-all text-slate-200 font-medium text-sm">
                       {chain.hasIcon && (
                         <div style={{ background: chain.iconBackground, width: 20, height: 20, borderRadius: 999, overflow: 'hidden' }}>
@@ -175,7 +192,6 @@ export default function Topbar({ title }: TopbarProps) {
                       <span>{chain.name}</span>
                       <i className="fi fi-rr-angle-small-down text-slate-400 mt-1"></i>
                     </button>
-
                   </div>
                 );
               })()}
