@@ -10,7 +10,7 @@ import { QueryClientProvider, QueryClient } from '@tanstack/react-query';
 // Configuration des réseaux (Base Mainnet et Base Sepolia pour les tests)
 const config = getDefaultConfig({
   appName: 'Guild Task Deployer',
-  projectId: 'VOTRE_PROJECT_ID', // Requis par WalletConnect (laissez tel quel pour le test local)
+  projectId: 'bc9ad5dbb06165a04f7c14743b5b4ccb', // Requis par WalletConnect (laissez tel quel pour le test local)
   chains: [base, baseSepolia],
   ssr: true,
 });
