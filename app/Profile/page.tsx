@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useRef } from 'react';
 import { useAccount } from 'wagmi';
-import DashboardLayout from '../../../components/DashboardLayout';
+import DashboardLayout from '../../components/DashboardLayout';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 // Interface pour typer notre utilisateur

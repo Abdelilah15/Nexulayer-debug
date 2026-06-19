@@ -24,7 +24,14 @@ export default function Topbar({ title }: TopbarProps) {
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // 2. État pour stocker les informations venant de notre base de données
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(() => {
+    // Au premier affichage, on lit le cache pour éviter le clignotement
+    if (typeof window !== 'undefined') {
+      const cached = localStorage.getItem('forgenix_profile');
+      if (cached) return JSON.parse(cached);
+    }
+    return null;
+  });
 
   // Ferme le menu si on clique en dehors
   useEffect(() => {
@@ -62,12 +69,15 @@ export default function Topbar({ title }: TopbarProps) {
         if (response.ok) {
           const data = await response.json();
           setUserProfile(data);
+          // NOUVEAU : On enregistre les données dans la mémoire du navigateur
+          localStorage.setItem('forgenix_profile', JSON.stringify(data)); 
         }
       } catch (error) {
         console.error("Erreur de synchronisation du profil", error);
       }
     } else {
       setUserProfile(null);
+      localStorage.removeItem('forgenix_profile'); // NOUVEAU : On vide la mémoire si déconnecté
     }
   };
 
@@ -173,6 +183,7 @@ export default function Topbar({ title }: TopbarProps) {
                           <button
                             onClick={() => {
                               disconnect();
+                              localStorage.removeItem('forgenix_profile');
                               setIsDropdownOpen(false);
                             }}
                             className="w-full text-left px-4 py-2.5 text-sm text-red-400 hover:bg-red-500/10 transition-colors flex items-center gap-3"
