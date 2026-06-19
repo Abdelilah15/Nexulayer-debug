@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import clientPromise from '../../lib/mongodb';
 
 export async function POST(request: Request) {
     try {
@@ -9,20 +10,30 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: "Adresse requise" }, { status: 400 });
         }
 
-        // ⚠️ ICI, NOUS CONNECTERONS VOTRE VRAIE BASE DE DONNÉES BIENTÔT
-        // Exemple de logique à venir : 
-        // 1. const user = await db.collection('users').findOne({ address });
-        // 2. if (!user) { await db.collection('users').insertOne({ address, username: "NewForger" }) }
+        // 1. On se connecte à la base de données
+        const client = await clientPromise;
+        const db = client.db('forgenix');
+        const collection = db.collection('users');
 
-        // En attendant, on simule une réponse de la base de données :
-        const mockUserProfile = {
-            address: address,
-            username: `Forger_${address.substring(2, 6).toUpperCase()}`, // Génère un nom stylé (ex: Forger_1A2B)
-            role: "Creator",
-            joinedAt: new Date().toISOString()
-        };
+        // 2. On cherche si l'utilisateur existe déjà
+        let user = await collection.findOne({ address: address });
 
-        return NextResponse.json(mockUserProfile, { status: 200 });
+        // 3. S'il n'existe pas, on le crée !
+        if (!user) {
+            const newUser = {
+                address: address,
+                username: `Forger_${address.substring(2, 6).toUpperCase()}`,
+                role: "Creator",
+                domain: "", // Prévu pour plus tard (ex: monx.forgenix.eth)
+                joinedAt: new Date().toISOString()
+            };
+            
+            await collection.insertOne(newUser);
+            user = newUser as any;
+        }
+
+        // 4. On renvoie les données (soit celles trouvées, soit les nouvelles)
+        return NextResponse.json(user, { status: 200 });
 
     } catch (error) {
         console.error("Erreur API User:", error);
