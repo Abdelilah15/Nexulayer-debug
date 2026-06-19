@@ -157,7 +157,7 @@ export default function Topbar({ title }: TopbarProps) {
 
                           <button
                             onClick={() => {
-                              router.push('/profile');
+                              router.push('/Profile');
                               setIsDropdownOpen(false);
                             }}
                             className="w-full text-left px-4 py-2.5 text-sm text-slate-300 hover:bg-slate-800 hover:text-white transition-colors flex items-center gap-3"
