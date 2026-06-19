@@ -56,3 +56,37 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: "Erreur serveur interne" }, { status: 500 });
     }
 }
+
+export async function PUT(request: Request) {
+    try {
+        const body = await request.json();
+        const { address, username, avatar } = body;
+
+        if (!address) {
+            return NextResponse.json({ error: "Adresse requise" }, { status: 400 });
+        }
+
+        const client = await clientPromise;
+        const db = client.db('Forgenix');
+        const collection = db.collection('users');
+
+        // On prépare les données à modifier
+        const updateDoc: any = {};
+        if (username) updateDoc.username = username;
+        if (avatar) updateDoc.avatar = avatar;
+
+        // On met à jour l'utilisateur dans MongoDB
+        await collection.updateOne(
+            { address: address },
+            { $set: updateDoc }
+        );
+
+        // On récupère et on renvoie le profil mis à jour
+        const updatedUser = await collection.findOne({ address: address });
+        return NextResponse.json(updatedUser, { status: 200 });
+
+    } catch (error) {
+        console.error("❌ CRASH API MONGODB (PUT) :", error);
+        return NextResponse.json({ error: "Erreur serveur interne" }, { status: 500 });
+    }
+}
