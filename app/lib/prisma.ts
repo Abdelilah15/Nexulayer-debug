@@ -3,7 +3,9 @@ import { PrismaNeon } from '@prisma/adapter-neon';
 import { Pool, neonConfig } from '@neondatabase/serverless';
 import ws from 'ws';
 
-// NOUVEAU : On force l'utilisation des WebSockets pour contourner les pare-feux (Port 443)
+// On force la lecture du fichier d'environnement de gré ou de force
+import 'dotenv/config'; 
+
 neonConfig.webSocketConstructor = ws;
 
 const globalForPrisma = global as unknown as { prisma: PrismaClient };
@@ -13,9 +15,16 @@ let prisma: PrismaClient;
 if (globalForPrisma.prisma) {
   prisma = globalForPrisma.prisma;
 } else {
-  // On utilise désormais le Pool spécial de Neon
-  const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-  const adapter = new PrismaNeon(pool);
+  // On récupère le lien
+  const connectionString = process.env.DATABASE_URL as string;
+
+  // Si Next.js est toujours aveugle, on crashe proprement avec un message en français
+  if (!connectionString || connectionString === "") {
+    throw new Error("❌ NEXT.JS EST AVEUGLE : Il ne trouve pas la variable DATABASE_URL ! Vérifiez votre fichier .env.local.");
+  }
+
+  const pool = new Pool({ connectionString });
+  const adapter = new PrismaNeon(pool as any);
   prisma = new PrismaClient({ adapter });
 }
 
