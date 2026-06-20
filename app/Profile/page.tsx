@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useRef } from 'react';
-import { useAccount, useBalance } from 'wagmi'; // NOUVEAU : useBalance pour le solde réel
+import { useAccount } from 'wagmi'; // NOUVEAU : useBalance pour le solde réel
 import DashboardLayout from '../../components/DashboardLayout';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
@@ -16,9 +16,6 @@ interface UserProfile {
 
 export default function ProfilePage() {
   const { address, isConnected } = useAccount();
-  
-  // 1. RÉCUPÉRATION DU SOLDE RÉEL
-  const { data: balanceData } = useBalance({ address: address });
 
   const [user, setUser] = useState<UserProfile | null>(null);
   const [activeTab, setActiveTab] = useState('details');
@@ -28,9 +25,10 @@ export default function ProfilePage() {
   const [editAvatar, setEditAvatar] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
-  // 2. ÉTATS DU GRAPHIQUE
-  const [timeframe, setTimeframe] = useState('6M');
+  // NOUVEAU : ÉTATS DU GRAPHIQUE ET SOLDE TOTAL USD
+  const [timeframe, setTimeframe] = useState('1M');
   const [chartData, setChartData] = useState<{date: string, balance: number}[]>([]);
+  const [totalBalance, setTotalBalance] = useState<number | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -52,7 +50,8 @@ export default function ProfilePage() {
     if (isConnected) fetchUser();
   }, [address, isConnected]);
 
-  // 3. LE MOTEUR DU GRAPHIQUE : Récupération réelle via l'API Zerion
+  
+  // 3. LE MOTEUR DU GRAPHIQUE (Simplifié avec les périodes natives Zerion)
   useEffect(() => {
     if (!address) return;
 
@@ -67,32 +66,48 @@ export default function ProfilePage() {
         if (res.ok) {
           const json = await res.json();
           
-          // Avec la nouvelle URL /charts, Zerion range les données dans attributes.charts
+          // 1. Extraire le Solde Total en USD depuis le portfolio
+          let currentBalance = 0;
+          if (json.portfolioData?.data?.attributes?.total?.positions !== undefined) {
+             currentBalance = json.portfolioData.data.attributes.total.positions;
+          } else if (json.chartData?.data?.attributes?.charts?.length > 0) {
+             const charts = json.chartData.data.attributes.charts;
+             currentBalance = charts[charts.length - 1][1];
+          }
+          setTotalBalance(currentBalance);
+
+          // 2. Extraire et formatter le Graphique natif
           let zerionDataPoints = [];
-          if (json.data && json.data.attributes && json.data.attributes.charts) {
-              zerionDataPoints = json.data.attributes.charts;
+          if (json.chartData?.data?.attributes?.charts) {
+              zerionDataPoints = json.chartData.data.attributes.charts;
           }
 
           if (zerionDataPoints.length > 0) {
             const formattedData = zerionDataPoints.map((point: any) => {
-              // point[0] = timestamp en secondes, point[1] = valeur en dollars
-              const pointDate = new Date(point[0] * 1000); 
-              
-              const dateString = pointDate.toLocaleDateString('fr-FR', {
-                month: 'short',
-                day: timeframe === '1M' ? 'numeric' : undefined,
-                year: (timeframe === '1Y' || timeframe === '2Y' || timeframe === '5Y') ? '2-digit' : undefined
-              });
+               const dateObj = new Date(point[0] * 1000);
+               
+               // Formatage dynamique selon la période sélectionnée
+               let dateString = "";
+               if (timeframe === '1J') {
+                   // Affiche l'heure pour le dernier jour (ex: 14:30)
+                   dateString = dateObj.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+               } else if (timeframe === '1S' || timeframe === '1M' || timeframe === '3M') {
+                   // Affiche le jour et le mois (ex: 12 févr.)
+                   dateString = dateObj.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+               } else {
+                   // Affiche le mois et l'année pour les longues périodes (ex: févr. 24)
+                   dateString = dateObj.toLocaleDateString('fr-FR', { month: 'short', year: '2-digit' });
+               }
 
-              return {
-                date: dateString,
-                balance: parseFloat(point[1].toFixed(4))
-              };
+               return {
+                  date: dateString,
+                  balance: parseFloat(point[1].toFixed(2))
+               };
             });
 
             setChartData(formattedData);
           } else {
-            console.log("Aucune donnée historique trouvée pour cette période.");
+            setChartData([]);
           }
         }
       } catch (error) {
@@ -230,17 +245,17 @@ export default function ProfilePage() {
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-lg lg:col-span-2">
             <div className="flex justify-between items-center mb-6">
               
-              {/* Affichage du VRAI solde */}
+              {/* Affichage du VRAI solde en USD */}
               <div>
-                <h3 className="text-slate-400 text-sm font-medium">Actif Total ({balanceData?.symbol || 'ETH'})</h3>
+                <h3 className="text-slate-400 text-sm font-medium">Actif Total (USD)</h3>
                 <p className="text-2xl font-bold text-white mt-1">
-                  {balanceData ? parseFloat(balanceData.formatted).toFixed(4) : '0.0000'} <span className="text-sm text-slate-500 font-medium">{balanceData?.symbol}</span>
+                  {totalBalance !== null ? `$${totalBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '$0.00'}
                 </p>
               </div>
               
-              {/* NOUVEAU : Sélecteur de temps dynamique */}
+              {/* NOUVEAU : Sélecteur de temps basé sur les options réelles de Zerion */}
               <div className="bg-slate-950 p-1 rounded-xl border border-slate-800 flex gap-1">
-                {['1M', '6M', '1Y', '2Y', '5Y'].map((tf) => (
+                {['1J', '1S', '1M', '3M', '1A', 'Max'].map((tf) => (
                   <button
                     key={tf}
                     onClick={() => setTimeframe(tf)}
@@ -266,12 +281,12 @@ export default function ProfilePage() {
                   <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 11}} dy={10} minTickGap={20} />
                   <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 11}} width={60} />
                   
-                  {/* NOUVEAU : Tooltip professionnel avec l'indice de la souris */}
+                  {/* Tooltip formaté en USD */}
                   <Tooltip 
                     contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b', borderRadius: '12px', color: '#f8fafc', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.5)' }} 
                     itemStyle={{ color: '#818cf8', fontWeight: 'bold', fontSize: '16px' }}
                     labelStyle={{ color: '#94a3b8', fontSize: '12px', marginBottom: '4px' }}
-                    formatter={(value: any) => [`${value} ${balanceData?.symbol || 'ETH'}`, 'Valeur']}
+                    formatter={(value: any) => [`$${value.toLocaleString('en-US')}`, 'Valeur']}
                   />
                   
                   <Area type="monotone" dataKey="balance" stroke="#818cf8" strokeWidth={3} fillOpacity={1} fill="url(#colorBalance)" />
