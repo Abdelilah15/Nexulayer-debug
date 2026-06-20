@@ -77,35 +77,42 @@ export default function ProfilePage() {
           setTotalBalance(currentBalance);
 
           // 2. Extraire et formatter le Graphique natif
-          let zerionDataPoints = [];
-          if (json.chartData?.data?.attributes?.charts) {
-              zerionDataPoints = json.chartData.data.attributes.charts;
-          }
+          const attrs = json.chartData?.data?.attributes;
+          
+          // Sécurité absolue : on vérifie tous les formats possibles que Zerion pourrait renvoyer
+          let zerionDataPoints = attrs?.charts || attrs?.points || attrs?.chart || attrs?.history || [];
 
           if (zerionDataPoints.length > 0) {
             const formattedData = zerionDataPoints.map((point: any) => {
-               const dateObj = new Date(point[0] * 1000);
+               // Gère les deux formats possibles de Zerion : tableau [timestamp, balance] ou objet {timestamp, value}
+               const timestamp = Array.isArray(point) ? point[0] : (point?.timestamp || point?.time || 0);
+               const balanceValue = Array.isArray(point) ? point[1] : (point?.value || point?.balance || 0);
                
-               // Formatage dynamique selon la période sélectionnée
+               const dateObj = new Date(timestamp * 1000);
+               
                let dateString = "";
                if (timeframe === '1J') {
-                   // Affiche l'heure pour le dernier jour (ex: 14:30)
                    dateString = dateObj.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
                } else if (timeframe === '1S' || timeframe === '1M' || timeframe === '3M') {
-                   // Affiche le jour et le mois (ex: 12 févr.)
                    dateString = dateObj.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
                } else {
-                   // Affiche le mois et l'année pour les longues périodes (ex: févr. 24)
                    dateString = dateObj.toLocaleDateString('fr-FR', { month: 'short', year: '2-digit' });
                }
 
                return {
                   date: dateString,
-                  balance: parseFloat(point[1].toFixed(2))
+                  balance: parseFloat(Number(balanceValue).toFixed(2))
                };
             });
 
-            setChartData(formattedData);
+            // Recharts a besoin d'au moins 2 points pour dessiner une Area. 
+            // Si le portefeuille est très récent et n'a qu'un point, on le duplique pour tracer une ligne plate.
+            if (formattedData.length === 1) {
+                const dummyPoint = { ...formattedData[0], date: 'Début' };
+                setChartData([dummyPoint, formattedData[0]]);
+            } else {
+                setChartData(formattedData);
+            }
           } else {
             setChartData([]);
           }

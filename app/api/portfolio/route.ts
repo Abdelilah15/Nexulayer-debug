@@ -13,7 +13,6 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: "Clé API manquante" }, { status: 500 });
         }
 
-        // 1. MAPPING PARFAIT AVEC ZERION
         const periodMap: Record<string, string> = {
             '1J': 'day',
             '1S': 'week',
@@ -22,7 +21,7 @@ export async function POST(request: Request) {
             '1A': 'year',
             'Max': 'max'
         };
-        const chartPeriod = periodMap[timeframe] || 'month'; // 'month' par défaut
+        const chartPeriod = periodMap[timeframe] || 'month';
 
         const encodedKey = Buffer.from(`${apiKey}:`).toString('base64');
         const headers = {
@@ -30,11 +29,15 @@ export async function POST(request: Request) {
             'authorization': `Basic ${encodedKey}`
         };
 
-        // 2. Requêtes simultanées
-        const chartRes = await fetch(`https://api.zerion.io/v1/wallets/${address}/charts/${chartPeriod}?currency=usd`, { headers });
-        const portfolioRes = await fetch(`https://api.zerion.io/v1/wallets/${address}/portfolio?currency=usd`, { headers });
+        // NOUVEAU : Ajout de filter[positions]=no_filter pour inclure TOUS les actifs (DeFi, Staking, autres tokens)
+        const chartUrl = `https://api.zerion.io/v1/wallets/${address}/charts/${chartPeriod}?currency=usd&filter[positions]=no_filter`;
+        const portfolioUrl = `https://api.zerion.io/v1/wallets/${address}/portfolio?currency=usd&filter[positions]=no_filter`;
+
+        const chartRes = await fetch(chartUrl, { headers });
+        const portfolioRes = await fetch(portfolioUrl, { headers });
 
         if (!chartRes.ok) {
+            console.error("Zerion Chart Error:", await chartRes.text());
             throw new Error(`Erreur Zerion Chart: ${chartRes.status}`);
         }
 
