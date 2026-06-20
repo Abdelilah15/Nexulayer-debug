@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '../../lib/prisma'; // Connexion à notre base de données
+import { prisma } from '../../lib/prisma'; 
 
 export async function POST(request: Request) {
     try {
@@ -13,34 +13,21 @@ export async function POST(request: Request) {
         const headers = { 'accept': 'application/json', 'authorization': `Basic ${encodedKey}` };
         const safeAddress = address.toLowerCase();
 
-        // 1. MISE À JOUR EN TEMPS RÉEL (On sauvegarde le solde exact de la seconde actuelle)
-        try {
-            const portfolioRes = await fetch(`https://api.zerion.io/v1/wallets/${address}/portfolio?currency=usd&filter[positions]=no_filter`, { headers });
-            if (portfolioRes.ok) {
-                const portfolioData = await portfolioRes.json();
-                const currentBalance = portfolioData.data?.attributes?.total?.positions;
-                if (currentBalance !== undefined) {
-                    await prisma.portfolioSnapshot.create({
-                        data: {
-                            address: safeAddress,
-                            timestamp: new Date(),
-                            balance: currentBalance
-                        }
-                    });
-                }
-            }
-        } catch (e) {
-            console.error("Erreur de sauvegarde du solde actuel :", e);
-        }
-
-        // 2. CHECK POSTGRESQL : Est-ce qu'on a déjà téléchargé l'historique de ce wallet ?
-        const existingHistory = await prisma.portfolioSnapshot.count({
+        // 1. VÉRIFICATION DU SEED (A-t-on le VRAI historique complet ?)
+        const existingHistoryCount = await prisma.portfolioSnapshot.count({
             where: { address: safeAddress }
         });
 
-        // 3. LE SEED INITIAL : Si le wallet est nouveau, on télécharge tout l'historique de Zerion (Mode MAX)
-        if (existingHistory < 10) {
-            console.log("Nouvel utilisateur détecté. Indexation de l'historique Zerion vers PostgreSQL...");
+        // Si moins de 50 points, c'est que la base est polluée ou vide. On nettoie !
+        if (existingHistoryCount < 50) {
+            console.log("Historique incomplet détecté. Nettoyage et téléchargement complet...");
+            
+            // On supprime les mauvaises données (les clones d'aujourd'hui)
+            await prisma.portfolioSnapshot.deleteMany({
+                where: { address: safeAddress }
+            });
+
+            // On télécharge le vrai historique depuis le début (Max)
             const chartRes = await fetch(`https://api.zerion.io/v1/wallets/${address}/charts/max?currency=usd&filter[positions]=no_filter`, { headers });
             
             if (chartRes.ok) {
@@ -50,40 +37,74 @@ export async function POST(request: Request) {
                 if (points.length > 0) {
                     const snapshotsToInsert = points.map((p: any) => ({
                         address: safeAddress,
-                        timestamp: new Date(p[0] * 1000),
+                        timestamp: new Date(p[0] * 1000), // Vrai timestamp Zerion
                         balance: parseFloat(Number(p[1]).toFixed(2))
                     }));
 
-                    // Sauvegarde massive dans PostgreSQL (skipDuplicates empêche les erreurs de collision)
                     await prisma.portfolioSnapshot.createMany({
                         data: snapshotsToInsert,
                         skipDuplicates: true,
                     });
-                    console.log(`✅ ${snapshotsToInsert.length} points sauvegardés dans la base !`);
+                    console.log(`✅ ${snapshotsToInsert.length} points historiques sauvegardés !`);
                 }
             }
         }
 
-        // 4. RÉPONSE ULTRA-RAPIDE : On lit uniquement notre propre base de données !
+        // 2. MISE À JOUR EN TEMPS RÉEL (Sécurisée contre le spam)
+        try {
+            const portfolioRes = await fetch(`https://api.zerion.io/v1/wallets/${address}/portfolio?currency=usd&filter[positions]=no_filter`, { headers });
+            if (portfolioRes.ok) {
+                const portfolioData = await portfolioRes.json();
+                const currentBalance = portfolioData.data?.attributes?.total?.positions;
+                
+                if (currentBalance !== undefined) {
+                    // TECHNIQUE PRO : On arrondit à l'heure pile (ex: 14:00:00)
+                    const now = new Date();
+                    const currentHour = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours(), 0, 0, 0);
+
+                    // Cherche si on a déjà mis à jour le solde pendant cette heure
+                    const existingPoint = await prisma.portfolioSnapshot.findFirst({
+                        where: { address: safeAddress, timestamp: currentHour }
+                    });
+
+                    if (!existingPoint) {
+                        // S'il n'y a pas de point pour cette heure, on le crée
+                        await prisma.portfolioSnapshot.create({
+                            data: { address: safeAddress, timestamp: currentHour, balance: parseFloat(Number(currentBalance).toFixed(2)) }
+                        });
+                    } else {
+                        // S'il existe déjà, on le met à jour pour avoir la dernière précision
+                        await prisma.portfolioSnapshot.update({
+                            where: { id: existingPoint.id },
+                            data: { balance: parseFloat(Number(currentBalance).toFixed(2)) }
+                        });
+                    }
+                }
+            }
+        } catch (e) {
+            console.error("Erreur de sauvegarde du solde actuel :", e);
+        }
+
+        // 3. RÉPONSE ULTRA-RAPIDE DEPUIS POSTGRESQL
         const now = new Date();
-        let limitDate = new Date(0); // Par défaut: Max
+        let limitDate = new Date(0); 
         
         if (timeframe === '1J') limitDate = new Date(now.getTime() - 24 * 60 * 60 * 1000);
         else if (timeframe === '1S') limitDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
         else if (timeframe === '1M') limitDate.setMonth(now.getMonth() - 1);
         else if (timeframe === '3M') limitDate.setMonth(now.getMonth() - 3);
         else if (timeframe === '1A') limitDate.setFullYear(now.getFullYear() - 1);
+        
 
-        // On interroge Prisma
         const dbSnapshots = await prisma.portfolioSnapshot.findMany({
             where: { 
                 address: safeAddress,
-                timestamp: { gte: limitDate } // gte = "Greater Than or Equal" (Plus grand ou égal à la date limite)
+                timestamp: { gte: limitDate } 
             },
             orderBy: { timestamp: 'asc' }
         });
 
-        // Le VRAI solde total est simplement le tout dernier point de notre base de données
+        // Le VRAI solde total est le tout dernier point enregistré
         const totalBalance = dbSnapshots.length > 0 ? dbSnapshots[dbSnapshots.length - 1].balance : 0;
 
         return NextResponse.json({ chartData: dbSnapshots, totalBalance }, { status: 200 });
