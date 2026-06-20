@@ -13,11 +13,18 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: "Clé API manquante" }, { status: 500 });
         }
 
-        // L'URL de base pour les graphiques de portefeuille Zerion
-        // (L'API Zerion utilise Basic Auth où le nom d'utilisateur est la clé API)
+        // 1. MAPPING DU TEMPS : On traduit nos filtres en "chart_period" pour Zerion
+        let chartPeriod = 'max';
+        if (timeframe === '1M') chartPeriod = 'month';
+        else if (timeframe === '6M') chartPeriod = '6months';
+        else if (timeframe === '1Y') chartPeriod = 'year';
+        else if (timeframe === '2Y') chartPeriod = 'max'; // 2Y n'existe pas chez Zerion, on prend 'max'
+        else if (timeframe === '5Y') chartPeriod = '5years';
+
         const encodedKey = Buffer.from(`${apiKey}:`).toString('base64');
         
-        const response = await fetch(`https://api.zerion.io/v1/wallets/${address}/portfolio/charts`, {
+        // 2. CORRECTION DE L'URL : Format officiel de Zerion
+        const response = await fetch(`https://api.zerion.io/v1/wallets/${address}/charts/${chartPeriod}?currency=usd`, {
             headers: {
                 'accept': 'application/json',
                 'authorization': `Basic ${encodedKey}`

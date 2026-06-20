@@ -58,7 +58,6 @@ export default function ProfilePage() {
 
     const fetchPortfolioHistory = async () => {
       try {
-        // On demande les données à notre pont sécurisé
         const res = await fetch('/api/portfolio', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -68,25 +67,16 @@ export default function ProfilePage() {
         if (res.ok) {
           const json = await res.json();
           
-          // Zerion renvoie les données dans json.data.attributes.changes.
-          // Il faut cibler la bonne période selon le timeframe choisi
+          // Avec la nouvelle URL /charts, Zerion range les données dans attributes.charts
           let zerionDataPoints = [];
-          
-          if (json.data && json.data.attributes && json.data.attributes.changes) {
-              const changes = json.data.attributes.changes;
-              // On mappe notre timeframe ('1M', '1Y') avec les clés de Zerion ('month', 'year')
-              if (timeframe === '1M') zerionDataPoints = changes.month || [];
-              else if (timeframe === '6M') zerionDataPoints = changes.half_year || changes.year || []; 
-              else if (timeframe === '1Y') zerionDataPoints = changes.year || [];
-              else zerionDataPoints = changes.max || []; // Pour 2Y ou 5Y, on prend le max disponible
+          if (json.data && json.data.attributes && json.data.attributes.charts) {
+              zerionDataPoints = json.data.attributes.charts;
           }
 
           if (zerionDataPoints.length > 0) {
-            // Transformation des données Zerion pour notre graphique Recharts
             const formattedData = zerionDataPoints.map((point: any) => {
-              // Zerion fournit souvent un timestamp (ex: point[0]) et une valeur (ex: point[1])
-              // Structure typique d'un point Zerion : { timestamp: 16... , value: 1200.50 }
-              const pointDate = new Date((point.timestamp || point[0]) * 1000); 
+              // point[0] = timestamp en secondes, point[1] = valeur en dollars
+              const pointDate = new Date(point[0] * 1000); 
               
               const dateString = pointDate.toLocaleDateString('fr-FR', {
                 month: 'short',
@@ -96,7 +86,7 @@ export default function ProfilePage() {
 
               return {
                 date: dateString,
-                balance: parseFloat((point.value || point[1]).toFixed(4))
+                balance: parseFloat(point[1].toFixed(4))
               };
             });
 
@@ -281,7 +271,7 @@ export default function ProfilePage() {
                     contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b', borderRadius: '12px', color: '#f8fafc', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.5)' }} 
                     itemStyle={{ color: '#818cf8', fontWeight: 'bold', fontSize: '16px' }}
                     labelStyle={{ color: '#94a3b8', fontSize: '12px', marginBottom: '4px' }}
-                    formatter={(value: number) => [`${value} ${balanceData?.symbol || 'ETH'}`, 'Valeur']}
+                    formatter={(value: any) => [`${value} ${balanceData?.symbol || 'ETH'}`, 'Valeur']}
                   />
                   
                   <Area type="monotone" dataKey="balance" stroke="#818cf8" strokeWidth={3} fillOpacity={1} fill="url(#colorBalance)" />
