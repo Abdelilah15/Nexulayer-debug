@@ -1,11 +1,16 @@
 import { MongoClient } from 'mongodb';
 
 if (!process.env.MONGODB_URI) {
-  throw new Error('Veuillez définir la variable MONGODB_URI dans .env.local');
+  throw new Error('Veuillez définir la variable MONGODB_URI dans .env');
 }
 
 const uri = process.env.MONGODB_URI;
-const options = {};
+
+// 🔥 L'ANTIDOTE : On force le passage du pare-feu 4G de Maroc Telecom ici
+const options = {
+  tlsAllowInvalidCertificates: true,
+  serverSelectionTimeoutMS: 5000, // Empêche l'application de charger dans le vide pendant 30 secondes
+};
 
 let client: MongoClient;
 let clientPromise: Promise<MongoClient>;

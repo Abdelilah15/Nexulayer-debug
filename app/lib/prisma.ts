@@ -3,19 +3,24 @@ import { PrismaNeon } from '@prisma/adapter-neon';
 import { Pool, neonConfig } from '@neondatabase/serverless';
 import ws from 'ws';
 
-// 1. On force le passage à travers le pare-feu (WebSockets)
+// Active les WebSockets pour traverser le pare-feu de l'université
 neonConfig.webSocketConstructor = ws;
 
-// 2. LE LIEN EN DUR : Collez votre vrai lien Neon ici entre les guillemets
-const NEON_URL = "NEON_URL";
-
-// 3. Gestion propre du cache pour éviter que Next.js ne plante
 const globalForPrisma = global as unknown as { prisma: PrismaClient };
 
-if (!globalForPrisma.prisma) {
-  const pool = new Pool({ connectionString: NEON_URL });
+let prisma: PrismaClient;
+
+if (globalForPrisma.prisma) {
+  prisma = globalForPrisma.prisma;
+} else {
+  // Lit le fichier .env proprement
+  const connectionString = process.env.DATABASE_URL as string;
+  const pool = new Pool({ connectionString });
   const adapter = new PrismaNeon(pool as any);
-  globalForPrisma.prisma = new PrismaClient({ adapter });
+  
+  prisma = new PrismaClient({ adapter });
 }
 
-export const prisma = globalForPrisma.prisma;
+if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
+
+export { prisma };
