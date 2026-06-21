@@ -89,6 +89,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ chartData: dbSnapshots, totalBalance }, { status: 200 });
 
     } catch (error) {
+        console.error("❌ CRASH API PORTFOLIO :", error);
         return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
     }
 }
