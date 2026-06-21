@@ -14,7 +14,13 @@ if (globalForPrisma.prisma) {
   prisma = globalForPrisma.prisma;
 } else {
   // Lit le fichier .env proprement
-  const connectionString = process.env.DATABASE_URL as string;
+  const connectionString = process.env.DATABASE_URL;
+  
+  // AJOUTEZ CETTE VÉRIFICATION :
+  if (!connectionString) {
+    throw new Error("🚨 CRASH : DATABASE_URL est introuvable. Next.js n'a pas lu le fichier .env !");
+  }
+
   const pool = new Pool({ connectionString });
   const adapter = new PrismaNeon(pool as any);
   
