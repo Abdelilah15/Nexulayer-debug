@@ -10,6 +10,7 @@ const uri = process.env.MONGODB_URI;
 const options = {
   tlsAllowInvalidCertificates: true,
   serverSelectionTimeoutMS: 5000, // Empêche l'application de charger dans le vide pendant 30 secondes
+  family: 4,
 };
 
 let client: MongoClient;
