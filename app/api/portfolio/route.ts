@@ -11,17 +11,16 @@ export async function POST(request: Request) {
         const headers = { 'accept': 'application/json', 'authorization': `Basic ${encodedKey}` };
         const safeAddress = address.toLowerCase();
 
-        // 1. MISE À JOUR DU SOLDE ACTUEL (STRICTEMENT LES JETONS)
+        // 1. MISE À JOUR DU SOLDE ACTUEL (Jetons + DeFi)
         let liveBalance = 0;
         try {
-            // L'API par défaut (sans no_filter) exclut automatiquement les spams et petits restes
-            const portfolioRes = await fetch(`https://api.zerion.io/v1/wallets/${safeAddress}/portfolio?currency=usd`, { headers });
+            // VOTRE IDÉE : filter[positions]=no_filter (Demande à Zerion d'inclure Tokens + DeFi)
+            const portfolioRes = await fetch(`https://api.zerion.io/v1/wallets/${safeAddress}/portfolio?currency=usd&filter[positions]=no_filter`, { headers });
             if (portfolioRes.ok) {
                 const portfolioData = await portfolioRes.json();
                 const totalObj = portfolioData.data?.attributes?.total;
                 
                 if (totalObj) {
-                    // On cible UNIQUEMENT la valeur des jetons dans le portefeuille ("positions")
                     liveBalance = Number(totalObj.positions) || 0;
                     liveBalance = parseFloat(liveBalance.toFixed(2));
 
@@ -50,22 +49,31 @@ export async function POST(request: Request) {
             console.error("Erreur fetch live portfolio", e);
         }
 
-        // 2. GESTION DE L'HISTORIQUE VÉRITABLE (SANS FAUSSES DONNÉES)
-        const existingHistoryCount = await prisma.portfolioSnapshot.count({
-            where: { address: safeAddress }
+        // 2. GESTION DE L'HISTORIQUE VÉRITABLE (Jetons + DeFi)
+        const dbSnapshotsCheck = await prisma.portfolioSnapshot.findMany({
+            where: { address: safeAddress },
+            orderBy: { timestamp: 'asc' }
         });
+        const existingHistoryCount = dbSnapshotsCheck.length;
 
-        // 👈 On utilise < 400 pour forcer la suppression des 365 faux points générés tout à l'heure !
-        if (existingHistoryCount < 400) {
+        // DÉTECTION DU BUG DE LA LIGNE PLATE :
+        // Si le point le plus vieux et le plus récent ont la même valeur, on détruit l'ancien bug !
+        const isFlatLine = existingHistoryCount > 1 && dbSnapshotsCheck[0].balance === dbSnapshotsCheck[existingHistoryCount - 1].balance;
+
+        if (existingHistoryCount < 400 || isFlatLine) {
+            console.log("🔄 Nettoyage de la base et téléchargement de l'historique complet (Tokens + DeFi)...");
             await prisma.portfolioSnapshot.deleteMany({ where: { address: safeAddress } });
             
             try {
-                // Téléchargement de l'historique strict (Jetons uniquement, pas de NFTs ni de spams)
-                const chartRes = await fetch(`https://api.zerion.io/v1/wallets/${safeAddress}/charts/max?currency=usd`, { headers });
+                // VOTRE IDÉE : filter[positions]=no_filter inclus dans l'historique
+                const chartRes = await fetch(`https://api.zerion.io/v1/wallets/${safeAddress}/charts/max?currency=usd&filter[positions]=no_filter`, { headers });
                 
                 if (chartRes.ok) {
                     const chartData = await chartRes.json();
-                    const points = chartData.data?.attributes?.charts || [];
+                    const attrs = chartData.data?.attributes || {};
+                    
+                    // CORRECTION DU BUG ZERION : Le tableau s'appelle "points", pas "charts" !
+                    const points = attrs.points || attrs.charts || attrs.chart || [];
                     
                     if (points.length > 0) {
                         const snapshotsToInsert = points.map((p: any) => ({
@@ -78,9 +86,10 @@ export async function POST(request: Request) {
                             data: snapshotsToInsert,
                             skipDuplicates: true,
                         });
+                        console.log(`✅ ${snapshotsToInsert.length} vrais points historiques (DeFi + Jetons) sauvegardés !`);
+                    } else {
+                        console.log("⚠️ L'API Zerion n'a retourné aucun historique pour cette adresse.");
                     }
-                    // Le générateur de fausses données a été totalement supprimé. 
-                    // S'il n'y a pas d'historique réel, le graphique utilisera uniquement les vraies données à partir d'aujourd'hui.
                 }
             } catch (e) {
                 console.error("Erreur historique", e);
@@ -103,7 +112,28 @@ export async function POST(request: Request) {
             orderBy: { timestamp: 'asc' }
         });
 
+        // Le VRAI solde total actuel (ex: 33$)
         const finalTotalBalance = liveBalance > 0 ? liveBalance : (dbSnapshots.length > 0 ? dbSnapshots[dbSnapshots.length - 1].balance : 0);
+
+        // 🔥 L'ALGORITHME DE SYNCHRONISATION (A + Delta A) 🔥
+        if (dbSnapshots.length > 0 && finalTotalBalance > 0) {
+            // On regarde à quelle altitude se trouve la fin de la courbe (ex: 1$)
+            const lastChartBalance = dbSnapshots[dbSnapshots.length - 1].balance;
+            
+            // On calcule l'actif historique "oublié" par le graphe (ex: 33 - 1 = 32$)
+            const missingActif = finalTotalBalance - lastChartBalance;
+
+            // Si le graphe est décalé par rapport à la réalité
+            if (Math.abs(missingActif) > 0.1) {
+                dbSnapshots.forEach(snap => {
+                    // APPLICATION DE VOTRE FORMULE : Actif Moment = A (missingActif) + Delta A (snap.balance)
+                    let adjustedBalance = snap.balance + missingActif;
+                    
+                    // Sécurité mathématique : un portefeuille ne peut pas être négatif
+                    snap.balance = adjustedBalance > 0 ? parseFloat(adjustedBalance.toFixed(2)) : 0;
+                });
+            }
+        }
 
         return NextResponse.json({ chartData: dbSnapshots, totalBalance: finalTotalBalance }, { status: 200 });
 
