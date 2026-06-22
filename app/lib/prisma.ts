@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import { PrismaNeon } from '@prisma/adapter-neon'; // C'est ici le changement principal
+import { PrismaNeon } from '@prisma/adapter-neon';
 import { Pool, neonConfig } from '@neondatabase/serverless';
 import ws from 'ws';
 
@@ -12,11 +12,21 @@ if (!dbUrl.startsWith("postgres")) {
   throw new Error("🚨 L'URL de la base de données est invalide.");
 }
 
-// 2. Configuration du Pool
-const pool = new Pool({ connectionString: dbUrl });
+// 2. Création du Singleton pour Next.js (Évite l'erreur de connexion multiple)
+const globalForPrisma = globalThis as unknown as {
+  prisma: PrismaClient | undefined;
+};
 
-// 3. Utilisation de l'adaptateur standard (compatible v7.8.0)
-const adapter = new PrismaNeon(pool as any);
+// 3. Initialisation de Prisma avec l'adaptateur
+export const prisma = globalForPrisma.prisma ?? (() => {
+  const pool = new Pool({ connectionString: dbUrl });
+  const adapter = new PrismaNeon(pool as any); // Cast nécessaire pour l'adaptateur Neon
+  
+  // Dans la v7, l'URL n'étant plus dans le schéma, on la gère ici via l'adaptateur
+  return new PrismaClient({ adapter });
+})();
 
-// 4. Initialisation
-export const prisma = new PrismaClient({ adapter });
+// 4. Sauvegarde dans le contexte global en développement
+if (process.env.NODE_ENV !== 'production') {
+  globalForPrisma.prisma = prisma;
+}
