@@ -10,15 +10,19 @@ const globalForPrisma = globalThis as unknown as {
 };
 
 export const prisma = globalForPrisma.prisma ?? (() => {
-  const dbUrl = process.env.DATABASE_URL;
+  // 1. Récupération de l'URL brute
+  const rawUrl = process.env.DATABASE_URL || "";
   
-  if (!dbUrl) {
-    throw new Error("🚨 CRITIQUE : DATABASE_URL est introuvable.");
+  // 2. NETTOYAGE CRUCIAL : On enlève les guillemets (simples ou doubles) et les espaces
+  const dbUrl = rawUrl.replace(/^["']|["']$/g, '').trim();
+  
+  if (!dbUrl || !dbUrl.startsWith("postgres")) {
+    throw new Error(`🚨 CRITIQUE : L'URL de la base de données est invalide. Reçu : ${rawUrl}`);
   }
 
-  // Prisma v7 exige l'adaptateur Neon
+  // 3. Initialisation avec l'URL propre
   const pool = new Pool({ connectionString: dbUrl });
-  const adapter = new PrismaNeon(pool);
+  const adapter = new PrismaNeon(pool as any); 
   
   return new PrismaClient({ adapter });
 })();
