@@ -9,7 +9,7 @@ const uri = process.env.MONGODB_URI;
 // 🔥 L'ANTIDOTE : On force le passage du pare-feu 4G de Maroc Telecom ici
 const options = {
   tlsAllowInvalidCertificates: true,
-  serverSelectionTimeoutMS: 5000, // Empêche l'application de charger dans le vide pendant 30 secondes
+  serverSelectionTimeoutMS: 10000, // Empêche l'application de charger dans le vide pendant 30 secondes
   family: 4,
 };
 

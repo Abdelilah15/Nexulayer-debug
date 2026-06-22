@@ -3,30 +3,29 @@ import { PrismaNeon } from '@prisma/adapter-neon';
 import { Pool, neonConfig } from '@neondatabase/serverless';
 import ws from 'ws';
 
-// Active les WebSockets pour traverser le pare-feu de l'université
 neonConfig.webSocketConstructor = ws;
 
 const globalForPrisma = global as unknown as { prisma: PrismaClient };
 
-let prisma: PrismaClient;
 
-if (globalForPrisma.prisma) {
-  prisma = globalForPrisma.prisma;
-} else {
-  // Lit le fichier .env proprement
-  const connectionString = process.env.DATABASE_URL;
-  
-  // AJOUTEZ CETTE VÉRIFICATION :
-  if (!connectionString) {
-    throw new Error("🚨 CRASH : DATABASE_URL est introuvable. Next.js n'a pas lu le fichier .env !");
+const createPrismaClient = () => {
+  const dbUrl = process.env.DATABASE_URL;
+
+  console.log("🔥 URL NEON TROUVÉE DANS LE .ENV :", dbUrl ? "OUI ✅" : "NON ❌");
+
+  // Sécurité anti-crash
+  if (!dbUrl) {
+    throw new Error("🚨 CRASH : DATABASE_URL est introuvable !");
   }
 
-  const pool = new Pool({ connectionString });
+  // 1. Le Pool prend votre URL Neon et gère tout
+  const pool = new Pool({ connectionString: dbUrl });
   const adapter = new PrismaNeon(pool as any);
-  
-  prisma = new PrismaClient({ adapter });
-}
+
+  // 2. On donne UNIQUEMENT l'adaptateur à Prisma, sans aucune option supplémentaire
+  return new PrismaClient({ adapter });
+};
+
+export const prisma = globalForPrisma.prisma ?? createPrismaClient();
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
-
-export { prisma };
