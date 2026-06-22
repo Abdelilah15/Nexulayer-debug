@@ -11,64 +11,79 @@ export async function POST(request: Request) {
         const headers = { 'accept': 'application/json', 'authorization': `Basic ${encodedKey}` };
         const safeAddress = address.toLowerCase();
 
-        // 1. VÉRIFICATION
+        // 1. INITIALISATION DE L'HISTORIQUE (On le fait en PREMIER)
         const existingHistoryCount = await prisma.portfolioSnapshot.count({
             where: { address: safeAddress }
         });
 
-        if (existingHistoryCount < 50) {
+        // S'il n'y a qu'un seul point (ou moins de 10), c'est qu'il y a eu un bug. On nettoie et on recharge.
+        if (existingHistoryCount < 10) {
             await prisma.portfolioSnapshot.deleteMany({ where: { address: safeAddress } });
-
-            const chartRes = await fetch(`https://api.zerion.io/v1/wallets/${address}/charts/max?currency=usd&filter[positions]=no_filter`, { headers });
             
-            if (chartRes.ok) {
-                const chartData = await chartRes.json();
-                const points = chartData.data?.attributes?.charts || [];
+            try {
+                // RESTAURATION : filter[positions]=no_filter pour inclure TOUS les tokens
+                const chartRes = await fetch(`https://api.zerion.io/v1/wallets/${address}/charts/year?currency=usd&filter[positions]=no_filter`, { headers });
                 
-                if (points.length > 0) {
-                    const snapshotsToInsert = points.map((p: any) => ({
-                        address: safeAddress,
-                        timestamp: new Date(p[0] * 1000),
-                        balance: parseFloat(Number(p[1]).toFixed(2))
-                    }));
+                if (chartRes.ok) {
+                    const chartData = await chartRes.json();
+                    const points = chartData.data?.attributes?.charts || [];
+                    
+                    if (points.length > 0) {
+                        const snapshotsToInsert = points.map((p: any) => ({
+                            address: safeAddress,
+                            timestamp: new Date(p[0] * 1000),
+                            balance: parseFloat(Number(p[1]).toFixed(2))
+                        }));
 
-                    await prisma.portfolioSnapshot.createMany({
-                        data: snapshotsToInsert,
-                        skipDuplicates: true,
-                    });
-                    console.log(`✅ ${snapshotsToInsert.length} points historiques sauvegardés !`);
-                }
-            }
-        }
-
-        // 2. MISE À JOUR DU SOLDE ACTUEL
-        try {
-            const portfolioRes = await fetch(`https://api.zerion.io/v1/wallets/${address}/portfolio?currency=usd&filter[positions]=no_filter`, { headers });
-            if (portfolioRes.ok) {
-                const portfolioData = await portfolioRes.json();
-                const currentBalance = portfolioData.data?.attributes?.total?.positions;
-                
-                if (currentBalance !== undefined) {
-                    const now = new Date();
-                    const currentHour = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours(), 0, 0, 0);
-
-                    const existingPoint = await prisma.portfolioSnapshot.findFirst({
-                        where: { address: safeAddress, timestamp: currentHour }
-                    });
-
-                    if (!existingPoint) {
-                        await prisma.portfolioSnapshot.create({
-                            data: { address: safeAddress, timestamp: currentHour, balance: parseFloat(Number(currentBalance).toFixed(2)) }
-                        });
-                    } else {
-                        await prisma.portfolioSnapshot.update({
-                            where: { id: existingPoint.id },
-                            data: { balance: parseFloat(Number(currentBalance).toFixed(2)) }
+                        await prisma.portfolioSnapshot.createMany({
+                            data: snapshotsToInsert,
+                            skipDuplicates: true,
                         });
                     }
                 }
+            } catch (e) {
+                console.error("Erreur téléchargement historique", e);
             }
-        } catch (e) {}
+        }
+
+        // 2. MISE À JOUR DU SOLDE ACTUEL (En second)
+        let liveBalance = 0;
+        try {
+            // RESTAURATION : filter[positions]=no_filter pour retrouver exactement les 38$
+            const portfolioRes = await fetch(`https://api.zerion.io/v1/wallets/${address}/portfolio?currency=usd&filter[positions]=no_filter`, { headers });
+            if (portfolioRes.ok) {
+                const portfolioData = await portfolioRes.json();
+                const totalObj = portfolioData.data?.attributes?.total;
+                
+                if (totalObj) {
+                    // On additionne explicitement les actifs positifs pour éviter de soustraire des dettes
+                    liveBalance = (Number(totalObj.positions) || 0) + (Number(totalObj.staked) || 0) + (Number(totalObj.deposited) || 0);
+                    liveBalance = parseFloat(liveBalance.toFixed(2));
+
+                    if (liveBalance > 0) {
+                        const now = new Date();
+                        const currentHour = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours(), 0, 0, 0);
+
+                        const existingPoint = await prisma.portfolioSnapshot.findFirst({
+                            where: { address: safeAddress, timestamp: currentHour }
+                        });
+
+                        if (!existingPoint) {
+                            await prisma.portfolioSnapshot.create({
+                                data: { address: safeAddress, timestamp: currentHour, balance: liveBalance }
+                            });
+                        } else {
+                            await prisma.portfolioSnapshot.update({
+                                where: { id: existingPoint.id },
+                                data: { balance: liveBalance }
+                            });
+                        }
+                    }
+                }
+            }
+        } catch (e) {
+            console.error("Erreur fetch live portfolio", e);
+        }
 
         // 3. RÉPONSE AU GRAPHIQUE
         const now = new Date();
@@ -85,8 +100,9 @@ export async function POST(request: Request) {
             orderBy: { timestamp: 'asc' }
         });
 
-        const totalBalance = dbSnapshots.length > 0 ? dbSnapshots[dbSnapshots.length - 1].balance : 0;
-        return NextResponse.json({ chartData: dbSnapshots, totalBalance }, { status: 200 });
+        const finalTotalBalance = liveBalance > 0 ? liveBalance : (dbSnapshots.length > 0 ? dbSnapshots[dbSnapshots.length - 1].balance : 0);
+
+        return NextResponse.json({ chartData: dbSnapshots, totalBalance: finalTotalBalance }, { status: 200 });
 
     } catch (error) {
         console.error("❌ CRASH API PORTFOLIO :", error);
