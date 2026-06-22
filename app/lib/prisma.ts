@@ -1,31 +1,22 @@
 import { PrismaClient } from '@prisma/client';
-import { PrismaNeon } from '@prisma/adapter-neon';
+import { PrismaNeon } from '@prisma/adapter-neon'; // C'est ici le changement principal
 import { Pool, neonConfig } from '@neondatabase/serverless';
 import ws from 'ws';
 
 neonConfig.webSocketConstructor = ws;
 
-const globalForPrisma = global as unknown as { prisma: PrismaClient };
+// 1. Nettoyage de l'URL
+const dbUrl = (process.env.DATABASE_URL || "").replace(/^"|"$/g, '').trim();
 
+if (!dbUrl.startsWith("postgres")) {
+  throw new Error("🚨 L'URL de la base de données est invalide.");
+}
 
-const createPrismaClient = () => {
-  const dbUrl = process.env.DATABASE_URL;
+// 2. Configuration du Pool
+const pool = new Pool({ connectionString: dbUrl });
 
-  console.log("🔥 URL NEON TROUVÉE DANS LE .ENV :", dbUrl ? "OUI ✅" : "NON ❌");
+// 3. Utilisation de l'adaptateur standard (compatible v7.8.0)
+const adapter = new PrismaNeon(pool as any);
 
-  // Sécurité anti-crash
-  if (!dbUrl) {
-    throw new Error("🚨 CRASH : DATABASE_URL est introuvable !");
-  }
-
-  // 1. Le Pool prend votre URL Neon et gère tout
-  const pool = new Pool({ connectionString: dbUrl });
-  const adapter = new PrismaNeon(pool as any);
-
-  // 2. On donne UNIQUEMENT l'adaptateur à Prisma, sans aucune option supplémentaire
-  return new PrismaClient({ adapter });
-};
-
-export const prisma = globalForPrisma.prisma ?? createPrismaClient();
-
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
+// 4. Initialisation
+export const prisma = new PrismaClient({ adapter });
