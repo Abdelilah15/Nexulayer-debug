@@ -21,7 +21,7 @@ export default function AssetList({ assets }: { assets: any[] }) {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedNetworkId, setSelectedNetworkId] = useState('Tous');
     const [selectedAsset, setSelectedAsset] = useState('Tokens');
-    
+
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -49,9 +49,17 @@ export default function AssetList({ assets }: { assets: any[] }) {
             const matchesSearch = asset.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 asset.symbol.toLowerCase().includes(searchTerm.toLowerCase());
             const matchesNetwork = selectedNetworkId === 'Tous' || asset.chainId === selectedNetworkId;
-            return matchesSearch && matchesNetwork;
+            
+            // Séparation stricte
+            const matchesTab = selectedAsset === 'Tokens' 
+                ? asset.positionType === 'wallet' 
+                : selectedAsset === 'DeFi' 
+                    ? asset.positionType !== 'wallet' 
+                    : false;
+
+            return matchesSearch && matchesNetwork && matchesTab;
         });
-    }, [assets, searchTerm, selectedNetworkId]);
+    }, [assets, searchTerm, selectedNetworkId, selectedAsset]);
 
     const activeNetwork = networks.find(n => n.id === selectedNetworkId) || networks[0];
 
@@ -63,7 +71,7 @@ export default function AssetList({ assets }: { assets: any[] }) {
                     <button onClick={() => setSelectedAsset('DeFi')} className={`border border-slate-700 px-3 py-2 text-sm focus:outline-none transition-colors ${selectedAsset === 'DeFi' ? "bg-slate-800 text-white" : "bg-slate-900 text-slate-400 hover:bg-slate-800/50"}`}>DeFi</button>
                     <button onClick={() => setSelectedAsset('NFTs')} className={`border border-slate-700 rounded-r-lg px-3 py-2 text-sm focus:outline-none transition-colors ${selectedAsset === 'NFTs' ? "bg-slate-800 text-white" : "bg-slate-900 text-slate-400 hover:bg-slate-800/50"}`}>NFTs</button>
                 </div>
-                
+
                 <input
                     type="text"
                     placeholder="Rechercher..."
@@ -71,7 +79,7 @@ export default function AssetList({ assets }: { assets: any[] }) {
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                 />
-                
+
                 <div className="relative min-w-[180px]" ref={dropdownRef}>
                     <button
                         onClick={() => setIsDropdownOpen(!isDropdownOpen)}
@@ -151,9 +159,56 @@ export default function AssetList({ assets }: { assets: any[] }) {
                     </div>
                 </div>
             )}
-            
-            {/* Autres onglets... */}
-            {selectedAsset === 'DeFi' && <div></div>}
+
+            {/* BLOC 2 : DEFI (Séparé et préparé pour l'avenir) */}
+            {selectedAsset === 'DeFi' && (
+                <div className="space-y-2">
+                    <div className="grid grid-cols-3 gap-3 p-3 bg-slate-800/50 rounded-lg border-slate-700">
+                        <p className="text-slate-400 text-xs font-bold">Protocole / Actif</p>
+                        <p className="text-slate-400 text-xs font-bold text-center">Cours</p>
+                        <p className="text-slate-400 text-xs font-bold text-right">Valeur</p>
+                    </div>
+
+                    <div className="space-y-1">
+                        {filteredAssets.length > 0 ? (
+                            filteredAssets.map((asset, index) => (
+                                <div key={`${asset.id}-${index}`} className="grid grid-cols-3 items-center p-3 bg-slate-800/30 rounded-lg border border-transparent hover:bg-slate-800/80 hover:border-slate-700 transition-all">
+                                    <div className="flex items-center gap-3 overflow-hidden">
+                                        <div className="relative shrink-0">
+                                            {asset.icon ? (
+                                                <img src={asset.icon} className="w-8 h-8 rounded-full bg-slate-900 object-cover" alt={asset.symbol} />
+                                            ) : (
+                                                <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-[10px] text-white font-bold uppercase">{asset.symbol?.substring(0, 1)}</div>
+                                            )}
+                                            <NetworkAvatar name={asset.chainName} iconUrl={asset.chainIcon} className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-slate-800 z-10 shadow-sm" />
+                                        </div>
+                                        <div className="min-w-0">
+                                            <p className="text-white font-medium text-sm truncate">{asset.name}</p>
+                                            <div className="flex items-center gap-2 mt-0.5">
+                                                <p className="text-slate-400 text-[10px] uppercase font-bold truncate">{asset.chainName}</p>
+                                                {/* Badge d'information DeFi */}
+                                                <span className="bg-blue-900/40 text-blue-300 text-[8px] uppercase font-bold px-1.5 py-0.5 rounded border border-blue-800/50 whitespace-nowrap">
+                                                    {asset.protocolName || asset.positionType.replace('_', ' ')}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="text-center">
+                                        <p className="text-slate-300 text-sm font-medium">${asset.price?.toLocaleString(undefined, { minimumFractionDigits: 2 }) || '0.00'}</p>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-white font-bold text-sm">${asset.value?.toLocaleString(undefined, { minimumFractionDigits: 2 }) || '0.00'}</p>
+                                        <p className="text-slate-400 text-xs">{Number(asset.balance).toFixed(4)} {asset.symbol}</p>
+                                    </div>
+                                </div>
+                            ))
+                        ) : (
+                            <p className="text-slate-500 text-center py-4">Aucune position DeFi trouvée.</p>
+                        )}
+                    </div>
+                </div>
+            )}
+
             {selectedAsset === 'NFTs' && <div></div>}
         </div>
     );

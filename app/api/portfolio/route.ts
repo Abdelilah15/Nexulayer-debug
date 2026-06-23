@@ -171,7 +171,9 @@ export async function POST(request: Request) {
                         // On garde l'ID pour la logique, mais on ajoute les données visuelles prêtes à l'emploi :
                         chainId: chainId,
                         chainName: networkData.name ? networkData.name.charAt(0).toUpperCase() + networkData.name.slice(1) : chainId,
-                        chainIcon: networkData.icon || null
+                        chainIcon: networkData.icon || null,
+                        positionType: pos.attributes.position_type || "wallet",
+                        protocolName: pos.attributes.application_metadata?.name || null
                     };
                 });
             }
