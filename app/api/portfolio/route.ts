@@ -135,12 +135,18 @@ export async function POST(request: Request) {
             }
         }
 
-        let assets = [];
+        let assets: any[] = [];
         try {
-            // 🌟 NOUVEAU : Récupération des métadonnées des réseaux côté serveur
             let chainsMeta: Record<string, any> = {};
-            const chainsRes = await fetch('https://api.zerion.io/v1/chains', { headers });
-            if (chainsRes.ok) {
+
+            // ⚡ OPTIMISATION : On lance les requêtes "chains" et "positions" EN MÊME TEMPS
+            const [chainsRes, positionsRes] = await Promise.all([
+                fetch('https://api.zerion.io/v1/chains', { headers }).catch(() => null),
+                fetch(`https://api.zerion.io/v1/wallets/${safeAddress}/positions?currency=usd&filter[positions]=no_filter`, { headers }).catch(() => null)
+            ]);
+
+            // Traitement des réseaux (si la requête a réussi)
+            if (chainsRes && chainsRes.ok) {
                 const chainsData = await chainsRes.json();
                 chainsData.data.forEach((chain: any) => {
                     chainsMeta[chain.id] = {
@@ -150,15 +156,13 @@ export async function POST(request: Request) {
                 });
             }
 
-            // Récupération des positions
-            const positionsRes = await fetch(`https://api.zerion.io/v1/wallets/${safeAddress}/positions?currency=usd&filter[positions]=no_filter`, { headers });
-            if (positionsRes.ok) {
+            // Traitement des positions (si la requête a réussi)
+            if (positionsRes && positionsRes.ok) {
                 const positionsData = await positionsRes.json();
 
-                // 🌟 MODIFICATION : Injection du vrai nom et de l'icône du réseau
                 assets = positionsData.data.map((pos: any) => {
                     const chainId = pos.relationships?.chain?.data?.id || "unknown";
-                    const networkData = chainsMeta[chainId] || {}; // On pioche dans le dictionnaire créé juste au-dessus
+                    const networkData = chainsMeta[chainId] || {};
 
                     return {
                         id: pos.id,
@@ -168,7 +172,6 @@ export async function POST(request: Request) {
                         price: pos.attributes.price,
                         value: pos.attributes.value,
                         icon: pos.attributes.fungible_info?.icon?.url,
-                        // On garde l'ID pour la logique, mais on ajoute les données visuelles prêtes à l'emploi :
                         chainId: chainId,
                         chainName: networkData.name ? networkData.name.charAt(0).toUpperCase() + networkData.name.slice(1) : chainId,
                         chainIcon: networkData.icon || null,
