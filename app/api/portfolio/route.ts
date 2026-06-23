@@ -139,49 +139,99 @@ export async function POST(request: Request) {
         try {
             let chainsMeta: Record<string, any> = {};
 
-            // ⚡ OPTIMISATION : On lance les requêtes "chains" et "positions" EN MÊME TEMPS
-            const [chainsRes, positionsRes] = await Promise.all([
-                fetch('https://api.zerion.io/v1/chains', { headers }).catch(() => null),
-                fetch(`https://api.zerion.io/v1/wallets/${safeAddress}/positions?currency=usd&filter[positions]=no_filter`, { headers }).catch(() => null)
+            const mobulaHeaders = {
+                'accept': 'application/json',
+                ...(process.env.MOBULA_API_KEY && { 'Authorization': process.env.MOBULA_API_KEY })
+            };
+
+            // ⚡ OPTIMISATION : Ajout de la DeFi et des filtres (anti-spam + précision totale)
+            const [chainsRes, portfolioRes, defiRes] = await Promise.all([
+                fetch('https://api.mobula.io/api/1/blockchains', { headers: mobulaHeaders }).catch(() => null),
+                fetch(`https://api.mobula.io/api/1/wallet/portfolio?wallet=${safeAddress}&filterSpam=true&accuracy=maximum`, { headers: mobulaHeaders }).catch(() => null),
+                fetch(`https://api.mobula.io/api/2/wallet/defi-positions?wallet=${safeAddress}`, { headers: mobulaHeaders }).catch(() => null)
             ]);
 
-            // Traitement des réseaux (si la requête a réussi)
+            // CORRECTION 1 : Fonction pour nettoyer le format "evm:8453" en "8453"
+            const cleanChainId = (cid: any) => cid ? cid.toString().replace('evm:', '') : "unknown";
+
+            // 1. Dictionnaire des réseaux (Logos et Noms propres)
             if (chainsRes && chainsRes.ok) {
                 const chainsData = await chainsRes.json();
-                chainsData.data.forEach((chain: any) => {
-                    chainsMeta[chain.id] = {
-                        name: chain.attributes.name,
-                        icon: chain.attributes.icon?.url
-                    };
-                });
+                if (chainsData.data) {
+                    chainsData.data.forEach((chain: any) => {
+                        const cid = cleanChainId(chain.chainId || chain.name);
+                        chainsMeta[cid] = {
+                            name: chain.name,
+                            icon: chain.logo || chain.icon || null
+                        };
+                    });
+                }
             }
 
-            // Traitement des positions (si la requête a réussi)
-            if (positionsRes && positionsRes.ok) {
-                const positionsData = await positionsRes.json();
+            // 2. Traitement du Portefeuille classique (Tokens)
+            if (portfolioRes && portfolioRes.ok) {
+                const portfolioData = await portfolioRes.json();
 
-                assets = positionsData.data.map((pos: any) => {
-                    const chainId = pos.relationships?.chain?.data?.id || "unknown";
-                    const networkData = chainsMeta[chainId] || {};
+                if (portfolioData.data && portfolioData.data.assets) {
+                    portfolioData.data.assets.forEach((assetItem: any) => {
+                        const tokenInfo = assetItem.asset;
+                        const balancesArray = assetItem.contracts_balances || [];
 
-                    return {
-                        id: pos.id,
-                        name: pos.attributes.fungible_info?.name || "Unknown",
-                        symbol: pos.attributes.fungible_info?.symbol || "???",
-                        balance: pos.attributes.quantity.numeric,
-                        price: pos.attributes.price,
-                        value: pos.attributes.value,
-                        icon: pos.attributes.fungible_info?.icon?.url,
-                        chainId: chainId,
-                        chainName: networkData.name ? networkData.name.charAt(0).toUpperCase() + networkData.name.slice(1) : chainId,
+                        balancesArray.forEach((contract: any) => {
+                            const cid = cleanChainId(contract.chainId);
+                            const networkData = chainsMeta[cid] || { name: cid, icon: null };
+
+                            // CORRECTION 2 : Filtre de sécurité maison pour les miettes invisibles (ex: < 0.01$)
+                            const value = contract.balance * (assetItem.price || 0);
+                            if (value < 0.01) return;
+
+                            assets.push({
+                                id: `${tokenInfo.id || tokenInfo.symbol}-${cid}`,
+                                name: tokenInfo.name || "Unknown",
+                                symbol: tokenInfo.symbol || "???",
+                                balance: contract.balance,
+                                price: assetItem.price || 0,
+                                value: value,
+                                icon: tokenInfo.logo || null,
+                                chainId: cid,
+                                chainName: networkData.name || cid,
+                                chainIcon: networkData.icon || null,
+                                positionType: "wallet",
+                                protocolName: null
+                            });
+                        });
+                    });
+                }
+            }
+
+            // 3. CORRECTION 3 : Traitement de la DeFi (Staking Plume, Lending, LP, etc.)
+            if (defiRes && defiRes.ok) {
+                const defiData = await defiRes.json();
+                const positions = defiData.data || (Array.isArray(defiData) ? defiData : []);
+
+                positions.forEach((position: any) => {
+                    const tokenInfo = position.asset || position.underlying_token || {};
+                    const cid = cleanChainId(position.chainId || position.chain);
+                    const networkData = chainsMeta[cid] || { name: cid, icon: null };
+
+                    assets.push({
+                        id: `defi-${position.id || tokenInfo.symbol || index}-${cid}`,
+                        name: tokenInfo.name || position.protocol || "DeFi Position",
+                        symbol: tokenInfo.symbol || "???",
+                        balance: position.balance || position.amount || 0,
+                        price: position.price || tokenInfo.price || 0,
+                        value: position.value || (position.balance * position.price) || 0,
+                        icon: tokenInfo.logo || position.logo || null,
+                        chainId: cid,
+                        chainName: networkData.name || cid,
                         chainIcon: networkData.icon || null,
-                        positionType: pos.attributes.position_type || "wallet",
-                        protocolName: pos.attributes.application_metadata?.name || null
-                    };
+                        positionType: position.type || "defi", // Va automatiquement dans l'onglet "DeFi" du Frontend
+                        protocolName: position.protocol || "DeFi Protocol"
+                    });
                 });
             }
         } catch (e) {
-            console.error("Erreur récupération actifs", e);
+            console.error("Erreur récupération actifs avec Mobula:", e);
         }
 
         return NextResponse.json({ chartData: dbSnapshots, totalBalance: finalTotalBalance, assets }, { status: 200 });

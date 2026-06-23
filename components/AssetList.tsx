@@ -1,15 +1,12 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 
-// Composant pour le badge réseau (utilise les données préparées par le backend)
 const NetworkAvatar = ({ name, iconUrl, className = "" }: { name: string, iconUrl?: string, className?: string }) => {
     const [hasError, setHasError] = useState(false);
 
-    // Si pas d'URL ou si l'image crash, on affiche une pastille propre et bien centrée
+    // ❌ Plus de pastille ! S'il n'y a pas d'image, on utilise le globe
     if (hasError || !iconUrl) {
         return (
-            <div className={`flex items-center justify-center bg-slate-700 text-white font-bold text-[8px] uppercase overflow-hidden ${className}`}>
-                {name ? name.charAt(0) : '?'}
-            </div>
+            <img src="/globe.svg" alt="Default Network" className={`object-cover bg-slate-800 p-[2px] ${className}`} />
         );
     }
 
@@ -134,13 +131,18 @@ export default function AssetList({ assets }: { assets: any[] }) {
 
                                     <div className="flex items-center gap-3 overflow-hidden">
                                         <div className="relative shrink-0">
+                                            {/* ❌ Plus de pastille textuelle. Si l'icône manque, on affiche l'icône globe */}
                                             {asset.icon ? (
                                                 <img src={asset.icon} className="w-8 h-8 rounded-full bg-slate-900 object-cover" alt={asset.symbol} />
                                             ) : (
-                                                <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-[10px] text-white font-bold uppercase">{asset.symbol?.substring(0, 1)}</div>
+                                                <img src="/globe.svg" className="w-8 h-8 rounded-full bg-slate-800 p-1 object-cover" alt="Unknown" />
                                             )}
-                                            {/* Le badge utilise directement les propriétés envoyées par le backend */}
-                                            <NetworkAvatar name={asset.chainName} iconUrl={asset.chainIcon} className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-slate-800 z-10 shadow-sm" />
+                                            
+                                            <NetworkAvatar 
+                                                name={asset.chainName} 
+                                                iconUrl={asset.chainIcon} 
+                                                className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-slate-800 z-10 shadow-sm" 
+                                            />
                                         </div>
 
                                         <div className="min-w-0">
