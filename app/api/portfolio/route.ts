@@ -96,7 +96,7 @@ export async function POST(request: Request) {
             }
         }
 
-        // 3. PRÉPARATION DES DONNÉES POUR LE GRAPHIQUE
+        // 3. PRÉPARATION DES DONNÉES POUR LE GRAPHIQUE 
         const now = new Date();
         let limitDate = new Date(0);
 
@@ -142,7 +142,7 @@ export async function POST(request: Request) {
             // (1 seul appel ultra rapide pour récupérer toutes les icônes)
             const chainsRes = await fetch("https://api.zerion.io/v1/chains", { headers });
             const chainIconsMap: Record<string, string | null> = {};
-            
+
             if (chainsRes.ok) {
                 const chainsData = await chainsRes.json();
                 // On crée un dictionnaire : "binance-smart-chain" -> "https://..."
@@ -204,55 +204,129 @@ export async function POST(request: Request) {
             console.error("Erreur récupération actifs avec Zerion Positions Forcé:", e);
         }
         // === FIN DU BLOC ZERION ===
-        
-        // === À AJOUTER JUSTE APRÈS LE BLOC ZERION : FALLBACK MOBULA HYBRIDE ===
+
+        // === FALLBACK HYBRIDE : MOBULA (Soldes) + COINGECKO (Icônes) ===
+        // === FALLBACK MOBULA (AVEC DIAGNOSTIC ET ANTI-CACHE) ===
         try {
-            // On fait appel à Mobula uniquement pour boucher les trous de Zerion
-            const mobulaRes = await fetch(`https://api.mobula.io/api/1/wallet/portfolio?wallet=${safeAddress}`);
-            if (mobulaRes.ok) {
+            console.log(`⏳ Appel Mobula en cours pour: ${safeAddress}`);
+            
+            const mobulaRes = await fetch(`https://api.mobula.io/api/1/wallet/portfolio?wallet=${safeAddress}`, {
+                cache: 'no-store', // 🔴 OBLIGATOIRE : Force Next.js à faire un vrai appel réseau
+                headers: {
+                    // 'Authorization': process.env.MOBULA_API_KEY || '' // Décommentez si vous avez créé une clé API gratuite sur leur site
+                }
+            });
+
+            console.log(`📡 Code de statut Mobula : ${mobulaRes.status}`);
+
+            if (!mobulaRes.ok) {
+                // Si Mobula refuse de répondre, on lit son message d'erreur d'origine
+                const errorText = await mobulaRes.text();
+                console.error(`❌ Mobula a bloqué la requête. Détails :`, errorText);
+            } else {
                 const mobulaData = await mobulaRes.json();
                 const mobulaAssets = mobulaData.data?.assets || [];
                 
-                // Whitelist stricte : On n'accepte que les réseaux que Zerion ne gère pas encore
+                
+                // === CODE DE DÉBOGAGE POUR LE TERMINAL VS CODE ===
+                console.log("\n====== 🔍 TEST MOBULA RAW DATA ======");
+                
+                mobulaAssets.forEach((item: any) => {
+                    const symbol = item.asset?.symbol || "Unknown";
+                    const crossChains = item.cross_chain_balances || {};
+                    
+                    // On ne log que si le jeton est sur Plume, Morph, etc.
+                    Object.entries(crossChains).forEach(([chainName, chainData]) => {
+                        const chainLower = chainName.toLowerCase();
+                        if (["plume", "morph", "lisk", "taiko"].some(c => chainLower.includes(c))) {
+                            console.log(`\nTrouvé : ${symbol} sur le réseau ${chainName}`);
+                            console.log(`- Solde Mobula : ${(chainData as any).balance}`);
+                            console.log(`- Contrat à envoyer à CoinGecko : ${(chainData as any).address}`);
+                        }
+                    });
+                });
+                console.log("=====================================\n");
+
                 const allowedFallbackChains = ["plume", "morph", "lisk", "taiko", "ronin", "mitosis", "flare"];
 
-                mobulaAssets.forEach((mobAsset: any) => {
-                    const blockchain = (mobAsset.blockchain || "").toLowerCase();
-                    
-                    // Si l'actif appartient à l'un de ces réseaux et a un solde > 0 (même des centimes ou sous de 0.01$)
-                    if (allowedFallbackChains.some(c => blockchain.includes(c)) && mobAsset.token_balance > 0) {
-                        const formattedChainId = blockchain.replace(/\s+/g, '-');
-                        const mobChainName = blockchain.split(/\s+|-/).map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-                        
-                        // Icône dynamique pour le fallback Mobula
-                        const chainIcon = `https://icons.llamao.fi/icons/chains/rsz_${formattedChainId}?width=40&height=40`;
+                // Dictionnaire de traduction : Nom Mobula -> ID Réseau CoinGecko
+                const cgNetworkMapping: Record<string, string> = {
+                    "bsc": "binance-smart-chain",
+                    "polygon": "polygon-pos",
+                    "ronin": "ronin",
+                    "taiko": "taiko",
+                    "lisk": "lisk"
+                    // Ajoutez les autres mappings selon la doc CoinGecko
+                };
 
-                        // Détection dynamique si c'est du Wallet ou de la DeFi venant de Mobula
-                        // Si le nom de l'actif ou du protocole indique du Staking / Yield
-                        const isDeFi = (mobAsset.protocol || mobAsset.type || "").toLowerCase().includes("stake") || 
-                                       (mobAsset.token?.name || "").toLowerCase().includes("staked");
+                // On utilise une boucle for...of pour gérer l'asynchrone (await) proprement avec CoinGecko
+                for (const item of mobulaAssets) {
+                    const tokenInfo = item.asset || {};
+                    const crossChains = item.cross_chain_balances || {};
+                    const price = item.price || 0;
 
-                        assets.push({
-                            id: `mobula-${mobAsset.token?.address || mobAsset.token?.symbol}-${formattedChainId}`,
-                            name: mobAsset.token?.name || "Unknown",
-                            symbol: mobAsset.token?.symbol || "???",
-                            balance: mobAsset.token_balance,
-                            price: mobAsset.price || 0,
-                            // Utilise le solde estimé de Mobula, sinon calcul manuel strict pour afficher même 0.00$
-                            value: parseFloat((mobAsset.estimated_balance || (mobAsset.token_balance * (mobAsset.price || 0))).toFixed(2)),
-                            icon: mobAsset.token?.logo || null,
-                            chainId: formattedChainId,
-                            chainName: mobChainName,
-                            chainIcon: chainIcon, // Assignation essentielle pour le menu déroulant du composant Front !
-                            positionType: isDeFi ? "defi" : "wallet",
-                            protocolName: isDeFi ? (mobAsset.protocol || "Staking Position") : null
-                        });
+                    for (const [chainName, chainData] of Object.entries(crossChains)) {
+                        const normalizedChainName = chainName.toLowerCase();
+                        const balance = (chainData as any).balance || 0;
+                        const contractAddress = (chainData as any).address || tokenInfo.contracts?.[0]; // Récupération du contrat
+
+                        if (allowedFallbackChains.some(c => normalizedChainName.includes(c)) && balance > 0) {
+
+                            const formattedChainId = normalizedChainName.replace(/\s+/g, '-');
+                            const displayChainName = chainName.charAt(0).toUpperCase() + chainName.slice(1);
+
+                            // 1. Définition de l'icône par défaut (fournie par Mobula)
+                            let finalIcon = tokenInfo.logo || null;
+
+                            // 2. TENTATIVE COINGECKO : Si on a un contrat et que le réseau est supporté par CG
+                            const cgNetworkId = cgNetworkMapping[normalizedChainName] || normalizedChainName;
+
+                            if (contractAddress) {
+                                try {
+                                    // Appel à l'endpoint Onchain de CoinGecko
+                                    const cgRes = await fetch(
+                                        `https://api.coingecko.com/api/v3/onchain/networks/${cgNetworkId}/tokens/${contractAddress}/info`,
+                                        { headers: { 'x-cg-demo-api-key': process.env.COINGECKO_API_KEY || '' } }
+                                    );
+
+                                    if (cgRes.ok) {
+                                        const cgData = await cgRes.json();
+                                        // On écrase l'icône Mobula par la belle icône CoinGecko (image.large ou image.thumb)
+                                        if (cgData.data?.attributes?.image?.large) {
+                                            finalIcon = cgData.data.attributes.image.large;
+                                        }
+                                    }
+                                } catch (cgError) {
+                                    console.error(`CoinGecko rate limit ou réseau non supporté pour ${normalizedChainName}`);
+                                }
+                            }
+
+                            const value = balance * price;
+                            const isDeFi = (tokenInfo.name || "").toLowerCase().includes("staked");
+
+                            assets.push({
+                                id: `hybrid-${tokenInfo.id || tokenInfo.symbol}-${formattedChainId}`,
+                                name: tokenInfo.name || "Unknown Token",
+                                symbol: tokenInfo.symbol || "???",
+                                balance: balance,
+                                price: price,
+                                value: parseFloat(value.toFixed(2)),
+                                icon: finalIcon, // <-- L'icône viendra de CoinGecko si l'appel a réussi !
+                                chainId: formattedChainId,
+                                chainName: displayChainName,
+                                chainIcon: null,
+                                positionType: isDeFi ? "defi" : "wallet",
+                                protocolName: isDeFi ? "Staking / Yield" : null
+                            });
+                        }
                     }
-                });
+                }
             }
         } catch (e) {
-            console.error("Erreur récupération Mobula Fallback:", e);
+            console.error("Erreur récupération Hybride Mobula/CoinGecko:", e);
         }
+        // =======================================================================
+
 
         return NextResponse.json({ chartData: dbSnapshots, totalBalance: finalTotalBalance, assets }, { status: 200 });
 
