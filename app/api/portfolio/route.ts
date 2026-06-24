@@ -213,7 +213,7 @@ export async function POST(request: Request) {
             const mobulaRes = await fetch(`https://api.mobula.io/api/1/wallet/portfolio?wallet=${safeAddress}`, {
                 cache: 'no-store', // 🔴 OBLIGATOIRE : Force Next.js à faire un vrai appel réseau
                 headers: {
-                    // 'Authorization': process.env.MOBULA_API_KEY || '' // Décommentez si vous avez créé une clé API gratuite sur leur site
+                    'Authorization': process.env.MOBULA_API_KEY || '',
                 }
             });
 
@@ -225,27 +225,24 @@ export async function POST(request: Request) {
                 console.error(`❌ Mobula a bloqué la requête. Détails :`, errorText);
             } else {
                 const mobulaData = await mobulaRes.json();
+                
+                
+                // === NOUVEAU CODE DE DÉBOGAGE SANS FILTRE ===
+                console.log("\n====== 🔍 CE QUE MOBULA VOIT VRAIMENT ======");
                 const mobulaAssets = mobulaData.data?.assets || [];
                 
-                
-                // === CODE DE DÉBOGAGE POUR LE TERMINAL VS CODE ===
-                console.log("\n====== 🔍 TEST MOBULA RAW DATA ======");
-                
-                mobulaAssets.forEach((item: any) => {
-                    const symbol = item.asset?.symbol || "Unknown";
-                    const crossChains = item.cross_chain_balances || {};
-                    
-                    // On ne log que si le jeton est sur Plume, Morph, etc.
-                    Object.entries(crossChains).forEach(([chainName, chainData]) => {
-                        const chainLower = chainName.toLowerCase();
-                        if (["plume", "morph", "lisk", "taiko"].some(c => chainLower.includes(c))) {
-                            console.log(`\nTrouvé : ${symbol} sur le réseau ${chainName}`);
-                            console.log(`- Solde Mobula : ${(chainData as any).balance}`);
-                            console.log(`- Contrat à envoyer à CoinGecko : ${(chainData as any).address}`);
-                        }
+                if (mobulaAssets.length === 0) {
+                    console.log("⚠️ Mobula affirme que votre portefeuille est 100% VIDE sur TOUS les réseaux.");
+                } else {
+                    mobulaAssets.forEach((item: any) => {
+                        const symbol = item.asset?.symbol || "Unknown";
+                        const crossChains = item.cross_chain_balances || {};
+                        const chainsFound = Object.keys(crossChains).join(" | ");
+                        
+                        console.log(`🪙 Jeton: ${symbol} -> Présent sur : [ ${chainsFound || 'Réseau inconnu'} ]`);
                     });
-                });
-                console.log("=====================================\n");
+                }
+                console.log("==============================================\n");
 
                 const allowedFallbackChains = ["plume", "morph", "lisk", "taiko", "ronin", "mitosis", "flare"];
 
