@@ -168,10 +168,10 @@ export async function POST(request: Request) {
                         .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
                         .join(' ');
 
-                    // 3. CORRECTIF LOGO RÉSEAU : Utilisation du CDN officiel de Zerion
-                    // Solution robuste qui évite les valeurs nulles des relations
+                    // 3. CORRECTIF LOGO RÉSEAU PROPRE ET TESTÉ
+                    // Utilisation d'un pattern d'URL d'icône universel et toléré par votre composant Front
                     const chainIcon = chainId !== "unknown" 
-                        ? `https://img.zerion.io/networks/${chainId}.png` 
+                        ? `https://icons.llamao.fi/icons/chains/rsz_${chainId === 'ethereum' ? 'ethereum' : chainId === 'binance-smart-chain' ? 'bsc' : chainId}?width=40&height=40`
                         : null;
 
                     const price = attrs.price || 0;
@@ -212,23 +212,33 @@ export async function POST(request: Request) {
                 mobulaAssets.forEach((mobAsset: any) => {
                     const blockchain = (mobAsset.blockchain || "").toLowerCase();
                     
-                    // Si l'actif appartient à l'un de ces réseaux et a un solde > 0
+                    // Si l'actif appartient à l'un de ces réseaux et a un solde > 0 (même des centimes ou sous de 0.01$)
                     if (allowedFallbackChains.some(c => blockchain.includes(c)) && mobAsset.token_balance > 0) {
+                        const formattedChainId = blockchain.replace(/\s+/g, '-');
                         const mobChainName = blockchain.split(/\s+|-/).map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
                         
+                        // Icône dynamique pour le fallback Mobula
+                        const chainIcon = `https://icons.llamao.fi/icons/chains/rsz_${formattedChainId}?width=40&height=40`;
+
+                        // Détection dynamique si c'est du Wallet ou de la DeFi venant de Mobula
+                        // Si le nom de l'actif ou du protocole indique du Staking / Yield
+                        const isDeFi = (mobAsset.protocol || mobAsset.type || "").toLowerCase().includes("stake") || 
+                                       (mobAsset.token?.name || "").toLowerCase().includes("staked");
+
                         assets.push({
-                            id: `mobula-${mobAsset.token?.address || mobAsset.token?.symbol}-${blockchain}`,
+                            id: `mobula-${mobAsset.token?.address || mobAsset.token?.symbol}-${formattedChainId}`,
                             name: mobAsset.token?.name || "Unknown",
                             symbol: mobAsset.token?.symbol || "???",
                             balance: mobAsset.token_balance,
                             price: mobAsset.price || 0,
-                            value: parseFloat((mobAsset.estimated_balance || 0).toFixed(2)),
+                            // Utilise le solde estimé de Mobula, sinon calcul manuel strict pour afficher même 0.00$
+                            value: parseFloat((mobAsset.estimated_balance || (mobAsset.token_balance * (mobAsset.price || 0))).toFixed(2)),
                             icon: mobAsset.token?.logo || null,
-                            chainId: blockchain.replace(/\s+/g, '-'),
+                            chainId: formattedChainId,
                             chainName: mobChainName,
-                            chainIcon: null, // Le fallback du composant (globe) prendra le relais
-                            positionType: "wallet",
-                            protocolName: null
+                            chainIcon: chainIcon, // Assignation essentielle pour le menu déroulant du composant Front !
+                            positionType: isDeFi ? "defi" : "wallet",
+                            protocolName: isDeFi ? (mobAsset.protocol || "Staking Position") : null
                         });
                     }
                 });
