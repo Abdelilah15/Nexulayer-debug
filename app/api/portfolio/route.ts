@@ -135,10 +135,10 @@ export async function POST(request: Request) {
             }
         }
 
-        // === REMPLACEMENT COMPLET DU BLOC MOBULA PAR ZERION POSITIONS ===
+        // === BLOC DE RÉCUPÉRATION REVISITÉ ET FORCÉ POUR TOUS LES RÉSEAUX ===
         let assets: any[] = [];
         try {
-            // Utilisation de l'endpoint de positions unifié de Zerion (Tokens + DeFi)
+            // Endpoint de positions unifié de Zerion
             const positionsRes = await fetch(
                 `https://api.zerion.io/v1/wallets/${safeAddress}/positions?currency=usd&filter[positions]=no_filter&sort=value`,
                 { headers }
@@ -152,29 +152,30 @@ export async function POST(request: Request) {
                     const attrs = pos.attributes;
                     if (!attrs) return;
 
-                    // 1. FILTRE ANTI-SPAM ET SÉCURITÉ NATIVE ZERION
-                    // On élimine le spam connu ou les jetons non vérifiés qui n'ont aucune valeur
-                    const isVerified = attrs.flags?.is_verified ?? false;
-                    const hasValue = (attrs.value || 0) > 0.01;
-                    if (!isVerified && !hasValue) return; 
-
-                    // Extraction des informations fondamentales du Token
                     const tokenInfo = attrs.fungible_info || {};
-                    const implementation = tokenInfo.implementations?.[0] || {};
-                    
-                    // Gestion propre du réseau (chainId / chainName)
-                    const chainId = pos.relationships?.chain?.data?.id || "unknown";
-                    // Capitalisation propre du nom du réseau (ex: base -> Base, plume -> Plume)
-                    const chainName = chainId.charAt(0).toUpperCase() + chainId.slice(1); 
-
                     const balance = attrs.quantity?.numeric ? parseFloat(attrs.quantity.numeric) : 0;
-                    const price = attrs.price || 0;
-                    const value = attrs.value || (balance * price);
 
+                    // 1. FORÇAGE STRICT : On garde tout tant qu'il y a un solde positif (> 0)
+                    // Cela permet d'inclure les centimes, les jetons de testnet ou non indexés en prix
                     if (balance <= 0) return;
 
-                    // 2. SÉPARATION STRICTE WALLET VS DEFI VIA LE TYPE DE POSITION ZERION
-                    // Zerion qualifie de "wallet" les jetons standards. Tout le reste est de la DeFi.
+                    // 2. GESTION ET NETTOYAGE PROFESSIONNEL DU RÉSEAU (Chain ID & Name)
+                    const chainId = pos.relationships?.chain?.data?.id || "unknown";
+                    
+                    // Nettoyage des tirets (ex: binance-smart-chain -> Binance Smart Chain)
+                    const chainName = chainId
+                        .split('-')
+                        .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
+                        .join(' ');
+
+                    // 3. CORRECTIF LOGO RÉSEAU : Utilisation du CDN officiel de Zerion
+                    // Solution robuste qui évite les valeurs nulles des relations
+                    const chainIcon = chainId !== "unknown" 
+                        ? `https://img.zerion.io/networks/${chainId}.png` 
+                        : null;
+
+                    const price = attrs.price || 0;
+                    const value = attrs.value || (balance * price);
                     const isWallet = attrs.position_type === 'wallet';
 
                     assets.push({
@@ -187,17 +188,54 @@ export async function POST(request: Request) {
                         icon: tokenInfo.icon?.url || null,
                         chainId: chainId,
                         chainName: chainName,
-                        // Zerion fournit de magnifiques icônes de réseaux prêtes à l'emploi
-                        chainIcon: pos.relationships?.chain?.links?.icon || null, 
+                        chainIcon: chainIcon, 
                         positionType: isWallet ? "wallet" : "defi",
                         protocolName: !isWallet ? (pos.relationships?.protocol?.data?.id || "DeFi Position") : null
                     });
                 });
             }
         } catch (e) {
-            console.error("Erreur récupération actifs avec Zerion Positions:", e);
+            console.error("Erreur récupération actifs avec Zerion Positions Forcé:", e);
         }
         
+        // === À AJOUTER JUSTE APRÈS LE BLOC ZERION : FALLBACK MOBULA HYBRIDE ===
+        try {
+            // On fait appel à Mobula uniquement pour boucher les trous de Zerion
+            const mobulaRes = await fetch(`https://api.mobula.io/api/1/wallet/portfolio?wallet=${safeAddress}`);
+            if (mobulaRes.ok) {
+                const mobulaData = await mobulaRes.json();
+                const mobulaAssets = mobulaData.data?.assets || [];
+                
+                // Whitelist stricte : On n'accepte que les réseaux que Zerion ne gère pas encore
+                const allowedFallbackChains = ["plume", "morph", "lisk", "taiko", "ronin", "mitosis", "flare"];
+
+                mobulaAssets.forEach((mobAsset: any) => {
+                    const blockchain = (mobAsset.blockchain || "").toLowerCase();
+                    
+                    // Si l'actif appartient à l'un de ces réseaux et a un solde > 0
+                    if (allowedFallbackChains.some(c => blockchain.includes(c)) && mobAsset.token_balance > 0) {
+                        const mobChainName = blockchain.split(/\s+|-/).map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+                        
+                        assets.push({
+                            id: `mobula-${mobAsset.token?.address || mobAsset.token?.symbol}-${blockchain}`,
+                            name: mobAsset.token?.name || "Unknown",
+                            symbol: mobAsset.token?.symbol || "???",
+                            balance: mobAsset.token_balance,
+                            price: mobAsset.price || 0,
+                            value: parseFloat((mobAsset.estimated_balance || 0).toFixed(2)),
+                            icon: mobAsset.token?.logo || null,
+                            chainId: blockchain.replace(/\s+/g, '-'),
+                            chainName: mobChainName,
+                            chainIcon: null, // Le fallback du composant (globe) prendra le relais
+                            positionType: "wallet",
+                            protocolName: null
+                        });
+                    }
+                });
+            }
+        } catch (e) {
+            console.error("Erreur récupération Mobula Fallback:", e);
+        }
 
         return NextResponse.json({ chartData: dbSnapshots, totalBalance: finalTotalBalance, assets }, { status: 200 });
 
