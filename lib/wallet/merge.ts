@@ -1,14 +1,46 @@
 import type { Asset, CombinedAssetsResponse, FactoryError } from "./types";
 
+function safeNumber(v: unknown, fallback = 0): number {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : fallback;
+}
+
+function enrichForUI(a: Asset): Asset {
+  const qty =
+    a.quantity != null
+      ? safeNumber(a.quantity, 0)
+      : safeNumber(a.formattedBalance, 0);
+
+  const value =
+    a.valueUsd != null
+      ? safeNumber(a.valueUsd, 0)
+      : a.priceUsd != null
+      ? qty * safeNumber(a.priceUsd, 0)
+      : 0;
+
+  return {
+    ...a,
+    quantity: qty,
+    valueUsd: value,
+    chainName: a.chainName ?? a.chain,
+    chainIcon: a.chainIcon ?? null,
+  };
+}
+
 function dedupe(assets: Asset[]): Asset[] {
   const map = new Map<string, Asset>();
-  for (const a of assets) {
+
+  for (const raw of assets) {
+    const a = enrichForUI(raw);
+
+    // clé de déduplication
     const key = [
-      a.chainId,
+      String(a.chainId),
       a.wallet.toLowerCase(),
       (a.contractAddress || "native").toLowerCase(),
       a.assetType,
       (a.protocol || "").toLowerCase(),
+      (a.tokenId || "").toLowerCase(),
     ].join(":");
 
     const prev = map.get(key);
@@ -17,9 +49,17 @@ function dedupe(assets: Asset[]): Asset[] {
       continue;
     }
 
-    // priorité Zerion si conflit (tu peux inverser)
-    if (prev.source !== "zerion" && a.source === "zerion") map.set(key, a);
+    // priorité à la source zerion, sinon plus grande valueUsd
+    if (prev.source !== "zerion" && a.source === "zerion") {
+      map.set(key, a);
+      continue;
+    }
+
+    if ((a.valueUsd || 0) > (prev.valueUsd || 0)) {
+      map.set(key, a);
+    }
   }
+
   return [...map.values()];
 }
 
@@ -32,13 +72,17 @@ export function mergeAssets(params: {
   partial?: boolean;
 }): CombinedAssetsResponse {
   const zerion = params.zerionAssets || [];
-  const local = [...(params.localNative || []), ...(params.localTokens || []), ...(params.localDefi || [])];
+  const local = [
+    ...(params.localNative || []),
+    ...(params.localTokens || []),
+    ...(params.localDefi || []),
+  ];
 
   const all = dedupe([...zerion, ...local]);
+
   const native = all.filter((a) => a.assetType === "native");
-  const defiTypes = new Set(["lp", "lending", "staking", "vault"]);
-  const defi = all.filter((a) => defiTypes.has(a.assetType));
-  const tokens = all.filter((a) => a.assetType === "erc20");
+  const tokens = all.filter((a) => a.positionType === "wallet"); // <- onglet Tokens
+  const defi = all.filter((a) => a.positionType === "defi");     // <- onglet DeFi
 
   return {
     assets: all,

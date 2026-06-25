@@ -15,7 +15,7 @@ export const CHAINS: Record<ChainKey, ChainConfig> = {
   plume: {
     chain: "plume",
     chainId: 98866, // TODO: vérifier valeur réelle
-    rpcUrl: process.env.PLUME_RPC_URL || "",
+    rpcUrl: process.env.PLUME_RPC_URL || "https://rpc.plume.org",
     nativeSymbol: "PLUME",
     nativeName: "Plume",
     nativeDecimals: 18,
@@ -25,9 +25,9 @@ export const CHAINS: Record<ChainKey, ChainConfig> = {
   lisk: {
     chain: "lisk",
     chainId: 1135, // TODO: vérifier valeur réelle
-    rpcUrl: process.env.LISK_RPC_URL || "",
+    rpcUrl: process.env.LISK_RPC_URL || "https://rpc.api.lisk.com",
     nativeSymbol: "ETH",
-    nativeName: "Lisk Native",
+    nativeName: "Lisk",
     nativeDecimals: 18,
     maxBlockWindow: 40_000,
     maxLookbackBlocks: 1_200_000,
@@ -35,9 +35,9 @@ export const CHAINS: Record<ChainKey, ChainConfig> = {
   morph: {
     chain: "morph",
     chainId: 2818, // TODO: vérifier valeur réelle
-    rpcUrl: process.env.MORPH_RPC_URL || "",
+    rpcUrl: process.env.MORPH_RPC_URL || "https://rpc-quicknode.morph.network",
     nativeSymbol: "ETH",
-    nativeName: "Morph Native",
+    nativeName: "Morph",
     nativeDecimals: 18,
     maxBlockWindow: 40_000,
     maxLookbackBlocks: 1_200_000,

@@ -64,7 +64,8 @@ export default function ProfilePage() {
 
         if (res.ok) {
           const json = await res.json();
-          setTotalBalance(json.totalBalance);
+          setTotalBalance(json.totalBalance ?? 0);
+          setAssets(Array.isArray(json.assets) ? json.assets : []);
 
           // Fonction utile pour formater les dates
           const formatTime = (d: Date) => timeframe === '1J'
