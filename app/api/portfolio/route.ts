@@ -69,8 +69,7 @@ async function getZerionAssetsNormalized(address: string): Promise<Asset[]> {
                     chain: chainId as any, // ✅ On cast car Zerion renvoie "ethereum" etc, qui déborde du type ("plume"|"lisk"|"morph")
                     chainId: 0, // Fallback numérique car Zerion utilise des strings pour l'ID
                     chainName: chainName,
-                    chainIcon: chainIcon,
-                    positionType: isWallet ? "wallet" : "defi",
+                    chainIcon: chainIcon || pos.relationships?.chain?.data?.attributes?.icon?.url || null, positionType: isWallet ? "wallet" : "defi",
                     assetType: isWallet ? "erc20" : "vault", // ✅ FIX 2 : Requis pour la clé de déduplication
                     protocol: !isWallet ? (pos.relationships?.protocol?.data?.id || "DeFi Position") : null,
                     contractAddress: tokenInfo.implementations?.[0]?.address || null, // ✅ FIX 3 : Requis pour éviter un autre crash
@@ -82,6 +81,7 @@ async function getZerionAssetsNormalized(address: string): Promise<Asset[]> {
                     quantity: balance,
                     priceUsd: price,
                     valueUsd: parseFloat(value.toFixed(2)),
+                    icon: tokenInfo.icon?.url || pos.attributes?.icon?.url || null,
                     source: "zerion", // ✅ FIX 4 : Essentiel pour la priorité dans merge.ts
                     updatedAt: new Date().toISOString()
                 } as Asset);
