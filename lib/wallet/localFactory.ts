@@ -95,7 +95,7 @@ async function fetchDefiAdapters(
         wallet: wallet,
         chain: cfg.chain,
         chainId: cfg.chainId,
-        chainName: cfg.name,
+        chainName: cfg.nativeName,
         chainIcon: icons.chain,
         icon: icons.token,
         positionType: "defi", // Rangement direct dans l'onglet DeFi
@@ -372,7 +372,7 @@ export async function runLocalFactory(wallet: string, cfg: ChainConfig): Promise
     errors.push({ scope: "defi", chain: cfg.chain, reason: e?.message || "defi failed" });
   }
 
-  await enrichWithPrices(cfg.chain, native, tokens);
+  await enrichWithPrices(cfg.chain, native, [...tokens, ...defi]);
   await addSeenContracts(cfg.chain, wallet, [...discovered]);
   await setCursor(cfg.chain, wallet, toBlock);
 
