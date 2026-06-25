@@ -95,6 +95,7 @@ async function fetchNative(provider: JsonRpcProvider, cfg: ChainConfig, wallet: 
     chain: cfg.chain,
     chainId: cfg.chainId,
     wallet,
+    positionType: "wallet",
     assetType: "native",
     contractAddress: null,
     symbol: cfg.nativeSymbol,
@@ -102,6 +103,7 @@ async function fetchNative(provider: JsonRpcProvider, cfg: ChainConfig, wallet: 
     decimals: cfg.nativeDecimals,
     rawBalance: r.toString(),
     formattedBalance: formatUnitsSafe(r, cfg.nativeDecimals),
+    quantity: Number(formatUnitsSafe(r, cfg.nativeDecimals)),
     source: "local-rpc",
     updatedAt: new Date().toISOString(),
   };
@@ -122,25 +124,29 @@ async function fetchToken(provider: JsonRpcProvider, cfg: ChainConfig, wallet: s
   ]);
 
   const d = Number(decimals);
+  const formatted = formatUnitsSafe(raw, d);
 
   return {
     chain: cfg.chain,
     chainId: cfg.chainId,
     wallet,
+    positionType: "wallet",
     assetType: "erc20",
     contractAddress: token,
     symbol,
     name,
     decimals: d,
     rawBalance: raw.toString(),
-    formattedBalance: formatUnitsSafe(raw, d),
+    formattedBalance: formatted,
+    quantity: Number(formatted),
     source: "local-rpc",
     updatedAt: new Date().toISOString(),
   };
 }
 
 async function fetchDefiAdapters(_provider: JsonRpcProvider, _cfg: ChainConfig, _wallet: string): Promise<Asset[]> {
-  // brancher tes adapters DeFi ici
+  // TODO: brancher tes adapters DeFi ici
+  // Chaque item doit avoir: positionType: "defi"
   return [];
 }
 
