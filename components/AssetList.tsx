@@ -41,8 +41,15 @@ export default function AssetList({ assets }: { assets: any[] }) {
     const networks = useMemo(() => {
         const uniqueNetworks = new Map();
         assets.forEach(a => {
-            if (a.chainId && a.chainId !== "unknown") {
-                uniqueNetworks.set(a.chainId, { id: a.chainId, name: a.chainName, icon: a.chainIcon });
+            const netKey = a.chain || "unknown";
+            if (netKey !== "unknown") {
+                const existing = uniqueNetworks.get(netKey);
+                uniqueNetworks.set(netKey, {
+                    id: netKey,
+                    name: a.chainName || netKey,
+                    // ✅ Ne remplace jamais une icône valide par 'null'
+                    icon: a.chainIcon || (existing ? existing.icon : null)
+                });
             }
         });
         return [{ id: 'Tous', name: 'Tous les réseaux', icon: null }, ...Array.from(uniqueNetworks.values())];
@@ -57,8 +64,9 @@ export default function AssetList({ assets }: { assets: any[] }) {
                 name.includes(searchTerm.toLowerCase()) ||
                 symbol.includes(searchTerm.toLowerCase());
 
+            // ✅ Filtrage basé sur `chain` au lieu de `chainId`
             const matchesNetwork =
-                selectedNetworkId === "Tous" || String(asset.chainId) === String(selectedNetworkId);
+                selectedNetworkId === "Tous" || String(asset.chain) === String(selectedNetworkId);
 
             const matchesTab =
                 selectedAsset === "Tokens"

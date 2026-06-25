@@ -7,17 +7,24 @@ import { getCursor, setCursor, getSeenContracts, addSeenContracts } from "./cach
 
 const CHAIN_ICONS_MAP: Record<string, { chain: string; token: string }> = {
   plume: {
-    chain: "https://raw.githubusercontent.com/cryptoicons/images/cards/plum.png",
-    token: "https://cryptologos.cc/logos/ethereum-eth-logo.png"
+    chain: "https://cdn.prod.website-files.com/670fc97cba6a0b3f2e579538/67caae7d641e95b46d3f6d2c_plume-token.svg",
+    token: "https://cdn.prod.website-files.com/670fc97cba6a0b3f2e579538/67caae7d641e95b46d3f6d2c_plume-token.svg"
   },
   lisk: {
-    chain: "https://cryptologos.cc/logos/lisk-lsk-logo.png",
-    token: "https://cryptologos.cc/logos/lisk-lsk-logo.png"
+    chain: "https://cryptocurrencyjobs.co/startups/assets/logos/lisk.baa502c183d879321ba54a9afa28077cbf702bcd1fa43187db11af9e7c1af74e_hu_3591cd61297c4e4e.png",
+    token: "https://static.cdnlogo.com/logos/e/81/ethereum-eth.svg"
   },
   morph: {
-    chain: "https://raw.githubusercontent.com/cryptoicons/images/cards/morph.png",
-    token: "https://cryptologos.cc/logos/ethereum-eth-logo.png"
+    chain: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQqF2UAgt6OlrU0S_t_pgeBmJ1ykq4p97jBm0iZI6QDFg&s",
+    token: "https://static.cdnlogo.com/logos/e/81/ethereum-eth.svg"
   }
+};
+
+// Dictionnaire pour la valorisation CoinGecko (Prix USD)
+const PRICING_MAP: Record<string, { platform: string | null; nativeId: string }> = {
+  lisk: { platform: "lisk", nativeId: "ethereum" },
+  morph: { platform: null, nativeId: "ethereum" }, // "null" car CoinGecko n'a pas encore de plateforme officielle pour les ERC20 de Morph
+  plume: { platform: null, nativeId: "plume" }  // Idem pour Plume
 };
 
 const ERC20_ABI = [
@@ -145,6 +152,7 @@ async function fetchToken(provider: JsonRpcProvider, cfg: ChainConfig, wallet: s
 
   const d = Number(decimals);
   const formatted = formatUnitsSafe(raw, d);
+  const icons = CHAIN_ICONS_MAP[cfg.chain.toLowerCase()] || { chain: null, token: null };
 
   return {
     chain: cfg.chain,
@@ -159,6 +167,8 @@ async function fetchToken(provider: JsonRpcProvider, cfg: ChainConfig, wallet: s
     rawBalance: raw.toString(),
     formattedBalance: formatted,
     quantity: Number(formatted),
+    chainIcon: icons.chain,
+    icon: icons.token,
     source: "local-rpc",
     updatedAt: new Date().toISOString(),
   };
