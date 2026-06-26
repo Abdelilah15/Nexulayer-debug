@@ -232,7 +232,15 @@ export default function Forger({ initialTab }: { initialTab: string }) {
   const [nftName, setNftName] = useState('Ma Collection');
   const [nftSymbol, setNftSymbol] = useState('MCN');
   const [nftSupply, setNftSupply] = useState('10'); // <-- Quantité pour NFT intégrée
-  const getElementType = () => activeTab === 'message' ? 'Message' : activeTab === 'token' ? 'Token ERC-20' : 'NFT';
+  const [isAdvancedMode, setIsAdvancedMode] = useState(false);
+  const [mediaFile, setMediaFile] = useState<File | null>(null);
+  const [description, setDescription] = useState('');
+  const [simpleName, setSimpleName] = useState('Mon Contrat')
+  const getElementType = () =>
+    activeTab === 'message' ? 'Message' :
+      activeTab === 'token' ? 'Token ERC-20' :
+        activeTab === 'nft' ? 'NFT' : 'Contrat Simple';
+
   const shareText = `🚀 I just deployed a ${getElementType()} contract on ${networkName}!\n\nCreate yours: https://forgnix.vercel.app/forge?tab=${activeTab}\nTrack onchain activity: https://forgnix.vercel.app\n@monx`;
   const encodedShareText = encodeURIComponent(shareText);
 
@@ -241,6 +249,9 @@ export default function Forger({ initialTab }: { initialTab: string }) {
     setError('');
     setTxHash('');
     setIsModalOpen(false);
+    setIsAdvancedMode(false);
+    setMediaFile(null);
+    setDescription('');
 
     try {
       // Astuce TypeScript pour Vercel : on force le type de window
@@ -268,9 +279,15 @@ export default function Forger({ initialTab }: { initialTab: string }) {
       if (activeTab === 'message') {
         tx = await factoryContract.createMessage(msgText, { value: fee });
       } else if (activeTab === 'token') {
+        // Plus tard: Si isAdvancedMode est true, injecter l'URI de l'image/description
         tx = await factoryContract.createToken(tokenName, tokenSymbol, tokenSupply, { value: fee });
       } else if (activeTab === 'nft') {
+        // Plus tard: Si isAdvancedMode est true, injecter l'URI de l'artwork
         tx = await factoryContract.createNFT(nftName, nftSymbol, nftSupply, { value: fee });
+      } else if (activeTab === 'simple') {
+        // ⚠️ La fonction Solidity pour ce contrat doit d'abord être ajoutée
+        // tx = await factoryContract.createSimpleContract(simpleName, { value: fee });
+        throw new Error("L'ABI du Smart Contract doit être mise à jour pour supporter le Contrat Simple.");
       }
 
       const receipt = await tx.wait();
@@ -308,6 +325,66 @@ export default function Forger({ initialTab }: { initialTab: string }) {
 
         {/* FORMULAIRES DYNAMIQUES */}
         <div className="space-y-6 mb-8">
+
+          {/* TOGGLE MODE AVANCÉ (Uniquement pour Token et NFT) */}
+          {(activeTab === 'token' || activeTab === 'nft') && (
+            <div className="mb-6 flex items-center animate-in fade-in duration-500">
+              <label className="flex items-center cursor-pointer">
+                <div className="relative">
+                  <input
+                    type="checkbox"
+                    className="sr-only"
+                    checked={isAdvancedMode}
+                    onChange={() => setIsAdvancedMode(!isAdvancedMode)}
+                  />
+                  <div className={`block w-12 h-7 rounded-full transition-colors ${isAdvancedMode ? 'bg-indigo-600' : 'bg-slate-700'}`}></div>
+                  <div className={`absolute left-1 top-1 bg-white w-5 h-5 rounded-full transition-transform transform ${isAdvancedMode ? 'translate-x-5' : ''}`}></div>
+                </div>
+                <div className="ml-3 text-sm font-medium text-slate-300">
+                  Mode Avancé <span className="text-slate-500 font-normal ml-1">(Métadonnées & Artwork)</span>
+                </div>
+              </label>
+            </div>
+          )}
+
+          {/* CHAMPS DU MODE AVANCÉ */}
+          {isAdvancedMode && (activeTab === 'token' || activeTab === 'nft') && (
+            <div className="p-6 bg-slate-900/50 border border-indigo-500/30 rounded-xl animate-in slide-in-from-top-4 duration-300">
+              <h4 className="text-indigo-400 font-medium mb-4 flex items-center gap-2">
+                Paramètres Avancés
+              </h4>
+              <div className="space-y-5">
+                <div>
+                  <label className="block text-sm font-medium text-slate-400 mb-2">
+                    {activeTab === 'nft' ? 'Artwork (PNG, JPG, GIF)' : 'Logo du Token (PNG, JPG)'}
+                  </label>
+                  <input
+                    type="file"
+                    accept="image/png, image/jpeg, image/gif"
+                    onChange={(e) => setMediaFile(e.target.files ? e.target.files[0] : null)}
+                    className="block w-full text-sm text-slate-400
+                      file:mr-4 file:py-2.5 file:px-4
+                      file:rounded-lg file:border-0
+                      file:text-sm file:font-semibold
+                      file:bg-indigo-500/10 file:text-indigo-400
+                      hover:file:bg-indigo-500/20 cursor-pointer
+                      border border-slate-700 rounded-lg bg-slate-950"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-400 mb-2">Description détaillée</label>
+                  <textarea
+                    rows={3}
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    placeholder={`Décrivez votre ${activeTab === 'nft' ? 'collection NFT' : 'projet de Token'}...`}
+                    className="w-full bg-slate-950 border border-slate-700 rounded-lg p-4 text-white focus:outline-none focus:border-indigo-500"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
           {activeTab === 'message' && (
             <div className="animate-in fade-in duration-500">
               <label className="block text-sm font-medium text-slate-400 mb-2">Message à graver</label>
@@ -348,6 +425,18 @@ export default function Forger({ initialTab }: { initialTab: string }) {
               </div>
             </div>
           )}
+
+          {/* NOUVEAU: Formulaire Contrat Simple */}
+          {activeTab === 'simple' && (
+            <div className="animate-in fade-in duration-500">
+              <label className="block text-sm font-medium text-slate-400 mb-2">Nom du Contrat</label>
+              <input type="text" value={simpleName} onChange={(e) => setSimpleName(e.target.value)} className="w-full bg-slate-950 border border-slate-700 rounded-lg p-4 text-white focus:outline-none focus:border-indigo-500" placeholder="Ex: MonContratDeBase" />
+              <p className="mt-3 text-sm text-slate-500">
+                Déploie un Smart Contract basique, idéal pour interagir rapidement avec le réseau sans complexité.
+              </p>
+            </div>
+          )}
+
         </div>
 
         {/* ZONE D'ACTION */}

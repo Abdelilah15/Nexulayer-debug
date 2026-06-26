@@ -52,7 +52,16 @@ export default function Sidebar() {
           {!isCollapsed && <span className="ml-3">Accueil</span>}
         </button>
 
-        {/* BOUTON 2 : MESSAGE */}
+        {/* AJOUT : BOUTON 2 : SIMPLE CONTRACT */}
+        <button
+          onClick={() => router.push('/forge?tab=simple')}
+          className={`w-full flex items-center py-2.5 rounded-lg transition-colors ${currentTab === 'simple' ? 'bg-indigo-500/10 text-indigo-400' : 'text-slate-400 hover:bg-slate-800/50'} ${isCollapsed ? 'justify-center px-0' : 'px-3 text-sm font-medium'}`}
+        >
+          <i className="fi fi-rr-document text-xl"></i>
+          {!isCollapsed && <span className="ml-3">Contrat Simple</span>}
+        </button>
+
+        {/* BOUTON 3 : MESSAGE */}
         <button
           onClick={() => router.push('/forge?tab=message')}
           className={`w-full flex items-center py-2.5 rounded-lg transition-colors ${currentTab === 'message' ? 'bg-indigo-500/10 text-indigo-400' : 'text-slate-400 hover:bg-slate-800/50'} ${isCollapsed ? 'justify-center px-0' : 'px-3 text-sm font-medium'}`}
@@ -61,7 +70,7 @@ export default function Sidebar() {
           {!isCollapsed && <span className="ml-3">Message On-Chain</span>}
         </button>
 
-        {/* BOUTON 3 : TOKEN */}
+        {/* BOUTON 4 : TOKEN */}
         <button
           onClick={() => router.push('/forge?tab=token')}
           className={`w-full flex items-center py-2.5 rounded-lg transition-colors ${currentTab === 'token' ? 'bg-indigo-500/10 text-indigo-400' : 'text-slate-400 hover:bg-slate-800/50'} ${isCollapsed ? 'justify-center px-0' : 'px-3 text-sm font-medium'}`}
@@ -70,7 +79,7 @@ export default function Sidebar() {
           {!isCollapsed && <span className="ml-3">Token ERC-20</span>}
         </button>
 
-        {/* BOUTON 4 : NFT */}
+        {/* BOUTON 5 : NFT */}
         <button
           onClick={() => router.push('/forge?tab=nft')}
           className={`w-full flex items-center py-2.5 rounded-lg transition-colors ${currentTab === 'nft' ? 'bg-indigo-500/10 text-indigo-400' : 'text-slate-400 hover:bg-slate-800/50'} ${isCollapsed ? 'justify-center px-0' : 'px-3 text-sm font-medium'}`}
