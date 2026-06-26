@@ -326,7 +326,8 @@ export default function Forger({ initialTab }: { initialTab: string }) {
     return `ipfs://${jsonData.ipfsHash}`;
   };
 
-  const handleCreate = async () => {
+  const handleCreate = async (e: React.FormEvent | React.MouseEvent) => {
+    e.preventDefault();
     setIsLoading(true);
     setError('');
     setTxHash('');
@@ -546,7 +547,7 @@ export default function Forger({ initialTab }: { initialTab: string }) {
           {!isConnected ? (
             <div className="text-center text-slate-500 font-medium">Connectez votre portefeuille.</div>
           ) : (
-            <button onClick={handleCreate} disabled={isLoading} className={`w-full py-4 rounded-xl font-bold text-lg transition-all ${isLoading ? 'bg-slate-800 text-slate-500 cursor-not-allowed' : 'bg-indigo-600 text-white hover:bg-indigo-500 hover:shadow-[0_0_25px_rgba(79,70,229,0.5)]'}`}>
+            <button type="button" onClick={handleCreate} disabled={isLoading} className={`w-full py-4 rounded-xl font-bold text-lg transition-all ${isLoading ? 'bg-slate-800 text-slate-500 cursor-not-allowed' : 'bg-indigo-600 text-white hover:bg-indigo-500 hover:shadow-[0_0_25px_rgba(79,70,229,0.5)]'}`}>
               {isLoading ? 'Forge en cours...' : '⚡ Forger sur la Blockchain'}
             </button>
           )}
