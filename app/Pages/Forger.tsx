@@ -332,9 +332,7 @@ export default function Forger({ initialTab }: { initialTab: string }) {
     setError('');
     setTxHash('');
     setIsModalOpen(false);
-    setIsAdvancedMode(false);
-    setMediaFile(null);
-    setDescription('');
+    
 
     try {
       // Astuce TypeScript pour Vercel : on force le type de window
@@ -404,6 +402,9 @@ export default function Forger({ initialTab }: { initialTab: string }) {
         console.error("Impossible de parser les logs", err);
       }
 
+      setIsAdvancedMode(false);
+      setMediaFile(null);
+      setDescription('');
       setDeployedAddress(extractedAddress);
       setIsModalOpen(true); // Ouvre la fenêtre de succès !
 
