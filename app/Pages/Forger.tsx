@@ -3,8 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { useAccount } from 'wagmi';
 import { ethers } from 'ethers';
 
-// ⚠️ À REMPLACER PAR VOTRE NOUVELLE ADRESSE ET VOTRE NOUVEL ABI APRÈS LE DÉPLOIEMENT
-const FACTORY_ADDRESS = "0x93a3646d3A81c7fB98cD5D9A1703E848B1ef0205";
+
+const FACTORY_ADDRESS = "0xFdd1f9992D69a739db0538BC4c47eEaf73565075";
 const FACTORY_ABI = [
   {
     "inputs": [],
@@ -89,7 +89,7 @@ const FACTORY_ABI = [
       },
       {
         "internalType": "string",
-        "name": "tokenURI",
+        "name": "_contractURI",
         "type": "string"
       }
     ],
@@ -356,10 +356,10 @@ export default function Forger({ initialTab }: { initialTab: string }) {
 
       const fee = ethers.parseEther(currentFeeString);
       let tx;
-      let finalTokenURI = "";
+      let metadataURI = "";
 
       if (isAdvancedMode && (activeTab === 'token' || activeTab === 'nft')) {
-        finalTokenURI = await handleIPFSUpload();
+        metadataURI = await handleIPFSUpload();
       }
 
       if (activeTab === 'message') {
@@ -367,14 +367,14 @@ export default function Forger({ initialTab }: { initialTab: string }) {
 
       } else if (activeTab === 'token') {
         if (isAdvancedMode) {
-          tx = await factoryContract.createAdvancedToken(tokenName, tokenSymbol, tokenSupply, finalTokenURI, { value: fee });
+          tx = await factoryContract.createAdvancedToken(tokenName, tokenSymbol, tokenSupply, metadataURI, { value: fee });
         } else {
           tx = await factoryContract.createToken(tokenName, tokenSymbol, tokenSupply, { value: fee });
         }
 
       } else if (activeTab === 'nft') {
         if (isAdvancedMode) {
-          tx = await factoryContract.createAdvancedNFT(nftName, nftSymbol, nftSupply, finalTokenURI, { value: fee });
+          tx = await factoryContract.createAdvancedNFT(nftName, nftSymbol, nftSupply, metadataURI, { value: fee });
         } else {
           tx = await factoryContract.createNFT(nftName, nftSymbol, nftSupply, { value: fee });
         }
