@@ -1,53 +1,23 @@
-import type { ChainKey } from "./types";
 
-export type ChainConfig = {
-  chain: ChainKey;
+export type ChainInfo = {
+  id: string;
   chainId: number;
-  rpcUrl: string;
-  nativeSymbol: string;
-  nativeName: string;
-  nativeDecimals: number;
-  maxBlockWindow: number;     // taille batch logs
-  maxLookbackBlocks: number;  // scan initial
+  name: string;
 };
 
-export const CHAINS: Record<ChainKey, ChainConfig> = {
-  plume: {
-    chain: "plume",
-    chainId: 98866, // TODO: vérifier valeur réelle
-    rpcUrl: process.env.PLUME_RPC_URL || "https://rpc.plume.org",
-    nativeSymbol: "PLUME",
-    nativeName: "Plume",
-    nativeDecimals: 18,
-    maxBlockWindow: 30_000,
-    maxLookbackBlocks: 1_200_000,
-  },
-  lisk: {
-    chain: "lisk",
-    chainId: 1135, // TODO: vérifier valeur réelle
-    rpcUrl: process.env.LISK_RPC_URL || "https://rpc.api.lisk.com",
-    nativeSymbol: "ETH",
-    nativeName: "Lisk",
-    nativeDecimals: 18,
-    maxBlockWindow: 40_000,
-    maxLookbackBlocks: 1_200_000,
-  },
-  morph: {
-    chain: "morph",
-    chainId: 2818, // TODO: vérifier valeur réelle
-    rpcUrl: process.env.MORPH_RPC_URL || "https://rpc-quicknode.morph.network",
-    nativeSymbol: "ETH",
-    nativeName: "Morph",
-    nativeDecimals: 18,
-    maxBlockWindow: 40_000,
-    maxLookbackBlocks: 1_200_000,
-  },
-};
+export function normalizeChain(rawChain: string, rawChainId?: number): ChainInfo {
+  const lower = rawChain.toLowerCase().trim();
 
-export function getEnabledChains(input?: string): ChainKey[] {
-  if (!input) return ["plume", "lisk", "morph"];
-  return input
-    .split(",")
-    .map((s) => s.trim().toLowerCase())
-    .filter((s): s is ChainKey => s === "plume" || s === "lisk" || s === "morph");
+  // 1. On intercepte UNIQUEMENT les alias discordants connus entre les API
+  let id = lower;
+  if (lower === "matic") id = "polygon";
+  if (lower === "bsc" || lower === "bnb") id = "binance";
+  if (lower === "eth") id = "ethereum";
+
+  // 2. Tout le reste (base, arbitrum, optimism, plume, etc.) passe dynamiquement
+  return {
+    id,
+    chainId: rawChainId || 0, // Optionnel, selon si l'API le fournit
+    name: id.charAt(0).toUpperCase() + id.slice(1), // Formate "base" en "Base" pour l'UI
+  };
 }

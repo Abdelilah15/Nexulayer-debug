@@ -1,16 +1,5 @@
-export type ChainKey = "plume" | "lisk" | "morph";
-
-/**
- * positionType = ce que ton UI attend déjà (AssetList.tsx)
- * - wallet => onglet Tokens
- * - defi   => onglet DeFi
- * - nft    => onglet NFTs
- */
 export type PositionType = "wallet" | "defi" | "nft";
 
-/**
- * assetType = granularité métier interne
- */
 export type AssetType =
   | "native"
   | "erc20"
@@ -20,14 +9,15 @@ export type AssetType =
   | "staking"
   | "vault"
   | "reward"
-  | "nft";
+  | "nft"
+  | "unknown";
 
 export type Asset = {
   // identité
   id?: string;
   wallet: string;
-  chain: ChainKey;
-  chainId: number;
+  chain: string;
+  chainId?: number;
   chainName?: string;
   chainIcon?: string | null;
   icon?: string | null;
@@ -52,30 +42,13 @@ export type Asset = {
   valueUsd?: number | null;
 
   // provenance
-  source: "zerion" | "local-rpc";
+  source: "zerion" | "zapper" | "coinstats";
   updatedAt: string;
 };
 
-export type FactoryErrorScope = "native" | "discovery" | "token" | "defi" | "merge";
-
-export type FactoryError = {
-  scope: FactoryErrorScope;
-  chain?: ChainKey;
+export type ApiError = {
+  source: string;
   reason: string;
-  context?: string;
-};
-
-export type LocalFactoryResult = {
-  native: Asset[];
-  tokens: Asset[];
-  defi: Asset[];
-  partial: boolean;
-  errors: FactoryError[];
-  meta: {
-    fromBlock: string;
-    toBlock: string;
-    discoveredContracts: number;
-  };
 };
 
 export type CombinedAssetsResponse = {
@@ -84,5 +57,5 @@ export type CombinedAssetsResponse = {
   tokens: Asset[];
   defi: Asset[];
   partial: boolean;
-  errors: FactoryError[];
+  errors: ApiError[];
 };

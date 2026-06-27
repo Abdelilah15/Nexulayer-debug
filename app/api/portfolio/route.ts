@@ -1,105 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from '../../lib/prisma'; // Assure-toi que le chemin correspond à ton projet
-import { CHAINS, getEnabledChains } from "@/lib/wallet/chains";
-import { runLocalFactory } from "@/lib/wallet/localFactory";
+import { prisma } from '../../lib/prisma';
+import { fetchAllWalletAssets } from "@/lib/wallet/orchestrator"; // Ton nouveau chef d'orchestre
 import { mergeAssets } from "@/lib/wallet/merge";
-import type { Asset, FactoryError } from "@/lib/wallet/types";
-
-/**
- * Fonction dédiée à la récupération des actifs (Tokens + DeFi) via Zerion.
- * Retourne des Asset[] normalisés.
- */
-async function getZerionAssetsNormalized(address: string): Promise<Asset[]> {
-    const apiKey = process.env.ZERION_API_KEY;
-    if (!apiKey) return [];
-
-    const encodedKey = Buffer.from(`${apiKey}:`).toString('base64');
-    const headers = { 'accept': 'application/json', 'authorization': `Basic ${encodedKey}` };
-    const safeAddress = address.toLowerCase();
-
-    const assets: any[] = [];
-
-    try {
-        // 1. Récupération du catalogue complet et officiel des réseaux Zerion
-        const chainsRes = await fetch("https://api.zerion.io/v1/chains", { headers });
-        const chainIconsMap: Record<string, string | null> = {};
-
-        if (chainsRes.ok) {
-            const chainsData = await chainsRes.json();
-            chainsData.data?.forEach((chain: any) => {
-                chainIconsMap[chain.id] = chain.attributes?.icon?.url || null;
-            });
-        }
-
-        // 2. Récupération unifiée de tous les actifs (Tokens + DeFi)
-        const positionsRes = await fetch(
-            `https://api.zerion.io/v1/wallets/${safeAddress}/positions?currency=usd&filter[positions]=no_filter&sort=value`,
-            { headers }
-        );
-
-        if (positionsRes.ok) {
-            const positionsData = await positionsRes.json();
-            const rawPositions = positionsData.data || [];
-
-            rawPositions.forEach((pos: any) => {
-                const attrs = pos.attributes;
-                if (!attrs) return;
-
-                const tokenInfo = attrs.fungible_info || {};
-                const balance = attrs.quantity?.numeric ? parseFloat(attrs.quantity.numeric) : 0;
-
-                // On conserve même les centimes et petits soldes
-                if (balance <= 0) return;
-
-                const chainId = pos.relationships?.chain?.data?.id || "unknown";
-                const chainName = chainId
-                    .split('-')
-                    .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
-                    .join(' ');
-
-                const chainIcon = chainIconsMap[chainId] || null;
-
-                const price = attrs.price || 0;
-                const value = attrs.value || (balance * price);
-                const isWallet = attrs.position_type === 'wallet';
-
-                assets.push({
-                    id: pos.id || `${tokenInfo.symbol}-${chainId}`,
-                    wallet: safeAddress, // ✅ FIX 1 : Indispensable pour a.wallet.toLowerCase()
-                    chain: chainId as any, // ✅ On cast car Zerion renvoie "ethereum" etc, qui déborde du type ("plume"|"lisk"|"morph")
-                    chainId: 0, // Fallback numérique car Zerion utilise des strings pour l'ID
-                    chainName: chainName,
-                    chainIcon: chainIcon || pos.relationships?.chain?.data?.attributes?.icon?.url || null, positionType: isWallet ? "wallet" : "defi",
-                    assetType: isWallet ? "erc20" : "vault", // ✅ FIX 2 : Requis pour la clé de déduplication
-                    protocol: !isWallet ? (pos.relationships?.protocol?.data?.id || "DeFi Position") : null,
-                    contractAddress: tokenInfo.implementations?.[0]?.address || null, // ✅ FIX 3 : Requis pour éviter un autre crash
-                    symbol: tokenInfo.symbol || "???",
-                    name: tokenInfo.name || "Unknown Token",
-                    decimals: tokenInfo.decimals || 18,
-                    rawBalance: attrs.quantity?.int || "0",
-                    formattedBalance: attrs.quantity?.numeric || "0",
-                    quantity: balance,
-                    priceUsd: price,
-                    valueUsd: parseFloat(value.toFixed(2)),
-                    icon: tokenInfo.icon?.url || pos.attributes?.icon?.url || null,
-                    source: "zerion", // ✅ FIX 4 : Essentiel pour la priorité dans merge.ts
-                    updatedAt: new Date().toISOString()
-                } as Asset);
-            });
-        }
-    } catch (e) {
-        console.error("Erreur récupération actifs avec Zerion Positions Forcé:", e);
-    }
-
-    return assets;
-}
+import type { Asset, ApiError } from "@/lib/wallet/types";
 
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
         const address = body?.address as string | undefined;
-        const chainsInput = body?.chains as string | undefined; // ex: "plume,lisk,morph"
-        const timeframe = body?.timeframe as string | undefined || '1M'; // Intégration du timeframe
+        const timeframe = body?.timeframe as string | undefined || '1M';
 
         if (!address) {
             return NextResponse.json({ error: "address is required" }, { status: 400 });
@@ -159,7 +68,7 @@ export async function POST(req: NextRequest) {
         const isFlatLine = existingHistoryCount > 1 && dbSnapshotsCheck[0].balance === dbSnapshotsCheck[existingHistoryCount - 1].balance;
 
         if (existingHistoryCount < 400 || isFlatLine) {
-            console.log("🔄 Nettoyage de la base et téléchargement de l'historique complet (Tokens + DeFi)...");
+            console.log("🔄 Nettoyage de la base et téléchargement de l'historique complet...");
             await prisma.portfolioSnapshot.deleteMany({ where: { address: safeAddress } });
 
             try {
@@ -181,7 +90,7 @@ export async function POST(req: NextRequest) {
                             data: snapshotsToInsert,
                             skipDuplicates: true,
                         });
-                        console.log(`✅ ${snapshotsToInsert.length} vrais points historiques sauvegardés !`);
+                        console.log(`✅ ${snapshotsToInsert.length} points historiques sauvegardés !`);
                     }
                 }
             } catch (e) {
@@ -220,85 +129,49 @@ export async function POST(req: NextRequest) {
             }
         }
 
-
         // ====================================================================
-        // 2) LANCEMENT DES USINES DE RÉCUPÉRATION (ZERION + LOCAL)
+        // 2) LANCEMENT DE L'ORCHESTRATEUR GLOBAL (API MULTIPLES)
         // ====================================================================
-
-        // Lancement Zerion en parallèle
-        const zerionPromise = getZerionAssetsNormalized(address);
-
-        // Lancement usine locale sur réseaux cibles
-        const chains = getEnabledChains(chainsInput || "plume,lisk,morph");
-        const localSettled = await Promise.allSettled(
-            chains.map((chainKey) => runLocalFactory(address, CHAINS[chainKey]))
-        );
-
-        const localNative: Asset[] = [];
-        const localTokens: Asset[] = [];
-        const localDefi: Asset[] = [];
-        const errors: FactoryError[] = [];
-        let partial = false;
-
-        for (const r of localSettled) {
-            if (r.status === "fulfilled") {
-                localNative.push(...r.value.native);
-                localTokens.push(...r.value.tokens);
-                localDefi.push(...r.value.defi);
-                errors.push(...r.value.errors);
-                if (r.value.partial) partial = true;
-            } else {
-                partial = true;
-                errors.push({
-                    scope: "merge",
-                    reason: r.reason?.message || "local factory execution failed",
-                });
-            }
-        }
-
-        let zerionAssets: Asset[] = [];
+        
+        let allAssetsResponse = { assets: [], partial: false, errors: [] as ApiError[] };
+        
         try {
-            // On ajoute un timeout manuel de sécurité de 8 secondes maximum pour Zerion
-            // Si Zerion bloque, on l'ignore et on charge le reste du dashboard
-            const timeoutPromise = new Promise<Asset[]>((_, reject) =>
-                setTimeout(() => reject(new Error("Zerion API Timeout ou bloqué")), 8000)
+            // On limite le temps de réponse total de toutes les API à 10 secondes
+            const timeoutPromise = new Promise<any>((_, reject) =>
+                setTimeout(() => reject(new Error("Timeout global des APIs")), 10000)
             );
-            zerionAssets = await Promise.race([zerionPromise, timeoutPromise]);
+            
+            // fetchAllWalletAssets gère désormais en interne Zerion (et bientôt Zapper/Coinstats)
+            allAssetsResponse = await Promise.race([
+                fetchAllWalletAssets(safeAddress), 
+                timeoutPromise
+            ]);
         } catch (e: any) {
-            console.warn("⚠️ Zerion ignoré (Réseau ou Timeout) :", e.message);
-            partial = true; // Le dashboard s'affichera quand même avec le flag "données partielles"
-            errors.push({
-                scope: "merge",
-                reason: e?.message || "Zerion bloqué par le réseau",
-            });
+            console.warn("⚠️ Orchestrateur bloqué (Timeout ou Erreur) :", e.message);
+            allAssetsResponse.partial = true;
+            allAssetsResponse.errors.push({ source: "orchestrator", reason: e.message });
         }
+
 
         // ====================================================================
         // 3) FUSION ET RÉPONSE FINALE
         // ====================================================================
 
-        const merged = mergeAssets({
-            zerionAssets,
-            localNative,
-            localTokens,
-            localDefi,
-            errors,
-            partial,
-        });
+        const merged = mergeAssets(allAssetsResponse.assets, allAssetsResponse.errors);
 
-        // Calcul du total incluant Zerion + les usines locales ajoutées
+        // Calcul du total basé sur les actifs fusionnés
         const totalBalanceMerged = merged.assets.reduce((sum, a) => sum + (a.valueUsd || 0), 0);
 
         return NextResponse.json({
-            totalBalance: totalBalanceMerged, // Le total qui intègre bien les ajouts locaux
-            chartTotalBalance: finalTotalBalance, // Gardé à part si tu as besoin du total Zerion strict pour l'UI
+            totalBalance: totalBalanceMerged,
+            chartTotalBalance: finalTotalBalance, 
             assets: merged.assets,
             native: merged.native,
             tokens: merged.tokens,
             defi: merged.defi,
-            partial: merged.partial,
+            partial: merged.partial || allAssetsResponse.partial,
             errors: merged.errors,
-            chartData: dbSnapshots, // Ton historique de graph inséré ici !
+            chartData: dbSnapshots,
         });
 
     } catch (e: any) {

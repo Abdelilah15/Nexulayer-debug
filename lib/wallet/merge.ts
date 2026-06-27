@@ -1,4 +1,5 @@
-import type { Asset, CombinedAssetsResponse, FactoryError } from "./types";
+import type { Asset, CombinedAssetsResponse, ApiError } from "./types";
+import { normalizeChain } from "./chains";
 
 function safeNumber(v: unknown, fallback = 0): number {
   const n = Number(v);
@@ -6,23 +7,19 @@ function safeNumber(v: unknown, fallback = 0): number {
 }
 
 function enrichForUI(a: Asset): Asset {
-  const qty =
-    a.quantity != null
-      ? safeNumber(a.quantity, 0)
-      : safeNumber(a.formattedBalance, 0);
-
-  const value =
-    a.valueUsd != null
-      ? safeNumber(a.valueUsd, 0)
-      : a.priceUsd != null
-      ? qty * safeNumber(a.priceUsd, 0)
-      : 0;
+  const qty = a.quantity != null ? safeNumber(a.quantity, 0) : safeNumber(a.formattedBalance, 0);
+  const value = a.valueUsd != null ? safeNumber(a.valueUsd, 0) : a.priceUsd != null ? qty * safeNumber(a.priceUsd, 0) : 0;
+  
+  // Utilisation du dictionnaire pour garantir un nom standard
+  const chainInfo = normalizeChain(a.chain);
 
   return {
     ...a,
     quantity: qty,
     valueUsd: value,
-    chainName: a.chainName ?? a.chain,
+    chain: chainInfo.id,
+    chainName: chainInfo.name,
+    chainId: a.chainId || chainInfo.chainId,
     chainIcon: a.chainIcon ?? null,
   };
 }
@@ -33,9 +30,9 @@ function dedupe(assets: Asset[]): Asset[] {
   for (const raw of assets) {
     const a = enrichForUI(raw);
 
-    // clé de déduplication
+    // Nouvelle clé de déduplication basée sur la chaîne normalisée (au lieu de chainId)
     const key = [
-      String(a.chainId),
+      a.chain, 
       a.wallet.toLowerCase(),
       (a.contractAddress || "native").toLowerCase(),
       a.assetType,
@@ -49,13 +46,13 @@ function dedupe(assets: Asset[]): Asset[] {
       continue;
     }
 
-    // priorité à la source zerion, sinon plus grande valueUsd
+    // Priorité absolue à Zerion, sinon on garde la valeur USD la plus haute
     if (prev.source !== "zerion" && a.source === "zerion") {
       map.set(key, a);
       continue;
     }
 
-    if ((a.valueUsd || 0) > (prev.valueUsd || 0)) {
+    if ((a.valueUsd || 0) > (prev.valueUsd || 0) && prev.source !== "zerion") {
       map.set(key, a);
     }
   }
@@ -63,34 +60,20 @@ function dedupe(assets: Asset[]): Asset[] {
   return [...map.values()];
 }
 
-export function mergeAssets(params: {
-  zerionAssets?: Asset[];
-  localNative?: Asset[];
-  localTokens?: Asset[];
-  localDefi?: Asset[];
-  errors?: FactoryError[];
-  partial?: boolean;
-}): CombinedAssetsResponse {
-  const zerion = params.zerionAssets || [];
-  const local = [
-    ...(params.localNative || []),
-    ...(params.localTokens || []),
-    ...(params.localDefi || []),
-  ];
-
-  const all = dedupe([...zerion, ...local]);
+export function mergeAssets(
+  rawAssets: Asset[], 
+  errors: ApiError[] = []
+): CombinedAssetsResponse {
+  
+  const all = dedupe(rawAssets);
   all.sort((a, b) => (b.valueUsd || 0) - (a.valueUsd || 0));
-
-  const native = all.filter((a) => a.assetType === "native");
-  const tokens = all.filter((a) => a.positionType === "wallet"); // <- onglet Tokens
-  const defi = all.filter((a) => a.positionType === "defi");     // <- onglet DeFi
 
   return {
     assets: all,
-    native,
-    tokens,
-    defi,
-    partial: !!params.partial,
-    errors: params.errors || [],
+    native: all.filter((a) => a.assetType === "native"),
+    tokens: all.filter((a) => a.positionType === "wallet" && a.assetType !== "native"), // <- onglet Tokens
+    defi: all.filter((a) => a.positionType === "defi"), // <- onglet DeFi
+    partial: errors.length > 0,
+    errors,
   };
 }
