@@ -332,7 +332,7 @@ export default function Forger({ initialTab }: { initialTab: string }) {
     setError('');
     setTxHash('');
     setIsModalOpen(false);
-    
+
 
     try {
       // Astuce TypeScript pour Vercel : on force le type de window
@@ -402,11 +402,11 @@ export default function Forger({ initialTab }: { initialTab: string }) {
         console.error("Impossible de parser les logs", err);
       }
 
-      setIsAdvancedMode(false);
+      setIsModalOpen(true);
+      setDeployedAddress(extractedAddress);
       setMediaFile(null);
       setDescription('');
-      setDeployedAddress(extractedAddress);
-      setIsModalOpen(true); // Ouvre la fenêtre de succès !
+
 
     } catch (error: unknown) {
       console.error(error);
@@ -567,7 +567,10 @@ export default function Forger({ initialTab }: { initialTab: string }) {
                   <div className="w-14 h-14 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center text-3xl shadow-[0_0_20px_rgba(16,185,129,0.3)]">
                     🎉
                   </div>
-                  <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-white transition-colors p-2 bg-slate-800 rounded-lg">
+                  <button onClick={() => {
+                    setIsModalOpen(false)
+                    setIsAdvancedMode(false);
+                  }} className="text-slate-400 hover:text-white transition-colors p-2 bg-slate-800 rounded-lg">
                     <i className="fi fi-rr-cross"></i>
                   </button>
                 </div>
@@ -665,8 +668,36 @@ export default function Forger({ initialTab }: { initialTab: string }) {
                       <i className="fi fi-rr-search-alt"></i> Basescan
                     </a>
                   </div>
-                </div>
 
+                  {/* NOUVEAU CODE À AJOUTER ICI 👇 */}
+                  {activeTab === 'nft' && isAdvancedMode && deployedAddress && (
+                    <a
+                      href={networkName === 'Base Mainnet'
+                        ? `https://opensea.io/assets/base/${deployedAddress}`
+                        : `https://testnets.opensea.io/assets/base-sepolia/${deployedAddress}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      // Ajout de "group" et "hover:text-white"
+                      className="mt-3 w-full group bg-white hover:bg-blue-500 text-black hover:text-white font-medium py-2.5 rounded-lg transition-colors flex items-center justify-center gap-2 shadow-sm"
+                    >
+                      Voir la collection sur
+
+                      {/* Logo Foncé : Affiché par défaut, caché au survol (group-hover:hidden) */}
+                      <img
+                        src="https://static.seadn.io/logos/OpenSea-Full-Logo%20(dark).svg"
+                        alt="OpenSea"
+                        className="h-5 w-auto block group-hover:hidden"
+                      />
+
+                      {/* Logo Blanc : Caché par défaut, affiché au survol (group-hover:block) */}
+                      <img
+                        src="https://static.seadn.io/logos/OpenSea-Full-Logo%20(light).svg"
+                        alt="OpenSea"
+                        className="h-5 w-auto hidden group-hover:block"
+                      />
+                    </a>
+                  )}
+                </div>
               </div>
             </div>
           </div>

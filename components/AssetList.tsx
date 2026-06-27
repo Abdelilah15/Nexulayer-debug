@@ -25,6 +25,7 @@ export default function AssetList({ assets }: { assets: any[] }) {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedNetworkId, setSelectedNetworkId] = useState('Tous');
     const [selectedAsset, setSelectedAsset] = useState('Tokens');
+    const [selectedDefiType, setSelectedDefiType] = useState('Tous');
 
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
@@ -75,7 +76,12 @@ export default function AssetList({ assets }: { assets: any[] }) {
                         ? asset.positionType === "defi"
                         : asset.positionType === "nft";
 
-            return matchesSearch && matchesNetwork && matchesTab;
+            const matchesDefiType = 
+                selectedAsset !== "DeFi" || 
+                selectedDefiType === "Tous" || 
+                asset.assetType === selectedDefiType;
+
+            return matchesSearch && matchesNetwork && matchesTab && matchesDefiType;
         });
     }, [assets, searchTerm, selectedNetworkId, selectedAsset]);
 
@@ -193,6 +199,23 @@ export default function AssetList({ assets }: { assets: any[] }) {
             {/* BLOC 2 : DEFI (Séparé et préparé pour l'avenir) */}
             {selectedAsset === 'DeFi' && (
                 <div className="space-y-2">
+                    {/* Filtres de types DeFi */}
+                    <div className="flex flex-wrap gap-2 pb-2 overflow-x-auto scrollbar-none">
+                        {['Tous', 'staking', 'lp', 'lending_supply', 'lending_borrow', 'vault'].map((type) => (
+                            <button
+                                key={type}
+                                onClick={() => setSelectedDefiType(type)}
+                                className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase border transition-all ${
+                                    selectedDefiType === type 
+                                    ? "bg-blue-600 border-blue-500 text-white" 
+                                    : "bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-500"
+                                }`}
+                            >
+                                {type === 'lp' ? 'Liquidity' : type.replace('_', ' ')}
+                            </button>
+                        ))}
+                    </div>
+
                     <div className="grid grid-cols-3 gap-3 p-3 bg-slate-800/50 rounded-lg border-slate-700">
                         <p className="text-slate-400 text-xs font-bold">Protocole / Actif</p>
                         <p className="text-slate-400 text-xs font-bold text-center">Cours</p>
@@ -219,7 +242,12 @@ export default function AssetList({ assets }: { assets: any[] }) {
                                                 <p className="text-white font-medium text-sm truncate">{asset.name}</p>
                                                 <div className="flex items-center gap-2 mt-0.5">
                                                     <p className="text-slate-400 text-[10px] uppercase font-bold truncate">{asset.chainName}</p>
-                                                    <span className="bg-blue-900/40 text-blue-300 text-[8px] uppercase font-bold px-1.5 py-0.5 rounded border border-blue-800/50 whitespace-nowrap">
+                                                    <span className={`text-[8px] uppercase font-bold px-1.5 py-0.5 rounded border whitespace-nowrap ${
+                                                        asset.assetType === 'staking' ? "bg-emerald-900/40 text-emerald-300 border-emerald-800/50" :
+                                                        asset.assetType === 'lp' ? "bg-amber-900/40 text-amber-300 border-amber-800/50" :
+                                                        asset.assetType === 'lending_supply' || asset.assetType === 'lending_borrow' ? "bg-purple-900/40 text-purple-300 border-purple-800/50" :
+                                                        "bg-blue-900/40 text-blue-300 border-blue-800/50"
+                                                    }`}>
                                                         {asset.protocol || asset.assetType?.replace('_', ' ') || asset.positionType}
                                                     </span>
                                                 </div>
