@@ -15,10 +15,10 @@ export default function Sidebar() {
 
   return (
     // La largeur passe dynamiquement de w-64 à w-20
-    <aside className={`flex-shrink-0 flex flex-col border-r border-slate-800 bg-slate-900/40 z-20 transition-all duration-300 ${isCollapsed ? 'w-20' : 'w-64'}`}>
+    <aside style={{background:'rgba(255,255,255,0.72)'}} className={`flex-shrink-0 flex flex-col  z-20 transition-all duration-300 ${isCollapsed ? 'w-20' : 'w-64'}`}>
 
       {/* 1. LOGO & BOUTON RANGER */}
-      <div className={`h-20 flex items-center border-b border-slate-800/50 ${isCollapsed ? 'justify-center' : 'justify-between px-6'}`}>
+      <div className={`h-20 flex items-center ${isCollapsed ? 'justify-center' : 'justify-between px-6'}`}>
         <div className="flex items-center">
           <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-cyan-400 rounded-lg flex items-center justify-center shadow-lg shadow-indigo-500/20 flex-shrink-0 cursor-pointer" onClick={() => setIsCollapsed(false)}>
             <span className="text-lg font-bold text-white">F</span>

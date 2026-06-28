@@ -4,7 +4,7 @@ import Topbar from './Topbar';
 
 export default function DashboardLayout({ children, title }: { children: React.ReactNode, title?: string }) {
   return (
-    <div className="flex h-screen bg-slate-950 text-slate-200 font-sans overflow-hidden">
+    <div className="flex h-screen text-slate-200 font-sans overflow-hidden">
       {/* La Sidebar n'a plus besoin d'arguments, elle se gère toute seule ! */}
       <Sidebar />
       
@@ -12,7 +12,7 @@ export default function DashboardLayout({ children, title }: { children: React.R
         {/* On passe le titre à la Topbar */}
         <Topbar title={title} />
         
-        <div className="flex-1 overflow-y-auto p-8">
+        <div style={{background:'#F9F9F9'}} className="flex-1 border-t border-l rounded-tl-lg border-slate-800 overflow-y-auto p-8">
           <div className="max-w-4xl mx-auto w-full">
             {/* Le contenu de la page s'injecte ici */}
             {children}

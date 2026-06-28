@@ -1,4 +1,3 @@
-
 export type ChainInfo = {
   id: string;
   chainId: number;
