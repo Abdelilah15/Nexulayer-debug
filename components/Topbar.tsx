@@ -95,8 +95,8 @@ export default function Topbar({ title }: TopbarProps) {
   }, [isConnected, address]);
 
   return (
-    <header style={{background:'rgba(255,255,255,0.72)'}} className="h-20 px-8 flex justify-between items-center z-10 flex-shrink-0">
-      <h2 className="text-lg font-semibold text-slate-300">
+    <header className="h-20 px-8 flex justify-between items-center z-10 flex-shrink-0 bg-glass border-b border-card shadow-custom">
+      <h2 className="text-lg font-semibold text-foreground">
         {title || "Forgenix"}
       </h2>
 
@@ -110,7 +110,7 @@ export default function Topbar({ title }: TopbarProps) {
               {(() => {
                 if (!connected) {
                   return (
-                    <button onClick={openConnectModal} type="button" className="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2.5 px-6 rounded-xl transition-all shadow-[0_0_15px_rgba(79,70,229,0.3)] hover:shadow-[0_0_25px_rgba(79,70,229,0.5)] flex items-center gap-2">
+                    <button onClick={openConnectModal} type="button" className="bg-accent hover:bg-accent/90 text-white font-semibold py-2.5 px-6 rounded-xl transition-all shadow-custom hover:shadow-lg flex items-center gap-2">
                       <i className="fi fi-rr-wallet"></i> Connecter le Wallet
                     </button>
                   );
@@ -130,13 +130,13 @@ export default function Topbar({ title }: TopbarProps) {
                       <button
                         onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                         type="button"
-                        className={`flex items-center gap-3 border transition-all py-1.5 pl-4 pr-1.5 rounded-full text-slate-200 ${isDropdownOpen ? 'bg-slate-800 border-slate-500' : 'bg-slate-900 border-slate-700 hover:border-slate-500'}`}
+                        className={`flex items-center gap-3 border transition-all py-1.5 pl-4 pr-1.5 rounded-full text-foreground ${isDropdownOpen ? 'bg-card border-accent/50' : 'bg-card border-card hover:border-accent/30'}`}
                       >
                         <span className="font-medium text-sm tracking-wide">
                           {userProfile?.username || account.displayName}
                         </span>
 
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-500 to-cyan-400 border-2 border-slate-950 flex items-center justify-center overflow-hidden shadow-inner">
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-500 to-cyan-400 border-2 border-accent/20 flex items-center justify-center overflow-hidden shadow-custom">
                           {/* NOUVEAU : Affichage de l'avatar de la base de données ! */}
                           {userProfile?.avatar ? (
                             <img src={userProfile.avatar} alt="Profile" className="w-full h-full object-cover" />
@@ -149,18 +149,18 @@ export default function Topbar({ title }: TopbarProps) {
                       </button>
 
                       {isDropdownOpen && (
-                        <div className="absolute right-0 mt-3 w-64 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
-                          <div className="px-4 py-3 border-b border-slate-800/80 mb-2 bg-slate-900/50">
+                        <div className="absolute right-0 mt-3 w-64 bg-card border border-card rounded-2xl shadow-custom py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                          <div className="px-4 py-3 border-b border-card/80 mb-2 bg-card/50">
                             <div className="flex justify-between items-center mb-1">
-                              <p className="text-xs text-slate-500 uppercase tracking-wider">Mon Profil</p>
-                              <span className="bg-indigo-500/20 text-indigo-400 text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">
+                              <p className="text-xs text-secondary uppercase tracking-wider">Mon Profil</p>
+                              <span className="bg-accent/20 text-accent text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">
                                 {userProfile ? userProfile.role : '...'}
                               </span>
                             </div>
-                            <p className="text-sm font-bold text-white truncate mb-0.5">
+                            <p className="text-sm font-bold text-foreground truncate mb-0.5">
                               {userProfile ? userProfile.username : 'Chargement...'}
                             </p>
-                            <p className="text-xs font-mono text-slate-500 truncate" title={account.address}>
+                            <p className="text-xs font-mono text-secondary truncate" title={account.address}>
                               {account.address}
                             </p>
                           </div>
@@ -170,15 +170,15 @@ export default function Topbar({ title }: TopbarProps) {
                               router.push('/Profile');
                               setIsDropdownOpen(false);
                             }}
-                            className="w-full text-left px-4 py-2.5 text-sm text-slate-300 hover:bg-slate-800 hover:text-white transition-colors flex items-center gap-3"
+                            className="w-full text-left px-4 py-2.5 text-sm text-secondary hover:bg-hover hover:text-foreground transition-colors flex items-center gap-3"
                           >
-                            <i className="fi fi-rr-user text-slate-400"></i> My profile
+                            <i className="fi fi-rr-user text-secondary"></i> My profile
                           </button>
-                          <button className="w-full text-left px-4 py-2.5 text-sm text-slate-300 hover:bg-slate-800 hover:text-white transition-colors flex items-center gap-3">
-                            <i className="fi fi-rr-settings text-slate-400"></i> Settings
+                          <button className="w-full text-left px-4 py-2.5 text-sm text-secondary hover:bg-hover hover:text-foreground transition-colors flex items-center gap-3">
+                            <i className="fi fi-rr-settings text-secondary"></i> Settings
                           </button>
 
-                          <div className="h-px bg-slate-800/80 my-2"></div>
+                          <div className="h-px bg-card/80 my-2"></div>
 
                           <button
                             onClick={() => {
@@ -194,14 +194,14 @@ export default function Topbar({ title }: TopbarProps) {
                       )}
                     </div>
 
-                    <button onClick={openChainModal} type="button" className="flex items-center gap-2 bg-slate-900 border border-slate-700 hover:border-slate-500 py-2 px-4 rounded-xl transition-all text-slate-200 font-medium text-sm">
+                    <button onClick={openChainModal} type="button" className="flex items-center gap-2 bg-card border border-card hover:border-accent/30 py-2 px-4 rounded-xl transition-all text-foreground font-medium text-sm shadow-custom">
                       {chain.hasIcon && (
                         <div style={{ background: chain.iconBackground, width: 20, height: 20, borderRadius: 999, overflow: 'hidden' }}>
                           {chain.iconUrl && (<img alt={chain.name ?? 'Chain icon'} src={chain.iconUrl} style={{ width: 20, height: 20 }} />)}
                         </div>
                       )}
                       <span>{chain.name}</span>
-                      <i className="fi fi-rr-angle-small-down text-slate-400 mt-1"></i>
+                      <i className="fi fi-rr-angle-small-down text-secondary mt-1"></i>
                     </button>
                   </div>
                 );

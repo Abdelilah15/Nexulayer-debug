@@ -419,7 +419,7 @@ export default function Forger({ initialTab }: { initialTab: string }) {
 
 
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-xl overflow-hidden mb-8">
+    <div className="bg-card border border-card rounded-2xl shadow-custom shadow-xl overflow-hidden mb-8">
       <div className="p-8">
 
         {/* FORMULAIRES DYNAMIQUES */}
@@ -436,10 +436,10 @@ export default function Forger({ initialTab }: { initialTab: string }) {
                     checked={isAdvancedMode}
                     onChange={() => setIsAdvancedMode(!isAdvancedMode)}
                   />
-                  <div className={`block w-12 h-7 rounded-full transition-colors ${isAdvancedMode ? 'bg-indigo-600' : 'bg-slate-700'}`}></div>
+                  <div className={`block w-12 h-7 rounded-full transition-colors ${isAdvancedMode ? 'bg-accent' : 'bg-slate-700'}`}></div>
                   <div className={`absolute left-1 top-1 bg-white w-5 h-5 rounded-full transition-transform transform ${isAdvancedMode ? 'translate-x-5' : ''}`}></div>
                 </div>
-                <div className="ml-3 text-sm font-medium text-slate-300">
+                <div className="ml-3 text-sm font-medium text-secondary">
                   Mode Avancé <span className="text-slate-500 font-normal ml-1">(Métadonnées & Artwork)</span>
                 </div>
               </label>
@@ -448,36 +448,36 @@ export default function Forger({ initialTab }: { initialTab: string }) {
 
           {/* CHAMPS DU MODE AVANCÉ */}
           {isAdvancedMode && (activeTab === 'token' || activeTab === 'nft') && (
-            <div className="p-6 bg-slate-900/50 border border-indigo-500/30 rounded-xl animate-in slide-in-from-top-4 duration-300">
-              <h4 className="text-indigo-400 font-medium mb-4 flex items-center gap-2">
+            <div className="p-6 bg-card/50 border border-indigo-500/30 rounded-xl animate-in slide-in-from-top-4 duration-300">
+              <h4 className="text-accent font-medium mb-4 flex items-center gap-2">
                 Paramètres Avancés
               </h4>
               <div className="space-y-5">
                 <div>
-                  <label className="block text-sm font-medium text-slate-400 mb-2">
+                  <label className="block text-sm font-medium text-secondary mb-2">
                     {activeTab === 'nft' ? 'Artwork (PNG, JPG, GIF)' : 'Logo du Token (PNG, JPG)'}
                   </label>
                   <input
                     type="file"
                     accept="image/png, image/jpeg, image/gif"
                     onChange={(e) => setMediaFile(e.target.files ? e.target.files[0] : null)}
-                    className="block w-full text-sm text-slate-400
+                    className="block w-full text-sm text-secondary
                       file:mr-4 file:py-2.5 file:px-4
-                      file:rounded-lg file:border-0
+                      file:rounded-xl file:border-0
                       file:text-sm file:font-semibold
-                      file:bg-indigo-500/10 file:text-indigo-400
-                      hover:file:bg-indigo-500/20 cursor-pointer
-                      border border-slate-700 rounded-lg bg-slate-950"
+                      file:bg-accent/10 file:text-accent
+                      hover:file:bg-accent/20 cursor-pointer
+                      border border-card rounded-xl bg-background"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-400 mb-2">Description détaillée</label>
+                  <label className="block text-sm font-medium text-secondary mb-2">Description détaillée</label>
                   <textarea
                     rows={3}
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     placeholder={`Décrivez votre ${activeTab === 'nft' ? 'collection NFT' : 'projet de Token'}...`}
-                    className="w-full bg-slate-950 border border-slate-700 rounded-lg p-4 text-white focus:outline-none focus:border-indigo-500"
+                    className="w-full bg-background border border-card rounded-xl p-4 text-foreground focus:outline-none focus:border-accent/50"
                   />
                 </div>
               </div>
@@ -486,24 +486,24 @@ export default function Forger({ initialTab }: { initialTab: string }) {
 
           {activeTab === 'message' && (
             <div className="animate-in fade-in duration-500">
-              <label className="block text-sm font-medium text-slate-400 mb-2">Message à graver</label>
-              <input type="text" value={msgText} onChange={(e) => setMsgText(e.target.value)} className="w-full bg-slate-950 border border-slate-700 rounded-lg p-4 text-white focus:outline-none focus:border-indigo-500" placeholder="Ex: GM Base!" />
+              <label className="block text-sm font-medium text-secondary mb-2">Message à graver</label>
+              <input type="text" value={msgText} onChange={(e) => setMsgText(e.target.value)} className="w-full bg-background border border-card rounded-xl p-4 text-foreground focus:outline-none focus:border-accent/50" placeholder="Ex: GM Base!" />
             </div>
           )}
 
           {activeTab === 'token' && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in duration-500">
               <div>
-                <label className="block text-sm font-medium text-slate-400 mb-2">Nom du Token</label>
-                <input type="text" value={tokenName} onChange={(e) => setTokenName(e.target.value)} className="w-full bg-slate-950 border border-slate-700 rounded-lg p-4 text-white focus:outline-none focus:border-indigo-500" placeholder="Ex: Forgenix Coin" />
+                <label className="block text-sm font-medium text-secondary mb-2">Nom du Token</label>
+                <input type="text" value={tokenName} onChange={(e) => setTokenName(e.target.value)} className="w-full bg-background border border-card rounded-xl p-4 text-foreground focus:outline-none focus:border-accent/50" placeholder="Ex: Forgenix Coin" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-400 mb-2">Symbole</label>
-                <input type="text" value={tokenSymbol} onChange={(e) => setTokenSymbol(e.target.value)} className="w-full bg-slate-950 border border-slate-700 rounded-lg p-4 text-white focus:outline-none focus:border-indigo-500" placeholder="Ex: FRGX" />
+                <label className="block text-sm font-medium text-secondary mb-2">Symbole</label>
+                <input type="text" value={tokenSymbol} onChange={(e) => setTokenSymbol(e.target.value)} className="w-full bg-background border border-card rounded-xl p-4 text-foreground focus:outline-none focus:border-accent/50" placeholder="Ex: FRGX" />
               </div>
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-slate-400 mb-2">Quantité Totale</label>
-                <input type="number" value={tokenSupply} onChange={(e) => setTokenSupply(e.target.value)} className="w-full bg-slate-950 border border-slate-700 rounded-lg p-4 text-white focus:outline-none focus:border-indigo-500" placeholder="Ex: 1000000" />
+                <label className="block text-sm font-medium text-secondary mb-2">Quantité Totale</label>
+                <input type="number" value={tokenSupply} onChange={(e) => setTokenSupply(e.target.value)} className="w-full bg-background border border-card rounded-xl p-4 text-foreground focus:outline-none focus:border-accent/50" placeholder="Ex: 1000000" />
               </div>
             </div>
           )}
@@ -511,16 +511,16 @@ export default function Forger({ initialTab }: { initialTab: string }) {
           {activeTab === 'nft' && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in duration-500">
               <div>
-                <label className="block text-sm font-medium text-slate-400 mb-2">Nom de la Collection</label>
-                <input type="text" value={nftName} onChange={(e) => setNftName(e.target.value)} className="w-full bg-slate-950 border border-slate-700 rounded-lg p-4 text-white focus:outline-none focus:border-indigo-500" placeholder="Ex: Bored Ape" />
+                <label className="block text-sm font-medium text-secondary mb-2">Nom de la Collection</label>
+                <input type="text" value={nftName} onChange={(e) => setNftName(e.target.value)} className="w-full bg-background border border-card rounded-xl p-4 text-foreground focus:outline-none focus:border-accent/50" placeholder="Ex: Bored Ape" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-400 mb-2">Symbole</label>
-                <input type="text" value={nftSymbol} onChange={(e) => setNftSymbol(e.target.value)} className="w-full bg-slate-950 border border-slate-700 rounded-lg p-4 text-white focus:outline-none focus:border-indigo-500" placeholder="Ex: BAPE" />
+                <label className="block text-sm font-medium text-secondary mb-2">Symbole</label>
+                <input type="text" value={nftSymbol} onChange={(e) => setNftSymbol(e.target.value)} className="w-full bg-background border border-card rounded-xl p-4 text-foreground focus:outline-none focus:border-accent/50" placeholder="Ex: BAPE" />
               </div>
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-slate-400 mb-2">Quantité de NFTs à générer</label>
-                <input type="number" value={nftSupply} onChange={(e) => setNftSupply(e.target.value)} className="w-full bg-slate-950 border border-slate-700 rounded-lg p-4 text-white focus:outline-none focus:border-indigo-500" placeholder="Ex: 10" />
+                <label className="block text-sm font-medium text-secondary mb-2">Quantité de NFTs à générer</label>
+                <input type="number" value={nftSupply} onChange={(e) => setNftSupply(e.target.value)} className="w-full bg-background border border-card rounded-xl p-4 text-foreground focus:outline-none focus:border-accent/50" placeholder="Ex: 10" />
               </div>
             </div>
           )}
@@ -528,8 +528,8 @@ export default function Forger({ initialTab }: { initialTab: string }) {
           {/* NOUVEAU: Formulaire Contrat Simple */}
           {activeTab === 'simple' && (
             <div className="animate-in fade-in duration-500">
-              <label className="block text-sm font-medium text-slate-400 mb-2">Nom du Contrat</label>
-              <input type="text" value={simpleName} onChange={(e) => setSimpleName(e.target.value)} className="w-full bg-slate-950 border border-slate-700 rounded-lg p-4 text-white focus:outline-none focus:border-indigo-500" placeholder="Ex: MonContratDeBase" />
+              <label className="block text-sm font-medium text-secondary mb-2">Nom du Contrat</label>
+              <input type="text" value={simpleName} onChange={(e) => setSimpleName(e.target.value)} className="w-full bg-background border border-card rounded-xl p-4 text-foreground focus:outline-none focus:border-accent/50" placeholder="Ex: MonContratDeBase" />
               <p className="mt-3 text-sm text-slate-500">
                 Déploie un Smart Contract basique, idéal pour interagir rapidement avec le réseau sans complexité.
               </p>
@@ -539,16 +539,16 @@ export default function Forger({ initialTab }: { initialTab: string }) {
         </div>
 
         {/* ZONE D'ACTION */}
-        <div className="bg-slate-950 border border-slate-800 rounded-xl p-6 flex flex-col items-center">
+        <div className="bg-background border border-card rounded-xl p-6 flex flex-col items-center">
           <div className="flex justify-between w-full mb-6 text-sm">
-            <span className="text-slate-400">Frais de service</span>
-            <span className="text-indigo-400 font-bold">{currentFeeString} ETH</span>
+            <span className="text-secondary">Frais de service</span>
+            <span className="text-accent font-bold">{currentFeeString} ETH</span>
           </div>
 
           {!isConnected ? (
             <div className="text-center text-slate-500 font-medium">Connectez votre portefeuille.</div>
           ) : (
-            <button type="button" onClick={handleCreate} disabled={isLoading} className={`w-full py-4 rounded-xl font-bold text-lg transition-all ${isLoading ? 'bg-slate-800 text-slate-500 cursor-not-allowed' : 'bg-indigo-600 text-white hover:bg-indigo-500 hover:shadow-[0_0_25px_rgba(79,70,229,0.5)]'}`}>
+            <button type="button" onClick={handleCreate} disabled={isLoading} className={`w-full py-4 rounded-xl font-bold text-lg transition-all ${isLoading ? 'bg-slate-800 text-slate-500 cursor-not-allowed' : 'bg-accent text-foreground hover:bg-accent hover:shadow-[0_0_25px_rgba(79,70,229,0.5)]'}`}>
               {isLoading ? 'Forge en cours...' : '⚡ Forger sur la Blockchain'}
             </button>
           )}
@@ -558,8 +558,8 @@ export default function Forger({ initialTab }: { initialTab: string }) {
 
         {/* 🔥 MODAL DE SUCCÈS (Félicitations & Partage) 🔥 */}
         {isModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4">
-            <div className="bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden animate-in fade-in zoom-in duration-300">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
+            <div className="bg-card border border-card rounded-2xl shadow-custom shadow-2xl max-w-lg w-full overflow-hidden animate-in fade-in zoom-in duration-300">
               <div className="p-8">
 
                 {/* En-tête du Modal */}
@@ -570,22 +570,22 @@ export default function Forger({ initialTab }: { initialTab: string }) {
                   <button onClick={() => {
                     setIsModalOpen(false)
                     setIsAdvancedMode(false);
-                  }} className="text-slate-400 hover:text-white transition-colors p-2 bg-slate-800 rounded-lg">
+                  }} className="text-secondary hover:text-foreground transition-colors p-2 bg-slate-800 rounded-xl">
                     <i className="fi fi-rr-cross"></i>
                   </button>
                 </div>
 
-                <h3 className="text-2xl font-bold text-white mb-2">Deployment Successful!</h3>
-                <p className="text-slate-300 mb-6">
-                  Your <span className="font-bold text-indigo-400">{getElementType()}</span> contract has been deployed on <span className="font-bold text-indigo-400">{networkName}</span>.
+                <h3 className="text-2xl font-bold text-foreground mb-2">Deployment Successful!</h3>
+                <p className="text-secondary mb-6">
+                  Your <span className="font-bold text-accent">{getElementType()}</span> contract has been deployed on <span className="font-bold text-accent">{networkName}</span>.
                 </p>
 
                 {/* Zone de Partage */}
-                <div className="bg-slate-950 border border-slate-800 rounded-xl p-5 mb-6">
+                <div className="bg-background border border-card rounded-xl p-5 mb-6">
                   <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Share your achievement</p>
 
                   {/* Utilisation d'un Div avec 'whitespace-pre-wrap' pour un auto-ajustement parfait sans scrollbar */}
-                  <div className="w-full bg-slate-900/50 border border-slate-800 rounded-lg p-4 text-sm text-slate-300 mb-4 whitespace-pre-wrap break-words leading-relaxed">
+                  <div className="w-full bg-card/50 border border-card rounded-xl p-4 text-sm text-secondary mb-4 whitespace-pre-wrap break-words leading-relaxed">
                     {shareText}
                   </div>
 
@@ -596,7 +596,7 @@ export default function Forger({ initialTab }: { initialTab: string }) {
                         navigator.clipboard.writeText(shareText);
                         alert("Message copié !");
                       }}
-                      className="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm py-2.5 rounded-lg transition-colors flex items-center justify-center gap-2 font-medium"
+                      className="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm py-2.5 rounded-xl transition-colors flex items-center justify-center gap-2 font-medium"
                     >
                       <i className="fi fi-rr-copy"></i> Copier le message
                     </button>
@@ -604,7 +604,7 @@ export default function Forger({ initialTab }: { initialTab: string }) {
                     {/* Liens pré-remplis avec des icônes SVG 100% autonomes */}
                     <div className="flex items-center gap-3 ml-2">
                       {/* X (Twitter) */}
-                      <a href={`https://twitter.com/intent/tweet?text=${encodedShareText}`} target="_blank" rel="noreferrer" title="Partager sur X" className="text-slate-300 hover:text-white transition-transform hover:scale-110 w-[30px] h-[30px] flex items-center justify-center">
+                      <a href={`https://twitter.com/intent/tweet?text=${encodedShareText}`} target="_blank" rel="noreferrer" title="Partager sur X" className="text-secondary hover:text-foreground transition-transform hover:scale-110 w-[30px] h-[30px] flex items-center justify-center">
                         <svg viewBox="0 0 24 24" fill="currentColor" className="w-full h-full">
                           <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
                         </svg>
@@ -655,7 +655,7 @@ export default function Forger({ initialTab }: { initialTab: string }) {
                         navigator.clipboard.writeText(deployedAddress || txHash);
                         alert("Adresse copiée !");
                       }}
-                      className="flex-1 bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 font-medium py-2.5 rounded-lg transition-colors flex items-center justify-center gap-2"
+                      className="flex-1 bg-accent/20 hover:bg-accent/30 text-indigo-300 font-medium py-2.5 rounded-xl transition-colors flex items-center justify-center gap-2"
                     >
                       <i className="fi fi-rr-copy"></i> Copier
                     </button>
@@ -663,7 +663,7 @@ export default function Forger({ initialTab }: { initialTab: string }) {
                       href={`${explorerUrl}/tx/${txHash}`}
                       target="_blank"
                       rel="noreferrer"
-                      className="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-2.5 rounded-lg transition-colors flex items-center justify-center gap-2"
+                      className="flex-1 bg-accent hover:bg-accent text-foreground font-medium py-2.5 rounded-xl transition-colors flex items-center justify-center gap-2"
                     >
                       <i className="fi fi-rr-search-alt"></i> Basescan
                     </a>
@@ -677,8 +677,8 @@ export default function Forger({ initialTab }: { initialTab: string }) {
                         : `https://testnets.opensea.io/assets/base-sepolia/${deployedAddress}`}
                       target="_blank"
                       rel="noreferrer"
-                      // Ajout de "group" et "hover:text-white"
-                      className="mt-3 w-full group bg-white hover:bg-blue-500 text-black hover:text-white font-medium py-2.5 rounded-lg transition-colors flex items-center justify-center gap-2 shadow-sm"
+                      // Ajout de "group" et "hover:text-foreground"
+                      className="mt-3 w-full group bg-white hover:bg-blue-500 text-black hover:text-foreground font-medium py-2.5 rounded-xl transition-colors flex items-center justify-center gap-2 shadow-sm"
                     >
                       Voir la collection sur
 

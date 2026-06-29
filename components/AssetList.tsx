@@ -1,4 +1,5 @@
-import React, { useState, useMemo, useRef, useEffect } from 'react';
+'use client';
+import { useState, useRef, useEffect, useMemo } from "react";
 import TokenIcon from "./TokenIcon";
 
 const NetworkAvatar = ({ name, iconUrl, className = "" }: { name: string, iconUrl?: string, className?: string }) => {
@@ -7,7 +8,7 @@ const NetworkAvatar = ({ name, iconUrl, className = "" }: { name: string, iconUr
     // ❌ Plus de pastille ! S'il n'y a pas d'image, on utilise le globe
     if (hasError || !iconUrl) {
         return (
-            <img src="/globe.svg" alt="Default Network" className={`object-cover bg-slate-800 p-[2px] ${className}`} />
+            <img src="/globe.svg" alt="Default Network" className={`object-cover bg-card p-[2px] ${className}`} />
         );
     }
 
@@ -15,7 +16,7 @@ const NetworkAvatar = ({ name, iconUrl, className = "" }: { name: string, iconUr
         <img
             src={iconUrl}
             alt={name}
-            className={`object-cover bg-slate-900 ${className}`}
+            className={`object-cover bg-card ${className}`}
             onError={() => setHasError(true)}
         />
     );
@@ -91,16 +92,16 @@ export default function AssetList({ assets }: { assets: any[] }) {
     return (
         <div className="space-y-3">
             <div className="flex flex-col sm:flex-row gap-3">
-                <div>
-                    <button onClick={() => setSelectedAsset('Tokens')} className={`border border-slate-700 rounded-l-lg px-3 py-2 text-sm focus:outline-none transition-colors ${selectedAsset === 'Tokens' ? "bg-slate-800 text-white" : "bg-slate-900 text-slate-400 hover:bg-slate-800/50"}`}>Tokens</button>
-                    <button onClick={() => setSelectedAsset('DeFi')} className={`border-t border-b border-slate-700 px-3 py-2 text-sm focus:outline-none transition-colors ${selectedAsset === 'DeFi' ? "bg-slate-800 text-white" : "bg-slate-900 text-slate-400 hover:bg-slate-800/50"}`}>DeFi</button>
-                    <button onClick={() => setSelectedAsset('NFTs')} className={`border border-slate-700 rounded-r-lg px-3 py-2 text-sm focus:outline-none transition-colors ${selectedAsset === 'NFTs' ? "bg-slate-800 text-white" : "bg-slate-900 text-slate-400 hover:bg-slate-800/50"}`}>NFTs</button>
+                <div className="flex gap-0 rounded-xl overflow-hidden border border-card">
+                    <button onClick={() => setSelectedAsset('Tokens')} className={`px-3 py-2 text-sm focus:outline-none transition-all ${selectedAsset === 'Tokens' ? "bg-accent/20 text-accent border-r border-card" : "bg-card text-secondary hover:bg-hover"}`}>Tokens</button>
+                    <button onClick={() => setSelectedAsset('DeFi')} className={`px-3 py-2 text-sm focus:outline-none transition-all border-r border-card ${selectedAsset === 'DeFi' ? "bg-accent/20 text-accent" : "bg-card text-secondary hover:bg-hover"}`}>DeFi</button>
+                    <button onClick={() => setSelectedAsset('NFTs')} className={`px-3 py-2 text-sm focus:outline-none transition-all ${selectedAsset === 'NFTs' ? "bg-accent/20 text-accent" : "bg-card text-secondary hover:bg-hover"}`}>NFTs</button>
                 </div>
 
                 <input
                     type="text"
                     placeholder="Rechercher..."
-                    className="flex-1 bg-slate-800 border border-slate-700 text-white rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-slate-500"
+                    className="flex-1 bg-card border border-card text-foreground rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-accent/50 placeholder-secondary"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -108,7 +109,7 @@ export default function AssetList({ assets }: { assets: any[] }) {
                 <div className="relative min-w-[180px]" ref={dropdownRef}>
                     <button
                         onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                        className="w-full bg-slate-800 border border-slate-700 text-white rounded-lg px-3 py-2 text-sm focus:outline-none flex items-center justify-between hover:bg-slate-700 transition-colors h-full"
+                        className="w-full bg-card border border-card text-foreground rounded-xl px-3 py-2 text-sm focus:outline-none flex items-center justify-between hover:bg-hover transition-all h-full"
                     >
                         <div className="flex items-center gap-2">
                             {activeNetwork.id !== 'Tous' && (
@@ -120,11 +121,11 @@ export default function AssetList({ assets }: { assets: any[] }) {
                     </button>
 
                     {isDropdownOpen && (
-                        <div className="absolute right-0 z-50 mt-2 w-full bg-slate-800 border border-slate-700 rounded-lg shadow-xl overflow-hidden max-h-60 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-600">
+                        <div className="absolute right-0 z-50 mt-2 w-full bg-card border border-card rounded-xl shadow-custom overflow-hidden max-h-60 overflow-y-auto scrollbar-thin scrollbar-thumb-secondary">
                             {networks.map(net => (
                                 <button
                                     key={net.id}
-                                    className="w-full text-left px-4 py-2 text-sm text-slate-300 hover:bg-slate-700 hover:text-white flex items-center gap-2 transition-colors"
+                                    className="w-full text-left px-4 py-2 text-sm text-secondary hover:bg-hover hover:text-foreground flex items-center gap-2 transition-all"
                                     onClick={() => { setSelectedNetworkId(net.id); setIsDropdownOpen(false); }}
                                 >
                                     {net.id !== 'Tous' && (
@@ -141,10 +142,10 @@ export default function AssetList({ assets }: { assets: any[] }) {
             {/* BLOC 1 : TOKENS (Séparé et préparé pour l'avenir) */}
             {selectedAsset === 'Tokens' && (
                 <div className="space-y-2">
-                    <div className="grid grid-cols-3 gap-3 p-3 bg-slate-800/50 rounded-lg border-slate-700">
-                        <p className="text-slate-400 text-xs font-bold">Actif</p>
-                        <p className="text-slate-400 text-xs font-bold text-center">Cours</p>
-                        <p className="text-slate-400 text-xs font-bold text-right">Valeur</p>
+                    <div className="grid grid-cols-3 gap-3 p-3 bg-card/50 rounded-xl border border-card">
+                        <p className="text-secondary text-xs font-bold">Actif</p>
+                        <p className="text-secondary text-xs font-bold text-center">Cours</p>
+                        <p className="text-secondary text-xs font-bold text-right">Valeur</p>
                     </div>
 
                     <div className="space-y-1">
@@ -156,33 +157,33 @@ export default function AssetList({ assets }: { assets: any[] }) {
                                 const priceUsd = Number(asset.priceUsd ?? asset.price ?? 0);
 
                                 return (
-                                    <div key={`${asset.id}-${index}`} className="grid grid-cols-3 items-center p-3 bg-slate-800/30 rounded-lg border border-transparent hover:bg-slate-800/80 hover:border-slate-700 transition-all">
+                                    <div key={`${asset.id}-${index}`} className="grid grid-cols-3 items-center p-3 bg-card/30 rounded-xl border border-transparent hover:bg-card/80 hover:border-card transition-all shadow-custom">
                                         {/* Colonne 1 : Pas d'overflow-hidden pour laisser respirer le badge entier */}
                                         <div className="flex items-center gap-3">
                                             <div className="relative shrink-0">
                                                 <TokenIcon asset={asset} />
-                                                <NetworkAvatar name={asset.chainName} iconUrl={asset.chainIcon} className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-slate-800 z-10 shadow-sm" />
+                                                <NetworkAvatar name={asset.chainName} iconUrl={asset.chainIcon} className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-card z-10 shadow-sm" />
                                             </div>
 
                                             <div className="min-w-0">
-                                                <p className="text-white font-medium text-sm truncate">{asset.name}</p>
-                                                <p className="text-slate-400 text-[10px] uppercase font-bold truncate">{asset.chainName}</p>
+                                                <p className="text-foreground font-medium text-sm truncate">{asset.name}</p>
+                                                <p className="text-secondary text-[10px] uppercase font-bold truncate">{asset.chainName}</p>
                                             </div>
                                         </div>
 
                                         {/* Colonne 2 : Cours (Utilisation de priceUsd) */}
                                         <div className="text-center">
-                                            <p className="text-slate-300 text-sm font-medium">
+                                            <p className="text-secondary text-sm font-medium">
                                                 ${priceUsd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                             </p>
                                         </div>
 
                                         {/* Colonne 3 : Valeur & Balance (Utilisation de valueUsd et quantity) */}
                                         <div className="text-right">
-                                            <p className="text-white font-bold text-sm">
+                                            <p className="text-foreground font-bold text-sm">
                                                 ${valueUsd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                             </p>
-                                            <p className="text-slate-400 text-xs">
+                                            <p className="text-secondary text-xs">
                                                 {quantity.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {asset.symbol}
                                             </p>
                                         </div>
@@ -190,7 +191,7 @@ export default function AssetList({ assets }: { assets: any[] }) {
                                 );
                             })
                         ) : (
-                            <p className="text-slate-500 text-center py-4">Aucun actif trouvé.</p>
+                            <p className="text-secondary text-center py-4">Aucun actif trouvé.</p>
                         )}
                     </div>
                 </div>
@@ -207,8 +208,8 @@ export default function AssetList({ assets }: { assets: any[] }) {
                                 onClick={() => setSelectedDefiType(type)}
                                 className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase border transition-all ${
                                     selectedDefiType === type 
-                                    ? "bg-blue-600 border-blue-500 text-white" 
-                                    : "bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-500"
+                                    ? "bg-accent/20 border-accent text-accent" 
+                                    : "bg-card border-card text-secondary hover:border-accent/30"
                                 }`}
                             >
                                 {type === 'lp' ? 'Liquidity' : type.replace('_', ' ')}
@@ -216,10 +217,10 @@ export default function AssetList({ assets }: { assets: any[] }) {
                         ))}
                     </div>
 
-                    <div className="grid grid-cols-3 gap-3 p-3 bg-slate-800/50 rounded-lg border-slate-700">
-                        <p className="text-slate-400 text-xs font-bold">Protocole / Actif</p>
-                        <p className="text-slate-400 text-xs font-bold text-center">Cours</p>
-                        <p className="text-slate-400 text-xs font-bold text-right">Valeur</p>
+                    <div className="grid grid-cols-3 gap-3 p-3 bg-card/50 rounded-xl border border-card">
+                        <p className="text-secondary text-xs font-bold">Protocole / Actif</p>
+                        <p className="text-secondary text-xs font-bold text-center">Cours</p>
+                        <p className="text-secondary text-xs font-bold text-right">Valeur</p>
                     </div>
 
                     <div className="space-y-1">
@@ -231,17 +232,17 @@ export default function AssetList({ assets }: { assets: any[] }) {
                                 const priceUsd = Number(asset.priceUsd ?? asset.price ?? 0);
 
                                 return (
-                                    <div key={`${asset.id}-${index}`} className="grid grid-cols-3 items-center p-3 bg-slate-800/30 rounded-lg border border-transparent hover:bg-slate-800/80 hover:border-slate-700 transition-all">
+                                    <div key={`${asset.id}-${index}`} className="grid grid-cols-3 items-center p-3 bg-card/30 rounded-xl border border-transparent hover:bg-card/80 hover:border-card transition-all shadow-custom">
                                         {/* Colonne 1 : Pas d'overflow-hidden pour laisser respirer le badge entier */}
                                         <div className="flex items-center gap-3">
                                             <div className="relative shrink-0">
                                                 <TokenIcon asset={asset} />
-                                                <NetworkAvatar name={asset.chainName} iconUrl={asset.chainIcon} className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-slate-800 z-10 shadow-sm" />
+                                                <NetworkAvatar name={asset.chainName} iconUrl={asset.chainIcon} className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-card z-10 shadow-sm" />
                                             </div>
                                             <div className="min-w-0">
-                                                <p className="text-white font-medium text-sm truncate">{asset.name}</p>
+                                                <p className="text-foreground font-medium text-sm truncate">{asset.name}</p>
                                                 <div className="flex items-center gap-2 mt-0.5">
-                                                    <p className="text-slate-400 text-[10px] uppercase font-bold truncate">{asset.chainName}</p>
+                                                    <p className="text-secondary text-[10px] uppercase font-bold truncate">{asset.chainName}</p>
                                                     <span className={`text-[8px] uppercase font-bold px-1.5 py-0.5 rounded border whitespace-nowrap ${
                                                         asset.assetType === 'staking' ? "bg-emerald-900/40 text-emerald-300 border-emerald-800/50" :
                                                         asset.assetType === 'lp' ? "bg-amber-900/40 text-amber-300 border-amber-800/50" :
@@ -256,17 +257,17 @@ export default function AssetList({ assets }: { assets: any[] }) {
 
                                         {/* Colonne 2 : Cours (Utilisation de priceUsd) */}
                                         <div className="text-center">
-                                            <p className="text-slate-300 text-sm font-medium">
+                                            <p className="text-secondary text-sm font-medium">
                                                 ${priceUsd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                             </p>
                                         </div>
 
                                         {/* Colonne 3 : Valeur & Balance (Utilisation de valueUsd et quantity) */}
                                         <div className="text-right">
-                                            <p className="text-white font-bold text-sm">
+                                            <p className="text-foreground font-bold text-sm">
                                                 ${valueUsd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                             </p>
-                                            <p className="text-slate-400 text-xs">
+                                            <p className="text-secondary text-xs">
                                                 {quantity.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {asset.symbol}
                                             </p>
                                         </div>
@@ -274,7 +275,7 @@ export default function AssetList({ assets }: { assets: any[] }) {
                                 );
                             })
                         ) : (
-                            <p className="text-slate-500 text-center py-4">Aucune position DeFi trouvée.</p>
+                            <p className="text-secondary text-center py-4">Aucune position DeFi trouvée.</p>
                         )}
                     </div>
                 </div>
