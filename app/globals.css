@@ -3,75 +3,95 @@
 @import "tailwindcss";
 
 :root {
-  /* Light Mode Colors */
-  --background: #F9F9F9;
-  --foreground: #111111;
-  --card-background: #FFFFFF;
-  --border: #E5E7EB;
-  --accent: #3B82F6;
-  --text-secondary: #52525B;
-  --hover-background: #F3F4F6;
-  --shadow-color: rgba(0, 0, 0, 0.05);
-  --glass-background: rgba(255, 255, 255, 0.7);
+  /* --- LIGHT MODE --- */
+  --background: #FFFFFF;
+  --foreground: #0e0e11;
+  --body-background: #FAFAFA;
+  
+  --bar-background: #FAFAFA;
+  --bar-button-background: #155dfc;
+  --bar-button-hover: #dbeafe;
+  --card-background: #FAFAFA;
+  --modal-background: #eff6ff;
+  --modal-border: #8ec5ff;
+
+  --area-background: oklch(0.97 0.014 254.604);
+  --element-background: oklch(0.97 0.014 254.604);
+
+  --button-background: oklch(0.623 0.214 259.815);
+  --button-hover: oklch(0.623 0.214 259.815);
+  
+  --accent: oklch(0.623 0.214 259.815);
+  --accent-hover: oklch(0.623 0.214 259.815);
+  --text-secondary: #71717A;
+  --modal-text: #162456;
+  
+  --border-color: #00000014;
+  --shadow-color: transparent;
 }
 
 .dark {
-  /* Dark Mode Colors */
-  --background: #111111;
-  --foreground: #FFFFFF;
-  --card-background: #1A1A1A;
-  --border: #2A2A2A;
-  --accent: #3B82F6;
-  --text-secondary: #A1A1AA;
-  --hover-background: rgba(255, 255, 255, 0.05);
-  --shadow-color: rgba(0, 0, 0, 0.5);
-  --glass-background: rgba(26, 26, 26, 0.7);
+  /* --- DARK MODE --- */
+  --background: #0e0e11;
+  --foreground: #FAFAFA;
+  --body-background: #18181b;
+  
+  --bar-background: #18181b;
+  --bar-button-background: #155dfc;
+  --bar-button-hover: #162456;
+  --card-background: #18181b;
+  --modal-background: #162456;
+  --modal-border: #193cb8;
+
+
+  --area-background: oklch(0.97 0.014 254.604);
+  --element-background: oklch(0.97 0.014 254.604);
+  
+  --button-background: oklch(0.623 0.214 259.815);
+  --button-hover: oklch(0.623 0.214 259.815);
+  
+  --accent: oklch(0.623 0.214 259.815);
+  --accent-hover: oklch(0.623 0.214 259.815);
+  --text-secondary: #71717A;
+  --modal-text: #dbeafe;
+  
+  --border-color: #27272a;
+  --shadow-color: transparent;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  /* Smooth transition for theme switching */
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* Custom Tailwind classes using CSS variables */
+/* Custom Tailwind classes mapping */
 @layer base {
-  .bg-background {
-    background-color: var(--background);
-  }
+  .bg-background { background-color: var(--background); }
+  .bg-body { background-color: var(--body-background); }
+  .bg-area { background-color: var(--area-background); }
+  .bg-element { background-color: var(--element-background); }
+  .text-foreground { color: var(--foreground); }
+  .bg-card { background-color: var(--card-background); }
+  .bg-bar { background-color: var(--bar-background); }
+  .bg-bar-top { background-color: var(--bar-top-background); }
+  .bg-bar-button { background-color: var(--bar-button-background); }
+  .bg-modal { background-color: var(--modal-background); }
+  .text-modal { color: var(--modal-text); }
+  .text-accent { color: var(--accent); }
+  .text-secondary { color: var(--text-secondary); }
+  
+  /* We redefine the border class to enforce the "no border" rule */
+  .border-card { border-color: var(--border-color); }
+  .border-modal { border-color: var(--modal-border); }
+  
 
-  .text-foreground {
-    color: var(--foreground);
-  }
+  /* The hover background for flat elements */
+  .hover\:bg-hover:hover { background-color: var(--element-hover); }
+  .hover\:bar-button-hover:hover { background-color: var(--bar-button-hover); }
 
-  .bg-card {
-    background-color: var(--card-background);
-  }
-
-  .border-card {
-    border-color: var(--border);
-  }
-
-  .text-accent {
-    color: var(--accent);
-  }
-
-  .text-secondary {
-    color: var(--text-secondary);
-  }
-
-  .hover\:bg-hover {
-    &:hover {
-      background-color: var(--hover-background);
-    }
-  }
-
-  .shadow-custom {
-    box-shadow: 0 4px 6px -1px var(--shadow-color), 0 2px 4px -2px var(--shadow-color);
-  }
-
-  .bg-glass {
-    background-color: var(--glass-background);
-    backdrop-filter: blur(10px);
-  }
+  /* We keep the class name but remove the actual shadow effect */
+  .shadow-custom { box-shadow: none; }
 }

@@ -4,14 +4,10 @@ import { useAccount } from 'wagmi';
 import { ethers } from 'ethers';
 import DashboardLayout from '@/components/DashboardLayout';
 
-// --- ADRESSES À CONFIGURER ---
-// Remplacez par l'adresse de votre FeeManager déployé
+// --- CONFIGURATION ---
 const FEE_MANAGER_ADDRESS = "0x1B299788876893038231f186Ccdaf092767916d2"; 
+const USDC_ADDRESS = "0x036CbD53842c5426634e7929541eC2318f3dCF7e"; 
 
-// Adresse USDC (Base Sepolia par défaut pour les tests, à changer pour le Mainnet)
-const USDC_ADDRESS = "0x036CbD53842c5426634e7929541eC2318f3dCF7e"; // Faux USDC usuel sur Base Sepolia
-
-// --- ABIs MINIMALES ---
 const FEE_MANAGER_ABI = [
   {
     "inputs": [
@@ -441,9 +437,9 @@ const USDC_ABI = [
 ];
 
 const TIERS = [
-  { id: 1, name: "Découverte", credits: 50, price: 0.3, badge: "Populaire" },
-  { id: 2, name: "Pro", credits: 100, price: 0.6, badge: "Rentable" },
-  { id: 3, name: "Studio", credits: 200, price: 1.0, badge: "Meilleur Prix" }
+  { id: 1, name: "Starter", credits: 50, price: 0.3, badge: "Popular" },
+  { id: 2, name: "Pro", credits: 100, price: 0.6, badge: "Best Value" },
+  { id: 3, name: "Studio", credits: 200, price: 1.0, badge: "Best Price" }
 ];
 
 export default function PricingPage() {
@@ -455,11 +451,11 @@ export default function PricingPage() {
   const handlePurchase = async (tierId: number, credits: number, priceUSDC: number) => {
     setIsLoading(tierId);
     setError('');
-    setStatusMsg('Vérification du portefeuille...');
+    setStatusMsg('Checking wallet...');
 
     try {
       const win = window as any;
-      if (!win.ethereum) throw new Error("Portefeuille non détecté");
+      if (!win.ethereum) throw new Error("Wallet not detected");
 
       const provider = new ethers.BrowserProvider(win.ethereum);
       const signer = await provider.getSigner();
@@ -467,35 +463,29 @@ export default function PricingPage() {
       const usdcContract = new ethers.Contract(USDC_ADDRESS, USDC_ABI, signer);
       const feeManagerContract = new ethers.Contract(FEE_MANAGER_ADDRESS, FEE_MANAGER_ABI, signer);
 
-      // L'USDC utilise 6 décimales sur Base (0.3 USDC = 300000 unités)
       const decimals = await usdcContract.decimals();
       const amountToApprove = ethers.parseUnits(priceUSDC.toString(), decimals);
 
-      // 1. Vérification du solde USDC
-      setStatusMsg('Vérification du solde USDC...');
+      setStatusMsg('Checking USDC balance...');
       const balance = await usdcContract.balanceOf(address);
       if (balance < amountToApprove) {
-        throw new Error("Solde USDC insuffisant.");
+        throw new Error("Insufficient USDC balance.");
       }
 
-      // 2. Vérification de l'allocation (Allowance)
-      setStatusMsg('Vérification des autorisations...');
+      setStatusMsg('Checking allowances...');
       const allowance = await usdcContract.allowance(address, FEE_MANAGER_ADDRESS);
       
-      // 3. Approbation (si nécessaire)
       if (allowance < amountToApprove) {
-        setStatusMsg('Veuillez approuver la dépense USDC dans votre portefeuille...');
+        setStatusMsg('Please approve USDC spending in your wallet...');
         const txApprove = await usdcContract.approve(FEE_MANAGER_ADDRESS, amountToApprove);
         await txApprove.wait();
       }
 
-      // 4. Achat de l'abonnement
-      setStatusMsg('Achat en cours, veuillez confirmer la transaction...');
+      setStatusMsg('Purchase in progress, please confirm the transaction...');
       const txPurchase = await feeManagerContract.purchaseSubscription(tierId);
       const receipt = await txPurchase.wait();
 
-      // 5. Sauvegarde en Base de données via notre nouvelle API
-      setStatusMsg('Enregistrement de votre achat...');
+      setStatusMsg('Saving your purchase...');
       const apiRes = await fetch('/api/subscription', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -509,15 +499,15 @@ export default function PricingPage() {
       });
 
       if (!apiRes.ok) {
-        console.warn("L'achat a réussi sur la blockchain, mais l'affichage distant a échoué.");
+        console.warn("Purchase successful on-chain, but dashboard sync failed.");
       }
 
       setStatusMsg('');
-      alert(`🎉 Félicitations ! ${credits} crédits ont été ajoutés à votre compte.`);
+      alert(`🎉 Congratulations! ${credits} credits have been added to your account.`);
 
     } catch (err: any) {
       console.error(err);
-      setError(err.reason || err.message || "Une erreur est survenue lors de l'achat.");
+      setError(err.reason || err.message || "An error occurred during the purchase.");
       setStatusMsg('');
     } finally {
       setIsLoading(null);
@@ -529,31 +519,32 @@ export default function PricingPage() {
     <div className="max-w-5xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
       <div className="text-center mb-12">
         <h2 className="text-3xl font-extrabold text-foreground sm:text-4xl">
-          Déployez en Marque Blanche
+          Deploy with White Label
         </h2>
         <p className="mt-4 text-xl text-secondary">
-          Achetez des crédits en USDC pour supprimer la mention "Créé avec Forgenix" de vos futurs Smart Contracts.
+          Purchase USDC credits to remove "Created with Forgenix" from your future Smart Contracts.
         </p>
       </div>
 
       {error && (
-        <div className="mb-8 p-4 bg-red-900/20 border border-red-500/30 rounded-xl text-red-400 text-center">
-          ❌ {error}
+        <div className="mb-8 p-4 bg-red-500/10 text-red-500 rounded-xl text-center font-medium">
+          {error}
         </div>
       )}
       
       {statusMsg && (
-        <div className="mb-8 p-4 bg-indigo-900/20 border border-indigo-500/30 rounded-xl text-indigo-300 text-center flex justify-center items-center gap-3">
-          <div className="w-4 h-4 rounded-full border-2 border-indigo-400 border-t-transparent animate-spin"></div>
+        <div className="mb-8 p-4 bg-accent/10 text-accent rounded-xl text-center flex justify-center items-center gap-3 font-medium">
+          <div className="w-4 h-4 rounded-full border-2 border-accent border-t-transparent animate-spin"></div>
           {statusMsg}
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {TIERS.map((tier) => (
-          <div key={tier.id} className="bg-card border border-card rounded-2xl p-8 shadow-custom flex flex-col relative overflow-hidden">
+          // Flat design card
+          <div key={tier.id} className="bg-card border border-card rounded-2xl p-6 flex flex-col relative overflow-hidden">
             {tier.badge && (
-              <div className="absolute top-0 right-0 bg-accent text-white text-xs font-bold px-3 py-1 rounded-bl-lg">
+              <div className="absolute top-0 right-0 bg-[#2b7fff] text-white text-xs font-bold px-3 py-1 rounded-bl-lg">
                 {tier.badge}
               </div>
             )}
@@ -563,16 +554,19 @@ export default function PricingPage() {
               {tier.price} <span className="ml-2 text-xl font-medium text-secondary">USDC</span>
             </div>
             <p className="mt-4 text-secondary">
-              Obtenez <strong className="text-foreground">{tier.credits} crédits</strong> de déploiement en marque blanche.
+              Get <strong className="text-foreground">{tier.credits} credits</strong> for white-label deployments.
             </p>
             
             <div className="mt-8 flex-1">
-              <ul className="space-y-4">
+              <ul className="space-y-3">
                 <li className="flex items-center text-secondary">
-                  <span className="text-emerald-400 mr-2">✔</span> Sans mention Forgenix
+                  <span className="text-emerald-500 mr-2">✔</span> No Forgenix branding
                 </li>
                 <li className="flex items-center text-secondary">
-                  <span className="text-emerald-400 mr-2">✔</span> Valable à vie
+                  <span className="text-emerald-500 mr-2">✔</span> 5 credits per deployment
+                </li>
+                <li className="flex items-center text-secondary">
+                  <span className="text-emerald-500 mr-2">✔</span> Valid for life
                 </li>
               </ul>
             </div>
@@ -580,15 +574,15 @@ export default function PricingPage() {
             <button
               onClick={() => handlePurchase(tier.id, tier.credits, tier.price)}
               disabled={isLoading !== null || !isConnected}
-              className={`mt-8 w-full py-3 px-4 rounded-xl font-bold transition-all ${
+              className={`mt-8 w-full py-3 px-4 bg-[#2b7fff] hover:bg-[#1a5fc0] text-white rounded-xl font-bold transition-colors cursor-pointer ${
                 isLoading === tier.id 
-                  ? 'bg-slate-800 text-slate-500 cursor-wait' 
+                  ? 'bg-background text-secondary cursor-wait' 
                   : !isConnected 
-                    ? 'bg-slate-800 text-slate-500 cursor-not-allowed'
-                    : 'bg-accent text-white hover:bg-accent/90 hover:shadow-[0_0_20px_rgba(79,70,229,0.4)]'
+                    ? 'bg-background text-secondary cursor-not-allowed'
+                    : 'bg-accent text-white hover:bg-accent-hover'
               }`}
             >
-              {isLoading === tier.id ? 'Traitement...' : isConnected ? 'Acheter' : 'Connectez-vous'}
+              {isLoading === tier.id ? 'Processing...' : isConnected ? 'Purchase' : 'Connect Wallet'}
             </button>
           </div>
         ))}

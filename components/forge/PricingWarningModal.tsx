@@ -1,7 +1,6 @@
 import React from 'react';
 import { useRouter } from 'next/navigation';
 
-// We define the properties (props) this component needs to receive
 interface PricingWarningModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -10,15 +9,16 @@ interface PricingWarningModalProps {
 export default function PricingWarningModal({ isOpen, onClose }: PricingWarningModalProps) {
   const router = useRouter();
 
-  // If the modal is not open, we render nothing
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
-      <div className="bg-card border border-emerald-500/30 rounded-2xl shadow-custom shadow-2xl max-w-md w-full overflow-hidden animate-in fade-in zoom-in duration-300">
+      {/* Flat Design: No borders, no shadows on the modal itself */}
+      <div className="bg-card rounded-2xl max-w-md w-full overflow-hidden animate-in fade-in zoom-in duration-300">
         <div className="p-8 text-center">
 
-          <div className="w-16 h-16 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center text-3xl shadow-[0_0_20px_rgba(16,185,129,0.3)] mx-auto mb-5">
+          {/* Flat icon background */}
+          <div className="w-16 h-16 bg-emerald-500/20 text-emerald-500 rounded-full flex items-center justify-center text-3xl mx-auto mb-5">
             <i className="fi fi-rr-gem"></i>
           </div>
 
@@ -30,16 +30,18 @@ export default function PricingWarningModal({ isOpen, onClose }: PricingWarningM
           </p>
 
           <div className="flex flex-col gap-3">
+            {/* Flat solid button */}
             <button
               onClick={() => router.push('/pricing')}
-              className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3.5 px-4 rounded-xl transition-all shadow-[0_0_15px_rgba(16,185,129,0.4)]"
+              className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3.5 px-4 rounded-xl transition-colors"
             >
               View Subscription Plans
             </button>
 
+            {/* Secondary flat button */}
             <button
               onClick={onClose}
-              className="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium py-3 px-4 rounded-xl transition-colors"
+              className="w-full bg-background hover:bg-hover text-secondary hover:text-foreground font-medium py-3 px-4 rounded-xl transition-colors"
             >
               Continue with ETH fees
             </button>
