@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from '../../lib/prisma';
 import { fetchAllWalletAssets } from "@/lib/wallet/orchestrator"; // Ton nouveau chef d'orchestre
 import { mergeAssets } from "@/lib/wallet/merge";
-import type { Asset, ApiError } from "@/lib/wallet/types";
+import type { Asset, ApiError, CombinedAssetsResponse} from "@/lib/wallet/types";
 
 export async function POST(req: NextRequest) {
     try {
@@ -133,7 +133,14 @@ export async function POST(req: NextRequest) {
         // 2) LANCEMENT DE L'ORCHESTRATEUR GLOBAL (API MULTIPLES)
         // ====================================================================
         
-        let allAssetsResponse = { assets: [], partial: false, errors: [] as ApiError[] };
+        let allAssetsResponse: CombinedAssetsResponse = { 
+            assets: [], 
+            native: [], 
+            tokens: [], 
+            defi: [], 
+            partial: false, 
+            errors: [] 
+        };
         
         try {
             // C'est désormais l'orchestrateur qui va gérer ses propres limites de temps
