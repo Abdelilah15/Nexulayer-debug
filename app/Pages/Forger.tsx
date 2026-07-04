@@ -115,7 +115,7 @@ export default function Forger({ initialTab }: { initialTab: string }) {
               <label className="flex items-center cursor-pointer">
                 <div className="relative">
                   <input type="checkbox" className="sr-only" checked={isAdvancedMode} onChange={() => setIsAdvancedMode(!isAdvancedMode)} />
-                  <div className={`block w-12 h-7 rounded-full transition-colors ${isAdvancedMode ? 'bg-[#155dfc]' : 'bg-[#1c398e]'}`}></div>
+                  <div className={`block w-12 h-7 rounded-full transition-colors ${isAdvancedMode ? 'bg-[#2b7fff]' : 'bg-[#1c398e]'}`}></div>
                   <div className={`absolute left-1 top-1 bg-white w-5 h-5 rounded-full transition-transform transform ${isAdvancedMode ? 'translate-x-5' : ''}`}></div>
                 </div>
                 <div className="ml-3 text-sm font-medium text-secondary">

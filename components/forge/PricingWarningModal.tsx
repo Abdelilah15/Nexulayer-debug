@@ -14,7 +14,7 @@ export default function PricingWarningModal({ isOpen, onClose }: PricingWarningM
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
       {/* Flat Design: No borders, no shadows on the modal itself */}
-      <div className="bg-card rounded-2xl max-w-md w-full overflow-hidden animate-in fade-in zoom-in duration-300">
+      <div className="bg-card border border-card rounded-2xl max-w-md w-full overflow-hidden animate-in fade-in zoom-in duration-300">
         <div className="p-8 text-center">
 
           {/* Flat icon background */}
@@ -33,7 +33,7 @@ export default function PricingWarningModal({ isOpen, onClose }: PricingWarningM
             {/* Flat solid button */}
             <button
               onClick={() => router.push('/pricing')}
-              className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3.5 px-4 rounded-xl transition-colors"
+              className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3.5 px-4 rounded-xl transition-colors cursor-pointer"
             >
               View Subscription Plans
             </button>
@@ -41,7 +41,7 @@ export default function PricingWarningModal({ isOpen, onClose }: PricingWarningM
             {/* Secondary flat button */}
             <button
               onClick={onClose}
-              className="w-full bg-background hover:bg-hover text-secondary hover:text-foreground font-medium py-3 px-4 rounded-xl transition-colors"
+              className="w-full border border-card text-secondary hover:text-foreground font-medium py-3 px-4 rounded-xl transition-colors cursor-pointer"
             >
               Continue with ETH fees
             </button>
