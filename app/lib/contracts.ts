@@ -1,4 +1,4 @@
-export const FACTORY_ADDRESS = "0xd5FEC534fD525E93e6dbf1e26D98581cfF4Da96d";
+export const FACTORY_ADDRESS = "0xD248946148aAAbA4155A14F2f622FfA7A274564E";
 
 export const FACTORY_ABI = [
   {
@@ -349,13 +349,6 @@ export const FACTORY_ABI = [
   },
   {
     "inputs": [],
-    "name": "pause",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
     "name": "ReentrancyGuardReentrantCall",
     "type": "error"
   },
@@ -388,6 +381,13 @@ export const FACTORY_ABI = [
     ],
     "name": "OwnershipTransferred",
     "type": "event"
+  },
+  {
+    "inputs": [],
+    "name": "pause",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
   },
   {
     "anonymous": false,
@@ -628,6 +628,25 @@ export const FACTORY_ABI = [
         "internalType": "contract IFeeManager",
         "name": "",
         "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "user",
+        "type": "address"
+      }
+    ],
+    "name": "getUserCredits",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
       }
     ],
     "stateMutability": "view",
