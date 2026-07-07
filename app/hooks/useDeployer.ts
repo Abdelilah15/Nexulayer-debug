@@ -140,26 +140,6 @@ export function useDeployer() {
         } catch (err) { }
       }
 
-      // Deduct credit in database if applicable
-      if (data.requestWhiteLabel && data.userCredits > 0 && (data.activeTab === 'token' || data.activeTab === 'nft')) {
-        try {
-          const res = await fetch('/api/user', {
-            method: 'PATCH', 
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ walletAddress: data.address })
-          });
-          
-          if (res.ok) {
-            const apiData = await res.json();
-            if (apiData.credits !== undefined) {
-              data.onCreditDeducted(apiData.credits);
-            }
-          }
-        } catch (dbErr) {
-          console.error("Network error while deducting credit off-chain", dbErr);
-        }
-      }
-
       setIsModalOpen(true);
       setDeployedAddress(extractedAddress);
       

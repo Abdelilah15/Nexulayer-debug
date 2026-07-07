@@ -504,23 +504,6 @@ export default function PricingPage() {
       const txPurchase = await feeManagerContract.purchaseSubscription(tierId);
       const receipt = await txPurchase.wait();
 
-      setStatusMsg('Saving your purchase...');
-      const apiRes = await fetch('/api/subscription', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          txHash: receipt.hash,
-          walletAddress: address,
-          tier: tierId,
-          creditsAdded: credits,
-          amountUSDC: priceUSDC
-        })
-      });
-
-      if (!apiRes.ok) {
-        console.warn("Purchase successful on-chain, but dashboard sync failed.");
-      }
-
       setStatusMsg('');
       alert(`🎉 Congratulations! ${credits} credits have been added to your account.`);
 

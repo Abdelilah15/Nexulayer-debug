@@ -1,28 +1,5 @@
 import { NextResponse } from 'next/server';
 import clientPromise from '../../lib/mongodb';
-import { prisma } from '@/app/lib/prisma'; 
-
-
-// GET: Fetch Prisma (PostgreSQL) credits
-export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const wallet = searchParams.get('wallet');
-
-  if (!wallet) {
-    return NextResponse.json({ error: "Missing wallet address" }, { status: 400 });
-  }
-
-  try {
-    const user = await prisma.user.findUnique({
-      where: { walletAddress: wallet.toLowerCase() }
-    });
-
-    return NextResponse.json({ credits: user?.credits || 0 }, { status: 200 });
-  } catch (error) {
-    console.error("User API Error (GET):", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
-}
 
 // POST: Create or fetch MongoDB user profile
 export async function POST(request: Request) {
@@ -114,39 +91,4 @@ export async function PUT(request: Request) {
         console.error("❌ MONGODB API CRASH (PUT):", error);
         return NextResponse.json({ error: "Internal server error" }, { status: 500 });
     }
-}
-
-// PATCH: Deduct 1 credit in Prisma (PostgreSQL)
-export async function PATCH(request: Request) {
-  try {
-    const body = await request.json();
-    const { walletAddress } = body;
-
-    if (!walletAddress) {
-      return NextResponse.json({ error: "Missing wallet address" }, { status: 400 });
-    }
-
-    const normalizedAddress = walletAddress.toLowerCase();
-
-    const user = await prisma.user.findUnique({
-      where: { walletAddress: normalizedAddress }
-    });
-
-    if (!user || user.credits <= 0) {
-      return NextResponse.json({ error: "Insufficient credits" }, { status: 400 });
-    }
-
-    // Deduct 1 credit securely using Prisma's atomic decrement
-    const updatedUser = await prisma.user.update({
-      where: { walletAddress: normalizedAddress },
-      data: {
-        credits: { decrement: 1 }
-      }
-    });
-
-    return NextResponse.json({ success: true, credits: updatedUser.credits }, { status: 200 });
-  } catch (error) {
-    console.error("Credit deduction error (PATCH):", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
 }
