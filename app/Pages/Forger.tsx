@@ -42,18 +42,29 @@ export default function Forger({ initialTab }: { initialTab: string }) {
       try {
         const win = window as any;
         if (win.ethereum) {
+          console.log("=== DEBUG FORGER CRÉDITS ===");
+          console.log("Adresse utilisateur connecté :", address);
+          console.log("Adresse du Factory ciblée :", FACTORY_ADDRESS);
+
           const provider = new ethers.BrowserProvider(win.ethereum);
+
+          // Vérifions que le wallet est sur le bon réseau
+          const network = await provider.getNetwork();
+          console.log("Chain ID du Wallet Metamask :", network.chainId);
+
           const factoryContract = new ethers.Contract(FACTORY_ADDRESS, FACTORY_ABI, provider);
 
-          // On appelle notre nouvelle fonction pont sur le Factory
+          // Appel on-chain
           const creditsBigInt = await factoryContract.getUserCredits(address);
           const creditsOnChain = Number(creditsBigInt);
+
+          console.log("Crédits récupérés de la blockchain :", creditsOnChain);
 
           setUserCredits(creditsOnChain);
           if (creditsOnChain > 0) setRequestWhiteLabel(true);
         }
       } catch (error) {
-        console.error("Échec de la lecture des crédits sur la blockchain", error);
+        console.error("❌ Échec critique de la lecture des crédits :", error);
         setUserCredits(0);
       }
     };
