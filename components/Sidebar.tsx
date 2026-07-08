@@ -88,6 +88,14 @@ export default function Sidebar() {
           {!isCollapsed && <span className="ml-3">NFT Collection</span>}
         </button>
 
+        <button
+          onClick={() => router.push('/forge?tab=erc1155')}
+          className={`cursor-pointer w-full flex items-center py-2.5 rounded-xl transition-all duration-200 ${currentTab === 'erc1155' ? 'bg-accent/10 text-accent' : 'text-secondary hover:bar-button-hover'} ${isCollapsed ? 'justify-center px-0' : 'px-3 text-sm font-medium'}`}
+        >
+          <i className="fi fi-rr-box flex text-xl"></i>
+          {!isCollapsed && <span className="ml-3">ERC-1155 Token</span>}
+        </button>
+
         <div className="mt-8">
           {!isCollapsed && <p className="px-3 text-xs font-semibold text-secondary uppercase tracking-wider mb-2">Other Services</p>}
           <button disabled title={isCollapsed ? "Auto Deploy" : ""} className={`w-full flex items-center py-2.5 rounded-xl text-secondary/50 cursor-not-allowed opacity-60 ${isCollapsed ? 'justify-center px-0' : 'px-3 text-sm font-medium'}`}>

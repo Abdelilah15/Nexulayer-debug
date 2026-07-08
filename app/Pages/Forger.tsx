@@ -79,6 +79,7 @@ export default function Forger({ initialTab }: { initialTab: string }) {
   const [nftName, setNftName] = useState('My Collection');
   const [nftSymbol, setNftSymbol] = useState('MCN');
   const [nftSupply, setNftSupply] = useState('10');
+  const [erc1155Amount, setErc1155Amount] = useState('100');
   const [isAdvancedMode, setIsAdvancedMode] = useState(false);
   const [mediaFile, setMediaFile] = useState<File | null>(null);
   const [description, setDescription] = useState('');
@@ -95,14 +96,13 @@ export default function Forger({ initialTab }: { initialTab: string }) {
     }
   }, [mediaFile]);
 
-  const getElementType = () => activeTab === 'message' ? 'Message' : activeTab === 'token' ? 'ERC-20 Token' : activeTab === 'nft' ? 'NFT' : 'Basic Contract';
-  const shareText = `🚀 I just deployed a ${getElementType()} contract on ${networkName}!\n\nCreate yours: https://forgnix.vercel.app/forge?tab=${activeTab}\nTrack onchain activity: https://forgnix.vercel.app\n@monx`;
+const getElementType = () => activeTab === 'message' ? 'Message' : activeTab === 'token' ? 'ERC-20 Token' : activeTab === 'nft' ? 'NFT' : activeTab === 'erc1155' ? 'ERC-1155 Edition' : 'Basic Contract';  const shareText = `🚀 I just deployed a ${getElementType()} contract on ${networkName}!\n\nCreate yours: https://forgnix.vercel.app/forge?tab=${activeTab}\nTrack onchain activity: https://forgnix.vercel.app\n@monx`;
   const encodedShareText = encodeURIComponent(shareText);
 
   const calculateFee = () => {
     let base = 0.00003;
     let wlSurcharge = 0;
-    if (isAdvancedMode && (activeTab === 'token' || activeTab === 'nft')) {
+    if (isAdvancedMode && (activeTab === 'token' || activeTab === 'nft' || activeTab === 'erc1155')) {
       base = 0.0001;
       if (requestWhiteLabel && userCredits === 0) wlSurcharge = 0.00008;
     } else {
@@ -131,7 +131,7 @@ export default function Forger({ initialTab }: { initialTab: string }) {
     const success = await deploy({
       activeTab, isAdvancedMode, mediaFile, description, nftName, tokenName,
       socials, requestWhiteLabel, msgText, simpleName, tokenSymbol, tokenSupply,
-      nftSymbol, nftSupply, royaltyFee, currentFeeString, userCredits,
+      nftSymbol, nftSupply, royaltyFee, currentFeeString, userCredits, erc1155Amount,
       address: address as string | undefined,
       onCreditDeducted: (newCredits) => {
         setUserCredits(newCredits);
@@ -242,6 +242,54 @@ export default function Forger({ initialTab }: { initialTab: string }) {
     );
   };
 
+  const renderERC1155Fields = () => {
+    if (isAdvancedMode) {
+      return (
+        <div className="animate-in fade-in duration-500 space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="md:col-span-2 flex flex-col gap-2">
+              <div>
+                <label className="block text-sm font-medium text-secondary mb-2">Edition Name (For Metadata)</label>
+                <input type="text" value={nftName} onChange={(e) => setNftName(e.target.value)} className="w-full border border-card rounded-xl p-4 text-foreground focus:outline-none focus:ring-2 focus:ring-accent/20 transition-all" placeholder="e.g. Genesis Edition" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-secondary mb-2">Amount to Mint</label>
+                <input type="number" value={erc1155Amount} onChange={(e) => setErc1155Amount(e.target.value)} className="w-full border border-card rounded-xl p-4 text-foreground focus:outline-none focus:ring-2 focus:ring-accent/20 transition-all" placeholder="e.g. 500" />
+              </div>
+            </div>
+            <div className="md:col-span-1 flex flex-col">
+              <label className="block text-sm font-medium text-secondary mb-2">Artwork (PNG, GIF)</label>
+              <div onClick={() => fileInputRef.current?.click()} className="group relative flex-grow aspect-square border-2 border-dashed border-card hover:border-accent/50 rounded-xl flex items-center justify-center cursor-pointer overflow-hidden transition-colors bg-background">
+                <input type="file" ref={fileInputRef} className="hidden" accept="image/png, image/jpeg, image/gif" onChange={handleImageChange} />
+                {previewUrl ? (
+                  <>
+                    <img src={previewUrl} alt="Preview" className="object-cover w-full h-full absolute inset-0" />
+                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity duration-300">
+                      <span className="bg-accent text-white px-4 py-2 rounded-lg text-sm font-medium shadow-lg flex items-center gap-2"><i className="fi fi-rr-picture"></i> Changer l'image</span>
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex flex-col items-center justify-center text-secondary group-hover:text-accent transition-colors p-4 text-center">
+                    <i className="fi fi-rr-picture text-3xl mb-2"></i>
+                    <span className="text-xs font-medium bg-card px-3 py-1.5 rounded-lg group-hover:bg-accent/10">Importer une image</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // En mode simple, on ne demande que le montant (pas de nom, pas d'IPFS)
+    return (
+      <div className="animate-in fade-in duration-500">
+        <label className="block text-sm font-medium text-secondary mb-2">Amount to Mint</label>
+        <input type="number" value={erc1155Amount} onChange={(e) => setErc1155Amount(e.target.value)} className="w-full border border-card rounded-xl p-4 text-foreground focus:outline-none focus:ring-2 focus:ring-accent/20 transition-all" placeholder="e.g. 100" />
+      </div>
+    );
+  };
+
   return (
     <div className="bg-card border border-card rounded-2xl overflow-hidden mb-8">
       <div className="p-8">
@@ -250,7 +298,7 @@ export default function Forger({ initialTab }: { initialTab: string }) {
         <div className="space-y-6 mb-8">
 
           {/* ADVANCED MODE TOGGLE */}
-          {(activeTab === 'token' || activeTab === 'nft') && (
+          {(activeTab === 'token' || activeTab === 'nft' || activeTab === 'erc1155') && (
             <div className="mb-6 flex items-center animate-in fade-in duration-500">
               <label className="flex items-center cursor-pointer">
                 <div className="relative">
@@ -266,7 +314,7 @@ export default function Forger({ initialTab }: { initialTab: string }) {
           )}
 
           {/* WHITE LABEL OPTION */}
-          {(activeTab === 'token' || activeTab === 'nft') && (
+          {(activeTab === 'token' || activeTab === 'nft' || activeTab === 'erc1155') && (
             userCredits > 0 ? (
               <div className="p-5 bg-emerald-500/10 rounded-xl animate-in fade-in duration-300 flex items-center justify-between">
                 <div>
@@ -313,9 +361,10 @@ export default function Forger({ initialTab }: { initialTab: string }) {
 
           {/* Rendu dynamique des champs Token ou NFT (gère le mode avancé et basique) */}
           {(activeTab === 'token' || activeTab === 'nft') && renderTokenOrNftFields()}
+          {activeTab === 'erc1155' && renderERC1155Fields()}
 
           {/* ADVANCED MODE FIELDS (Description & Socials) */}
-          {isAdvancedMode && (activeTab === 'token' || activeTab === 'nft') && (
+          {isAdvancedMode && (activeTab === 'token' || activeTab === 'nft' || activeTab === 'erc1155') && (
             <div className=" animate-in slide-in-from-top-4 duration-300 pt-2">
               <h4 className="text-accent font-medium mb-4 flex items-center gap-2">Advanced Settings</h4>
               <div className="space-y-5">
@@ -343,7 +392,7 @@ export default function Forger({ initialTab }: { initialTab: string }) {
                 </div>
 
                 {/* Royalties */}
-                {activeTab === 'nft' && (
+                {(activeTab === 'nft' || activeTab === 'erc1155') && (
                   <div className="pt-4">
                     <label className="block text-sm font-medium text-secondary mb-2">Royalties (OpenSea resales)</label>
                     <div className="flex items-center gap-3">

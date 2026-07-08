@@ -19,6 +19,7 @@ export interface DeployFormData {
   nftSymbol: string;
   nftSupply: string;
   royaltyFee: string;
+  erc1155Amount: string;
   currentFeeString: string;
   userCredits: number;
   address: string | undefined;
@@ -52,7 +53,7 @@ export function useDeployer() {
     const imageUrl = `ipfs://${fileData.ipfsHash}`;
 
     const metadata = {
-      name: data.activeTab === 'nft' ? data.nftName : data.tokenName,
+      name: (data.activeTab === 'nft' || data.activeTab === 'erc1155') ? data.nftName : data.tokenName,
       description: data.description,
       image: imageUrl,
       external_link: data.socials.website,
@@ -104,7 +105,7 @@ export function useDeployer() {
       let tx;
       let metadataURI = "";
 
-      if (data.isAdvancedMode && (data.activeTab === 'token' || data.activeTab === 'nft')) {
+      if (data.isAdvancedMode && (data.activeTab === 'token' || data.activeTab === 'nft' || data.activeTab === 'erc1155')) {
         metadataURI = await uploadToIPFS(data);
       }
 
@@ -124,6 +125,12 @@ export function useDeployer() {
         } else {
           tx = await factoryContract.deploySimpleNFT(data.nftName, data.nftSymbol, data.nftSupply, data.requestWhiteLabel, { value: fee });
         }
+      } else if (data.activeTab === 'erc1155') {
+        if (data.isAdvancedMode) {
+          tx = await factoryContract.deployAdvancedERC1155(metadataURI, data.erc1155Amount, data.royaltyFee, data.requestWhiteLabel, { value: fee });
+        } else {
+          tx = await factoryContract.deploySimpleERC1155("", data.erc1155Amount, { value: fee });
+        }
       }
 
       const receipt = await tx.wait();
@@ -140,7 +147,7 @@ export function useDeployer() {
         } catch (err) { }
       }
 
-      if (data.requestWhiteLabel && data.userCredits > 0 && (data.activeTab === 'token' || data.activeTab === 'nft')) {
+      if (data.requestWhiteLabel && data.userCredits > 0 && (data.activeTab === 'token' || data.activeTab === 'nft' || data.activeTab === 'erc1155')) {
         data.onCreditDeducted(data.userCredits - 1);
       }
 
