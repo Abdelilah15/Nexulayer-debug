@@ -129,7 +129,7 @@ export function useDeployer() {
         if (data.isAdvancedMode) {
           tx = await factoryContract.deployAdvancedERC1155(metadataURI, data.erc1155Amount, data.royaltyFee, data.requestWhiteLabel, { value: fee });
         } else {
-          tx = await factoryContract.deploySimpleERC1155("", data.erc1155Amount, { value: fee });
+          tx = await factoryContract.deploySimpleERC1155("", data.erc1155Amount, data.requestWhiteLabel, { value: fee });
         }
       }
 
