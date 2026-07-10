@@ -25,6 +25,7 @@ export interface DeployFormData {
   currentFeeString: string;
   userCredits: number;
   address: string | undefined;
+  feeWei: bigint;
   onCreditDeducted: (newCredits: number) => void;
 }
 
@@ -102,7 +103,7 @@ export function useDeployer() {
 
       const signer = await provider.getSigner();
       const factoryContract = new ethers.Contract(FACTORY_ADDRESS, FACTORY_ABI, signer);
-      const fee = ethers.parseEther(data.currentFeeString);
+      const fee = data.feeWei;
 
       let tx;
       let metadataURI = "";

@@ -106,31 +106,45 @@ export default function Forger({ initialTab }: { initialTab: string }) {
   const shareText = `🚀 I just deployed a ${getElementType()} contract on ${networkName}!\n\nCreate yours: https://forgnix.vercel.app/forge?tab=${activeTab}\nTrack onchain activity: https://forgnix.vercel.app\n@monx`;
   const encodedShareText = encodeURIComponent(shareText);
 
-  const calculateFee = () => {
+  const calculateFeeWei = (): bigint => {
+    const hasCredits = userCredits > 0;
 
+    // message/simple => _handlePayment(false, false)
+    if (activeTab === 'message' || activeTab === 'simple') {
+      return ethers.parseEther('0.00003');
+    }
+
+    // B20 => _handleB20Payment(...)
     if (activeTab === 'b20') {
-      let base = 0.00005; // B20_SIMPLE_MODE_FEE
-      let wlSurcharge = 0;
-      if (isAdvancedMode) {
-        base = 0.0001; // B20_ADVANCED_MODE_FEE
-        if (requestWhiteLabel && userCredits === 0) wlSurcharge = 0.0001; // WL_B20_ADVANCED_ADDITIONAL
-      } else {
-        if (requestWhiteLabel && userCredits === 0) wlSurcharge = 0.00005; // WL_B20_SIMPLE_ADDITIONAL
-      }
-      return (base + wlSurcharge).toFixed(5);
+      const base = isAdvancedMode
+        ? ethers.parseEther('0.0001')
+        : ethers.parseEther('0.00005');
+
+      if (!requestWhiteLabel || hasCredits) return base;
+
+      const wl = isAdvancedMode
+        ? ethers.parseEther('0.0001')
+        : ethers.parseEther('0.00005');
+
+      return base + wl;
     }
 
-    let base = 0.00003;
-    let wlSurcharge = 0;
-    if (isAdvancedMode && (activeTab === 'token' || activeTab === 'nft' || activeTab === 'erc1155')) {
-      base = 0.0001;
-      if (requestWhiteLabel && userCredits === 0) wlSurcharge = 0.00008;
-    } else {
-      if (requestWhiteLabel && userCredits === 0) wlSurcharge = 0.00005;
-    }
-    return (base + wlSurcharge).toFixed(5);
+    // token/nft/erc1155 => _handlePayment(...)
+    const base = isAdvancedMode
+      ? ethers.parseEther('0.0001')
+      : ethers.parseEther('0.00003');
+
+    if (!requestWhiteLabel || hasCredits) return base;
+
+    const wl = isAdvancedMode
+      ? ethers.parseEther('0.00008')
+      : ethers.parseEther('0.00005');
+
+    return base + wl;
   };
-  const currentFeeString = calculateFee();
+
+  const feeWei = calculateFeeWei();
+  const currentFeeString = ethers.formatEther(feeWei);
 
   // Gestion du changement d'image pour générer l'aperçu
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -151,7 +165,7 @@ export default function Forger({ initialTab }: { initialTab: string }) {
     const success = await deploy({
       activeTab, isAdvancedMode, mediaFile, description, nftName, tokenName,
       socials, requestWhiteLabel, msgText, simpleName, tokenSymbol, tokenSupply,
-      nftSymbol, nftSupply, royaltyFee, currentFeeString, userCredits, erc1155Amount,
+      nftSymbol, nftSupply, royaltyFee, feeWei, currentFeeString, userCredits, erc1155Amount,
       decimals: parseInt(decimals) || 18,
       address: address as string | undefined,
       onCreditDeducted: (newCredits) => {
