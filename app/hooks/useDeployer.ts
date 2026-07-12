@@ -7,6 +7,8 @@ import { FACTORY_ADDRESS, FACTORY_ABI } from '../lib/contracts';
 export interface DeployFormData {
   activeTab: string;
   isAdvancedMode: boolean;
+  b20Type: 'asset' | 'stablecoin';
+  currencyCode: string;
   mediaFile: File | null;
   description: string;
   nftName: string;
@@ -68,7 +70,7 @@ export function useDeployer() {
         { trait_type: "Github", value: data.socials.github },
         { trait_type: "Tags", value: data.socials.tags },
       ],
-      isWhiteLabeled: data.requestWhiteLabel 
+      isWhiteLabeled: data.requestWhiteLabel
     };
 
     const jsonRes = await fetch("/api/ipfs/json", {
@@ -92,7 +94,7 @@ export function useDeployer() {
 
       const provider = new ethers.BrowserProvider(win.ethereum);
       const network = await provider.getNetwork();
-      
+
       if (Number(network.chainId) === 8453) {
         setExplorerUrl('https://basescan.org');
         setNetworkName('Base Mainnet');
@@ -124,17 +126,32 @@ export function useDeployer() {
           tx = await factoryContract.deploySimpleERC20(data.tokenName, data.tokenSymbol, data.tokenSupply, data.requestWhiteLabel, { value: fee });
         }
       } else if (data.activeTab === 'b20') {
-        const b20Decimals = data.decimals || 18;
-        // The Precompile strictly expects the supply to account for decimals
-        const b20SupplyCap = ethers.parseUnits(data.tokenSupply, b20Decimals);
-        
-        // Generate a secure, deterministic salt for the Base precompile factory call
         const salt = keccak256(toBytes(`forgenix-b20-${data.tokenName}-${Date.now()}`));
 
-        if (data.isAdvancedMode) {
-          tx = await factoryContract.deployAdvancedB20(salt, data.tokenName, data.tokenSymbol, b20Decimals, b20SupplyCap, metadataURI, data.requestWhiteLabel, { value: fee });
+        if (data.b20Type === 'stablecoin') {
+          // Le Stablecoin est strictement limité à 6 décimales par le précompilé Base
+          const b20SupplyCap = ethers.parseUnits(data.tokenSupply, 6);
+
+          tx = await factoryContract.deployAdvancedB20Stablecoin(
+            salt,
+            data.tokenName,
+            data.tokenSymbol,
+            data.currencyCode,
+            b20SupplyCap,
+            metadataURI,
+            data.requestWhiteLabel,
+            { value: fee }
+          );
         } else {
-          tx = await factoryContract.deploySimpleB20(salt, data.tokenName, data.tokenSymbol, b20Decimals, b20SupplyCap, data.requestWhiteLabel, { value: fee });
+          // Logique B20 Asset classique
+          const b20Decimals = data.decimals || 18;
+          const b20SupplyCap = ethers.parseUnits(data.tokenSupply, b20Decimals);
+
+          if (data.isAdvancedMode) {
+            tx = await factoryContract.deployAdvancedB20(salt, data.tokenName, data.tokenSymbol, b20Decimals, b20SupplyCap, metadataURI, data.requestWhiteLabel, { value: fee });
+          } else {
+            tx = await factoryContract.deploySimpleB20(salt, data.tokenName, data.tokenSymbol, b20Decimals, b20SupplyCap, data.requestWhiteLabel, { value: fee });
+          }
         }
       } else if (data.activeTab === 'nft') {
         if (data.isAdvancedMode) {
@@ -158,7 +175,7 @@ export function useDeployer() {
         try {
           const parsed = factoryContract.interface.parseLog(log);
           if (parsed && parsed.name === 'ProxyDeployed') {
-            extractedAddress = parsed.args[0]; 
+            extractedAddress = parsed.args[0];
             break;
           }
         } catch (err) { }
@@ -171,7 +188,7 @@ export function useDeployer() {
 
       setIsModalOpen(true);
       setDeployedAddress(extractedAddress);
-      
+
       return true;
 
     } catch (error: any) {
@@ -184,7 +201,7 @@ export function useDeployer() {
   };
 
   return {
-    isLoading, txHash, error, explorerUrl, isModalOpen, setIsModalOpen, 
+    isLoading, txHash, error, explorerUrl, isModalOpen, setIsModalOpen,
     networkName, deployedAddress, deploy, resetStates
   };
 }

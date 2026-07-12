@@ -4,11 +4,12 @@ import { useAccount } from 'wagmi';
 import { ethers } from 'ethers';
 import { FACTORY_ADDRESS, FACTORY_ABI } from '../lib/contracts';
 import { useRouter } from 'next/navigation';
-
-// Import our extracted components and logic
 import SuccessModal from '../../components/forge/SuccessModal';
 import PricingWarningModal from '../../components/forge/PricingWarningModal';
 import { useDeployer } from '../../app/hooks/useDeployer';
+import DeploymentHistory from '../../components/forge/DeploymentHistory';
+
+
 
 export default function Forger({ initialTab }: { initialTab: string }) {
   const { address, isConnected } = useAccount();
@@ -88,6 +89,8 @@ export default function Forger({ initialTab }: { initialTab: string }) {
   const [requestWhiteLabel, setRequestWhiteLabel] = useState(false);
   const [isPricingModalOpen, setIsPricingModalOpen] = useState(false);
   const [royaltyFee, setRoyaltyFee] = useState('500');
+  const [b20Type, setB20Type] = useState<'asset' | 'stablecoin'>('asset');
+  const [currencyCode, setCurrencyCode] = useState('USD');
   const [socials, setSocials] = useState({ website: '', twitter: '', telegram: '', discord: '', farcaster: '', github: '', tags: '' });
 
   // Effacer l'aperçu si l'image est retirée (ex: après un déploiement réussi)
@@ -97,10 +100,16 @@ export default function Forger({ initialTab }: { initialTab: string }) {
     }
   }, [mediaFile]);
 
+  useEffect(() => {
+    if (!isAdvancedMode && b20Type === 'stablecoin') {
+      setB20Type('asset');
+    }
+  }, [isAdvancedMode, b20Type]);
+
   const getElementType = () =>
     activeTab === 'message' ? 'Message' :
       activeTab === 'token' ? 'ERC-20 Token' :
-        activeTab === 'b20' ? 'B20 Native Asset' :
+        activeTab === 'b20' ? (b20Type === 'stablecoin' ? 'B20 Stablecoin' : 'B20 Native Asset') :
           activeTab === 'nft' ? 'NFT' :
             activeTab === 'erc1155' ? 'ERC-1155 Edition' : 'Basic Contract';
   const shareText = `🚀 I just deployed a ${getElementType()} contract on ${networkName}!\n\nCreate yours: https://forgnix.vercel.app/forge?tab=${activeTab}\nTrack onchain activity: https://forgnix.vercel.app\n@monx`;
@@ -167,6 +176,7 @@ export default function Forger({ initialTab }: { initialTab: string }) {
       socials, requestWhiteLabel, msgText, simpleName, tokenSymbol, tokenSupply,
       nftSymbol, nftSupply, royaltyFee, feeWei, currentFeeString, userCredits, erc1155Amount,
       decimals: parseInt(decimals) || 18,
+      b20Type, currencyCode,
       address: address as string | undefined,
       onCreditDeducted: (newCredits) => {
         setUserCredits(newCredits);
@@ -181,6 +191,7 @@ export default function Forger({ initialTab }: { initialTab: string }) {
   };
 
   // Fonction de rendu dynamique pour les champs Token/NFT selon le mode
+  // Fonction de rendu dynamique pour les champs Token/NFT selon le mode
   const renderTokenOrNftFields = () => {
     const isToken = activeTab === 'token' || activeTab === 'b20';
 
@@ -192,9 +203,19 @@ export default function Forger({ initialTab }: { initialTab: string }) {
     const supVal = activeTab === 'token' || activeTab === 'b20' ? tokenSupply : nftSupply;
     const setSup = activeTab === 'token' || activeTab === 'b20' ? setTokenSupply : setNftSupply;
 
-    const nameLabel = activeTab === 'b20' ? 'B20 Asset Name' : isToken ? 'Token Name' : 'Collection Name';
-    const namePlaceholder = activeTab === 'b20' ? 'e.g. Base Native Gold' : isToken ? 'e.g. Forgenix Coin' : 'e.g. Bored Ape';
-    const symPlaceholder = activeTab === 'b20' ? 'e.g. BNG' : isToken ? 'e.g. FRGX' : 'e.g. BAPE';
+    // 👇 MODIFICATIONS ICI : Ajout de la condition b20Type === 'stablecoin'
+    const nameLabel = activeTab === 'b20'
+      ? (b20Type === 'stablecoin' ? 'Stablecoin Name' : 'B20 Asset Name')
+      : isToken ? 'Token Name' : 'Collection Name';
+
+    const namePlaceholder = activeTab === 'b20'
+      ? (b20Type === 'stablecoin' ? 'e.g. Base USD' : 'e.g. Base Native Gold')
+      : isToken ? 'e.g. Forgenix Coin' : 'e.g. Bored Ape';
+
+    const symPlaceholder = activeTab === 'b20'
+      ? (b20Type === 'stablecoin' ? 'e.g. USDb' : 'e.g. BNG')
+      : isToken ? 'e.g. FRGX' : 'e.g. BAPE';
+
     const supLabel = activeTab === 'b20' ? 'Initial Supply Cap' : isToken ? 'Total Supply' : 'Number of NFTs to mint';
     const supPlaceholder = isToken ? 'e.g. 1000000' : 'e.g. 10';
     const imageLabel = isToken ? 'Token Logo (PNG, JPG)' : 'Artwork (PNG, JPG, GIF)';
@@ -202,6 +223,21 @@ export default function Forger({ initialTab }: { initialTab: string }) {
     if (isAdvancedMode) {
       return (
         <div className="animate-in fade-in duration-500 space-y-6">
+
+          {/* SÉLECTEUR B20 ASSET vs STABLECOIN */}
+          {activeTab === 'b20' && (
+            <div className="bg-background border border-card rounded-xl p-4 flex gap-6">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="radio" name="b20Type" value="asset" checked={b20Type === 'asset'} onChange={() => setB20Type('asset')} className="accent-[#2b7fff]" />
+                <span className="text-sm font-medium text-foreground">Standard Asset</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="radio" name="b20Type" value="stablecoin" checked={b20Type === 'stablecoin'} onChange={() => setB20Type('stablecoin')} className="accent-[#2b7fff]" />
+                <span className="text-sm font-medium text-foreground">Stablecoin (6 Decimals)</span>
+              </label>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="md:col-span-2 flex flex-col gap-4">
               <div>
@@ -217,10 +253,18 @@ export default function Forger({ initialTab }: { initialTab: string }) {
                   <label className="block text-sm font-medium text-secondary mb-2">{supLabel}</label>
                   <input type="number" value={supVal} onChange={(e) => setSup(e.target.value)} className="w-full border border-card rounded-xl p-4 text-foreground focus:outline-none focus:ring-2 focus:ring-accent/20 transition-all" placeholder={supPlaceholder} />
                 </div>
-                {activeTab === 'b20' && (
+
+                {/* AFFICHAGE CONDITIONNEL DECIMALS vs CURRENCY CODE */}
+                {activeTab === 'b20' && b20Type === 'asset' && (
                   <div>
                     <label className="block text-sm font-medium text-secondary mb-2">Decimals (6 - 18)</label>
                     <input type="number" min="6" max="18" value={decimals} onChange={(e) => setDecimals(e.target.value)} className="w-full border border-card rounded-xl p-4 text-foreground focus:outline-none focus:ring-2 focus:ring-accent/20 transition-all" placeholder="18" />
+                  </div>
+                )}
+                {activeTab === 'b20' && b20Type === 'stablecoin' && (
+                  <div>
+                    <label className="block text-sm font-medium text-secondary mb-2">Currency Code</label>
+                    <input type="text" value={currencyCode} onChange={(e) => setCurrencyCode(e.target.value)} className="w-full border border-card rounded-xl p-4 text-foreground focus:outline-none focus:ring-2 focus:ring-accent/20 transition-all" placeholder="e.g. USD, EUR, JPY" />
                   </div>
                 )}
               </div>
@@ -324,8 +368,8 @@ export default function Forger({ initialTab }: { initialTab: string }) {
   };
 
   return (
-    <div className="bg-card border border-card rounded-2xl overflow-hidden mb-8">
-      <div className="p-8">
+    <div className="">
+      <div className="bg-card border border-card rounded-2xl overflow-hidden mb-8 p-8">
 
         {/* DYNAMIC FORMS */}
         <div className="space-y-6 mb-8">
@@ -360,7 +404,7 @@ export default function Forger({ initialTab }: { initialTab: string }) {
                 </div>
               </div>
             ) : (
-              <div className="p-5 bg-background rounded-xl animate-in fade-in duration-300 flex items-center justify-between">
+              <div className="p-5 bg-background border border-card rounded-xl animate-in fade-in duration-300 flex items-center justify-between">
                 <div>
                   <h4 className="text-accent font-medium flex items-center gap-2"><i className="fi fi-rr-gem"></i> White Label</h4>
                   <p className="text-sm text-secondary mt-1 max-w-[80%]">Removes Forgenix branding from your smart contracts.</p>
@@ -477,6 +521,15 @@ export default function Forger({ initialTab }: { initialTab: string }) {
           onClose={() => setIsPricingModalOpen(false)}
         />
       </div>
+
+      {/* Deployment History */}
+      <DeploymentHistory
+        address={address}
+        activeTab={activeTab}
+        explorerUrl={explorerUrl}
+        refreshTrigger={txHash || "init"}
+      />
+
     </div>
   );
 }

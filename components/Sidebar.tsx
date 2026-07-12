@@ -15,7 +15,7 @@ export default function Sidebar() {
 
   return (
     // Replaced glassmorphism, shadows, and borders with a solid flat bg-card
-    <aside className={`flex-shrink-0 flex flex-col z-20 transition-all duration-300 bg-bar ${isCollapsed ? 'w-20' : 'w-64'}`}>
+    <aside className={`flex-shrink-0 flex flex-col z-20 transition-all duration-300 bg-bar ${isCollapsed ? 'w-22' : 'w-64'}`}>
 
       {/* 1. LOGO & TOGGLE BUTTON */}
       <div className={`h-20 flex items-center ${isCollapsed ? 'justify-center' : 'justify-between px-6'}`}>
@@ -44,7 +44,7 @@ export default function Sidebar() {
       </div>
 
       {/* 2. NAVIGATION MENU */}
-      <nav className={`flex-1 overflow-y-auto py-6 space-y-2 ${isCollapsed ? 'px-2' : 'px-4'}`}>
+      <nav className={`flex-1 overflow-y-auto py-6 space-y-3 ${isCollapsed ? 'px-2' : 'px-4'}`}>
 
 
         <button
@@ -84,7 +84,7 @@ export default function Sidebar() {
           onClick={() => router.push('/forge?tab=b20')}
           className={`cursor-pointer w-full flex items-center py-2.5 rounded-xl transition-all duration-200 ${currentTab === 'b20' ? 'bg-accent/10 text-accent' : 'text-secondary hover:bar-button-hover'} ${isCollapsed ? 'justify-center px-0' : 'px-3 text-sm font-medium'}`}
         >
-          <i className="fi fi-rr-bolt flex text-lg"></i>
+          <i className="fi fi-rr-bolt flex text-xl"></i>
           {!isCollapsed && <span className='ml-3'>B20 Asset (Base)</span>}
         </button>
 

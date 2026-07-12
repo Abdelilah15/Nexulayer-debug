@@ -1,4 +1,4 @@
-export const FACTORY_ADDRESS = "0xa54ca1e2f00fe3a084c7234ce8a3d40acd819bcb";
+export const FACTORY_ADDRESS = "0x795c98dc5f6cc9c9baaf89e8b69c832ac1ce8984";
 
 export const FACTORY_ABI = [
     {
@@ -312,6 +312,55 @@ export const FACTORY_ABI = [
         }
       ],
       "name": "deployAdvancedB20",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "payable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "salt",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "string",
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "symbol",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "currencyCode",
+          "type": "string"
+        },
+        {
+          "internalType": "uint256",
+          "name": "initialSupplyCap",
+          "type": "uint256"
+        },
+        {
+          "internalType": "string",
+          "name": "metadataUri",
+          "type": "string"
+        },
+        {
+          "internalType": "bool",
+          "name": "requestWhiteLabel",
+          "type": "bool"
+        }
+      ],
+      "name": "deployAdvancedB20Stablecoin",
       "outputs": [
         {
           "internalType": "address",
