@@ -356,7 +356,7 @@ export default function DeploymentHistory({ address, activeTab, explorerUrl, ref
                   </div>
                 ) : (
                   <div className="w-12 h-12 rounded-xl bg-accent/10 text-accent flex items-center justify-center text-xl shrink-0 border border-accent/20">
-                    <i className="fi fi-rr-document-signed"></i>
+                    <i className="fi fi-rr-document-signed flex"></i>
                   </div>
                 )}
 

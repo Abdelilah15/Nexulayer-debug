@@ -4,12 +4,7 @@ import React from 'react';
 interface Props {
     size?: number;
     className?: string;
-    /** Liste des lettres à cacher (ex: ['F', 'O']). L'espace sera comblé. */
     hideLetters?: string[];
-    /** 
-     * Objet pour colorer des lettres spécifiques. 
-     * ex: {{ 'X': '#FF0000', 'N': 'text-blue-500' }} 
-     */
     coloredLetters?: Record<string, string>;
 }
 
@@ -27,7 +22,7 @@ export function ForgenixLogo({
             aria-label="Forgenix Logo"
         >
             <g
-                fill="currentColor" // Rend la couleur dynamique (hérite de la classe text-blue-500 par exemple)
+                fill="currentColor" 
                 transform="translate(-325.632 -264.192) scale(1.024)"
             >
                 <rect x="415" y="258" width="300" height="100" />
@@ -49,9 +44,6 @@ export function ForgenixText({
     // Largeur de base du viewBox
     const originalWidth = 265.10;
 
-    // Pour calculer le décalage, nous avons mesuré précisément la position 
-    // et l'espace occupé par chaque lettre dans le SVG original.
-    // L'"advance" correspond à la largeur de la lettre + la marge jusqu'à la suivante.
     const letterMetrics = [
         { char: 'F', advance: 29.55 }, // Largeur F + espace jusqu'au O
         { char: 'O', advance: 41.20 }, // Espace O -> R
@@ -77,26 +69,19 @@ export function ForgenixText({
 
     const isHidden = (char: string) => hideLetters.includes(char);
 
-    // 1. Calculer le décalage dynamique pour chaque lettre
-    // Si une lettre précédente est cachée, on accumule son "advance" (sa largeur + espace)
     let accumulatedShift = 0;
-
-    // 2. Calculer la nouvelle largeur totale du viewBox 
-    // (pour que l'image globale se rétrécisse et qu'il n'y ait pas de vide à la fin)
     let totalRemovedWidth = 0;
 
     const renderLetters = letterMetrics.map((metric, index) => {
         if (isHidden(metric.char)) {
-            // Si la lettre est cachée, on augmente le décalage pour les lettres suivantes
             accumulatedShift += metric.advance;
             totalRemovedWidth += metric.advance;
             return null;
         }
 
-        // Si une couleur personnalisée est passée, on l'utilise. Sinon, currentColor (hérite du parent).
+        
         const fillValue = coloredLetters[metric.char]
             ? coloredLetters[metric.char]
-            // Si c'est une classe Tailwind (comme 'text-red-500'), on laisse CSS gérer.
             : "currentColor";
 
         const isTailwindClass = coloredLetters[metric.char] && coloredLetters[metric.char].includes('text-');
@@ -104,7 +89,7 @@ export function ForgenixText({
         return (
             <path
                 key={metric.char}
-                // On translate vers la gauche (-X) d'autant de pixels que l'espace vide créé
+                
                 transform={`translate(-${accumulatedShift}, 0)`}
                 d={paths[metric.char as keyof typeof paths]}
                 fill={isTailwindClass ? "currentColor" : fillValue}
@@ -113,7 +98,7 @@ export function ForgenixText({
         );
     });
 
-    // La nouvelle largeur du SVG correspond à la largeur d'origine MOINS l'espace des lettres supprimées.
+    
     const newViewBoxWidth = originalWidth - totalRemovedWidth;
     const ratio = newViewBoxWidth / 35.5;
     const calculatedWidth = size * ratio;
@@ -122,7 +107,6 @@ export function ForgenixText({
         <svg
             width={calculatedWidth}
             height={size}
-            // Le viewBox s'ajuste dynamiquement pour couper l'espace vide à droite
             viewBox={`0 9 ${newViewBoxWidth} 35.5`}
             data-asc="0.878"
             className={className}

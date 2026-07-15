@@ -1,51 +1,83 @@
 'use client';
 import React, { useState } from 'react';
-import { useRouter, useSearchParams, usePathname } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import ThemeToggle from './ThemeToggle';
+import Forgenix, { ForgenixLogo, ForgenixText } from '@/components/ui/ForgenixLogo';
 
 export default function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const router = useRouter();
-  const searchParams = useSearchParams();
   const pathname = usePathname();
 
-  // Determine which button is active
-  const currentTab = searchParams.get('tab');
-  const isHome = !currentTab && pathname === '/' && !currentTab;
+  // Déterminer quel bouton est actif en fonction de l'URL
+  const isHome = pathname === '/' || pathname === '/dashboard';
+  const isSimple = pathname.includes('/forge/simple');
+  const isMessage = pathname.includes('/forge/message');
+  const isERC20 = pathname.includes('/forge/erc20');
+  const isB20 = pathname.includes('/forge/b20');
+  const isERC721 = pathname.includes('/forge/erc721');
+  const isERC1155 = pathname.includes('/forge/erc1155');
 
   return (
     // Replaced glassmorphism, shadows, and borders with a solid flat bg-card
-    <aside className={`flex-shrink-0 flex flex-col z-20 transition-all duration-300 bg-bar ${isCollapsed ? 'w-22' : 'w-64'}`}>
+    <aside className={`flex-shrink-0 flex flex-col z-20 transition-all duration-300 bg-bar ${isCollapsed ? 'w-22' : 'w-72'}`}>
 
       {/* 1. LOGO & TOGGLE BUTTON */}
-      <div className={`h-20 flex items-center ${isCollapsed ? 'justify-center' : 'justify-between px-6'}`}>
-        <div className="flex items-center">
-          <div
-            className="w-8 h-8 bg-accent rounded-xl flex items-center justify-center flex-shrink-0 cursor-pointer"
+      <div
+        className={`h-20 flex items-center ${isCollapsed ? "justify-center" : "justify-between px-6"
+          }`}
+      >
+        {isCollapsed ? (
+          // Sidebar réduite : logo uniquement
+          <button
+            type="button"
             onClick={() => setIsCollapsed(false)}
+            className="flex h-12 w-12 items-center justify-center rounded-xl cursor-pointer ml-2 mt-4"
           >
-            <span className="text-lg font-bold text-white">F</span>
-          </div>
-          {!isCollapsed && (
-            <h1 className="text-xl font-bold tracking-wide text-foreground ml-3 whitespace-nowrap">
-              Forgenix
-            </h1>
-          )}
-        </div>
-
-        {/* Collapse button */}
-        {!isCollapsed && (
-          <button onClick={() => setIsCollapsed(true)} className="text-secondary hover:text-foreground transition-colors cursor-pointer">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
-            </svg>
+            <ForgenixLogo className="text-[#0052FF]" size={36} />
           </button>
+        ) : (
+          <>
+            {/* Sidebar ouverte : logo + texte */}
+            <div className="flex items-center mr-4">
+              <button
+                type="button"
+                className="flex h-12 w-12 items-center justify-center"
+              >
+                <ForgenixLogo className="text-[#0052FF]" size={36} />
+              </button>
+
+              <div className="flex items-center">
+                <ForgenixText className="text-[#0052FF]" size={22} />
+              </div>
+            </div>
+
+            {/* Collapse button */}
+            <button
+              type="button"
+              onClick={() => setIsCollapsed(true)}
+              className="text-secondary hover:text-foreground transition-colors cursor-pointer"
+            >
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M11 19l-7-7 7-7m8 14l-7-7 7-7"
+                />
+              </svg>
+            </button>
+          </>
         )}
       </div>
 
       {/* 2. NAVIGATION MENU */}
       <nav className={`flex-1 overflow-y-auto py-6 space-y-3 ${isCollapsed ? 'px-2' : 'px-4'}`}>
-
 
         <button
           onClick={() => router.push('/dashboard')} className={`cursor-pointer w-full flex items-center py-2.5 rounded-xl transition-all duration-200 ${isHome ? 'bg-accent/10 text-accent' : 'text-secondary hover:bar-button-hover'} ${isCollapsed ? 'justify-center px-0' : 'px-3 text-sm font-medium'}`}
@@ -57,48 +89,48 @@ export default function Sidebar() {
         {!isCollapsed && <p className="px-3 mt-5 text-xs font-semibold text-secondary uppercase tracking-wider mb-2">The Forge</p>}
 
         <button
-          onClick={() => router.push('/forge?tab=simple')}
-          className={`cursor-pointer w-full flex items-center py-2.5 rounded-xl transition-all duration-200 ${currentTab === 'simple' ? 'bg-accent/10 text-accent' : 'text-secondary hover:bar-button-hover'} ${isCollapsed ? 'justify-center px-0' : 'px-3 text-sm font-medium'}`}
+          onClick={() => router.push('/forge/simple')}
+          className={`cursor-pointer w-full flex items-center py-2.5 rounded-xl transition-all duration-200 ${isSimple ? 'bg-accent/10 text-accent' : 'text-secondary hover:bar-button-hover'} ${isCollapsed ? 'justify-center px-0' : 'px-3 text-sm font-medium'}`}
         >
           <i className="fi fi-rr-document flex text-xl"></i>
           {!isCollapsed && <span className="ml-3">Basic Contract</span>}
         </button>
 
         <button
-          onClick={() => router.push('/forge?tab=message')}
-          className={`cursor-pointer w-full flex items-center py-2.5 rounded-xl transition-all duration-200 ${currentTab === 'message' ? 'bg-accent/10 text-accent' : 'text-secondary hover:bar-button-hover'} ${isCollapsed ? 'justify-center px-0' : 'px-3 text-sm font-medium'}`}
+          onClick={() => router.push('/forge/message')}
+          className={`cursor-pointer w-full flex items-center py-2.5 rounded-xl transition-all duration-200 ${isMessage ? 'bg-accent/10 text-accent' : 'text-secondary hover:bar-button-hover'} ${isCollapsed ? 'justify-center px-0' : 'px-3 text-sm font-medium'}`}
         >
           <i className="fi fi-rr-edit flex text-xl"></i>
           {!isCollapsed && <span className="ml-3">On-Chain Message</span>}
         </button>
 
         <button
-          onClick={() => router.push('/forge?tab=token')}
-          className={`cursor-pointer w-full flex items-center py-2.5 rounded-xl transition-all duration-200 ${currentTab === 'token' ? 'bg-accent/10 text-accent' : 'text-secondary hover:bar-button-hover'} ${isCollapsed ? 'justify-center px-0' : 'px-3 text-sm font-medium'}`}
+          onClick={() => router.push('/forge/erc20')}
+          className={`cursor-pointer w-full flex items-center py-2.5 rounded-xl transition-all duration-200 ${isERC20 ? 'bg-accent/10 text-accent' : 'text-secondary hover:bar-button-hover'} ${isCollapsed ? 'justify-center px-0' : 'px-3 text-sm font-medium'}`}
         >
           <i className="fi fi-rr-coins flex text-xl"></i>
           {!isCollapsed && <span className="ml-3">ERC-20 Token</span>}
         </button>
 
         <button
-          onClick={() => router.push('/forge?tab=b20')}
-          className={`cursor-pointer w-full flex items-center py-2.5 rounded-xl transition-all duration-200 ${currentTab === 'b20' ? 'bg-accent/10 text-accent' : 'text-secondary hover:bar-button-hover'} ${isCollapsed ? 'justify-center px-0' : 'px-3 text-sm font-medium'}`}
+          onClick={() => router.push('/forge/b20')}
+          className={`cursor-pointer w-full flex items-center py-2.5 rounded-xl transition-all duration-200 ${isB20 ? 'bg-accent/10 text-accent' : 'text-secondary hover:bar-button-hover'} ${isCollapsed ? 'justify-center px-0' : 'px-3 text-sm font-medium'}`}
         >
           <i className="fi fi-rr-bolt flex text-xl"></i>
           {!isCollapsed && <span className='ml-3'>B20 Asset (Base)</span>}
         </button>
 
         <button
-          onClick={() => router.push('/forge?tab=nft')}
-          className={`cursor-pointer w-full flex items-center py-2.5 rounded-xl transition-all duration-200 ${currentTab === 'nft' ? 'bg-accent/10 text-accent' : 'text-secondary hover:bar-button-hover'} ${isCollapsed ? 'justify-center px-0' : 'px-3 text-sm font-medium'}`}
+          onClick={() => router.push('/forge/erc721')}
+          className={`cursor-pointer w-full flex items-center py-2.5 rounded-xl transition-all duration-200 ${isERC721 ? 'bg-accent/10 text-accent' : 'text-secondary hover:bar-button-hover'} ${isCollapsed ? 'justify-center px-0' : 'px-3 text-sm font-medium'}`}
         >
           <i className="fi fi-rr-picture flex text-xl"></i>
           {!isCollapsed && <span className="ml-3">NFT Collection</span>}
         </button>
 
         <button
-          onClick={() => router.push('/forge?tab=erc1155')}
-          className={`cursor-pointer w-full flex items-center py-2.5 rounded-xl transition-all duration-200 ${currentTab === 'erc1155' ? 'bg-accent/10 text-accent' : 'text-secondary hover:bar-button-hover'} ${isCollapsed ? 'justify-center px-0' : 'px-3 text-sm font-medium'}`}
+          onClick={() => router.push('/forge/erc1155')}
+          className={`cursor-pointer w-full flex items-center py-2.5 rounded-xl transition-all duration-200 ${isERC1155 ? 'bg-accent/10 text-accent' : 'text-secondary hover:bar-button-hover'} ${isCollapsed ? 'justify-center px-0' : 'px-3 text-sm font-medium'}`}
         >
           <i className="fi fi-rr-box flex text-xl"></i>
           {!isCollapsed && <span className="ml-3">ERC-1155 Token</span>}

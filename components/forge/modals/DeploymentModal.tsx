@@ -1,6 +1,6 @@
 'use client';
 import React, { useState } from 'react';
-import { DeploymentRecord } from './DeploymentHistory';
+import { DeploymentRecord } from '../common/DeploymentHistory';
 
 interface DeploymentModalProps {
   record: DeploymentRecord;

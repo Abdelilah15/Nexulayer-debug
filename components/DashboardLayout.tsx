@@ -17,7 +17,7 @@ export default function DashboardLayout({ children, title }: { children: React.R
           smooth rounded corner at the top-left of the main workspace.
         */}
         <div className="flex-1 rounded-tl-2xl overflow-y-auto p-8 border-t border border-card bg-background">
-          <div className="max-w-4xl mx-auto w-full">
+          <div className="max-w-6xl mx-auto w-full">
             {children}
           </div>
         </div>

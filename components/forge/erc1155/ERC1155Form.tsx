@@ -1,0 +1,155 @@
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { useAccount } from 'wagmi';
+import { ethers } from 'ethers';
+import { FACTORY_ADDRESS, FACTORY_ABI } from '@/app/lib/contracts';
+import { useDeployer } from '../../../app/hooks/useDeployer';
+import ForgeLayout from '../common/ForgeLayout';
+import ImageUploader from '../common/ImageUploader';
+import AdvancedSettings from '../common/AdvancedSettings';
+import WhiteLabelSection from '../common/WhiteLabelSection';
+import { DeploymentRecord } from '../common/DeploymentHistory';
+
+export default function ERC1155Form() {
+  const { address, isConnected } = useAccount();
+  const {
+    isLoading, txHash, error, explorerUrl, isModalOpen, setIsModalOpen,
+    networkName, deployedAddress, deploy, resetStates
+  } = useDeployer();
+
+  const [activeTab] = useState('erc1155');
+  const [userCredits, setUserCredits] = useState<number>(0);
+  const [selectedRecord, setSelectedRecord] = useState<DeploymentRecord | null>(null);
+
+  const [nftName, setNftName] = useState('My Collection');
+  const [erc1155Amount, setErc1155Amount] = useState('100');
+  const [royaltyFee, setRoyaltyFee] = useState('500');
+  
+  const [isAdvancedMode, setIsAdvancedMode] = useState(false);
+  const [requestWhiteLabel, setRequestWhiteLabel] = useState(false);
+  const [description, setDescription] = useState('');
+  const [socials, setSocials] = useState({ website: '', twitter: '', telegram: '', discord: '', farcaster: '', github: '', tags: '' });
+  
+  const [mediaFile, setMediaFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  useEffect(() => { if (!mediaFile) setPreviewUrl(null); }, [mediaFile]);
+
+  useEffect(() => {
+    const fetchCredits = async () => {
+      if (!address) { setUserCredits(0); return; }
+      try {
+        const win = window as any;
+        if (win.ethereum) {
+          const provider = new ethers.BrowserProvider(win.ethereum);
+          const factoryContract = new ethers.Contract(FACTORY_ADDRESS, FACTORY_ABI, provider);
+          const creditsBigInt = await factoryContract.getUserCredits(address);
+          setUserCredits(Number(creditsBigInt));
+          if (Number(creditsBigInt) > 0) setRequestWhiteLabel(true);
+        }
+      } catch (err) { setUserCredits(0); }
+    };
+    fetchCredits();
+  }, [address]);
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files ? e.target.files[0] : null;
+    setMediaFile(file);
+    if (file) {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+      setPreviewUrl(URL.createObjectURL(file));
+    } else { setPreviewUrl(null); }
+  };
+
+  const calculateFeeWei = (): bigint => {
+    const hasCredits = userCredits > 0;
+    const base = isAdvancedMode ? ethers.parseEther('0.0001') : ethers.parseEther('0.00003');
+    if (!requestWhiteLabel || hasCredits) return base;
+    const wl = isAdvancedMode ? ethers.parseEther('0.00008') : ethers.parseEther('0.00005');
+    return base + wl;
+  };
+
+  const feeWei = calculateFeeWei();
+  const currentFeeString = ethers.formatEther(feeWei);
+  const shareText = `🚀 I just deployed an ERC-1155 Edition contract on ${networkName}!\n\nCreate yours: https://forgnix.vercel.app/forge/erc1155\nTrack onchain activity: https://forgnix.vercel.app\n@monx`;
+  const encodedShareText = encodeURIComponent(shareText);
+
+  const handleSubmit = async (e: React.FormEvent | React.MouseEvent) => {
+    e.preventDefault();
+    const success = await deploy({
+      activeTab, isAdvancedMode, mediaFile, description, nftName,
+      socials, requestWhiteLabel, erc1155Amount,
+      royaltyFee, feeWei, currentFeeString, userCredits,
+      address: address as string | undefined,
+      onCreditDeducted: (newCredits) => {
+        setUserCredits(newCredits);
+        if (newCredits === 0) setRequestWhiteLabel(false);
+      }
+    });
+
+    if (success) {
+      setMediaFile(null);
+      setDescription('');
+    }
+  };
+
+  return (
+    <div className="animate-in fade-in duration-500">
+      <ForgeLayout
+        onSubmit={handleSubmit} isLoading={isLoading} isConnected={isConnected}
+        currentFeeString={currentFeeString} error={error} isModalOpen={isModalOpen}
+        setIsModalOpen={setIsModalOpen} elementType="ERC-1155 Edition" networkName={networkName}
+        shareText={shareText} encodedShareText={encodedShareText} deployedAddress={deployedAddress}
+        txHash={txHash} explorerUrl={explorerUrl} activeTab={activeTab}
+        isAdvancedMode={isAdvancedMode} setIsAdvancedMode={setIsAdvancedMode}
+        address={address} selectedRecord={selectedRecord} setSelectedRecord={setSelectedRecord}
+      >
+        <div className="mb-6 flex items-center">
+          <label className="flex items-center cursor-pointer">
+            <div className="relative">
+              <input type="checkbox" className="sr-only" checked={isAdvancedMode} onChange={() => setIsAdvancedMode(!isAdvancedMode)} />
+              <div className={`block w-12 h-7 rounded-full transition-colors ${isAdvancedMode ? 'bg-[#2b7fff]' : 'bg-[#1c398e]'}`}></div>
+              <div className={`absolute left-1 top-1 bg-white w-5 h-5 rounded-full transition-transform transform ${isAdvancedMode ? 'translate-x-5' : ''}`}></div>
+            </div>
+            <div className="ml-3 text-sm font-medium text-secondary">
+              Advanced Mode <span className="opacity-70 ml-1">(Metadata & Artwork)</span>
+            </div>
+          </label>
+        </div>
+
+        <WhiteLabelSection userCredits={userCredits} requestWhiteLabel={requestWhiteLabel} setRequestWhiteLabel={setRequestWhiteLabel} />
+
+        {isAdvancedMode ? (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+            <div className="md:col-span-2 flex flex-col gap-2">
+              <div>
+                <label className="block text-sm font-medium text-secondary mb-2">Edition Name (For Metadata)</label>
+                <input type="text" value={nftName} onChange={(e) => setNftName(e.target.value)} className="w-full border border-card rounded-xl p-4 text-foreground focus:outline-none focus:ring-2 focus:ring-accent/20 transition-all" placeholder="e.g. Genesis Edition" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-secondary mb-2">Amount to Mint</label>
+                <input type="number" value={erc1155Amount} onChange={(e) => setErc1155Amount(e.target.value)} className="w-full border border-card rounded-xl p-4 text-foreground focus:outline-none focus:ring-2 focus:ring-accent/20 transition-all" placeholder="e.g. 500" />
+              </div>
+            </div>
+            <div className="md:col-span-1 flex flex-col">
+               <ImageUploader label="Artwork (PNG, GIF)" previewUrl={previewUrl} onImageChange={handleImageChange} />
+            </div>
+          </div>
+        ) : (
+          <div className="mt-6">
+            <label className="block text-sm font-medium text-secondary mb-2">Amount to Mint</label>
+            <input type="number" value={erc1155Amount} onChange={(e) => setErc1155Amount(e.target.value)} className="w-full border border-card rounded-xl p-4 text-foreground focus:outline-none focus:ring-2 focus:ring-accent/20 transition-all" placeholder="e.g. 100" />
+          </div>
+        )}
+
+        {isAdvancedMode && (
+          <AdvancedSettings 
+            activeTab={activeTab} description={description} setDescription={setDescription} 
+            socials={socials} setSocials={setSocials} royaltyFee={royaltyFee} setRoyaltyFee={setRoyaltyFee} 
+          />
+        )}
+      </ForgeLayout>
+    </div>
+  );
+}

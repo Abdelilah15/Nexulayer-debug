@@ -4,31 +4,42 @@ import { keccak256, toBytes } from 'viem';
 import { FACTORY_ADDRESS, FACTORY_ABI } from '../lib/contracts';
 
 // We define exactly what data the hook needs to execute a deployment
+// Correction : Les propriétés spécifiques sont désormais optionnelles (?)
 export interface DeployFormData {
   activeTab: string;
   isAdvancedMode: boolean;
-  b20Type: 'asset' | 'stablecoin';
-  currencyCode: string;
-  mediaFile: File | null;
-  description: string;
-  nftName: string;
-  tokenName: string;
-  socials: any;
   requestWhiteLabel: boolean;
-  msgText: string;
-  simpleName: string;
-  tokenSymbol: string;
-  tokenSupply: string;
-  decimals: number;
-  nftSymbol: string;
-  nftSupply: string;
-  royaltyFee: string;
-  erc1155Amount: string;
   currentFeeString: string;
   userCredits: number;
   address: string | undefined;
   feeWei: bigint;
-  onCreditDeducted: (newCredits: number) => void;
+  
+  // Rendu optionnel : B20
+  b20Type?: 'asset' | 'stablecoin';
+  currencyCode?: string;
+  
+  // Rendu optionnel : Formulaires avancés
+  mediaFile?: File | null;
+  description?: string;
+  socials?: any;
+  onCreditDeducted?: (newCredits: number) => void;
+
+  // Rendu optionnel : Nommage Token/NFT
+  nftName?: string;
+  tokenName?: string;
+  tokenSymbol?: string;
+  nftSymbol?: string;
+  
+  // Rendu optionnel : Supply / Amounts
+  tokenSupply?: string;
+  decimals?: number;
+  nftSupply?: string;
+  royaltyFee?: string;
+  erc1155Amount?: string;
+
+  // Rendu optionnel : Message / Simple
+  msgText?: string;
+  simpleName?: string;
 }
 
 export function useDeployer() {
@@ -61,14 +72,14 @@ export function useDeployer() {
       name: (data.activeTab === 'nft' || data.activeTab === 'erc1155') ? data.nftName : data.tokenName,
       description: data.description,
       image: imageUrl,
-      external_link: data.socials.website,
+      external_link: data.socials?.website,
       attributes: [
-        { trait_type: "Twitter", value: data.socials.twitter },
-        { trait_type: "Discord", value: data.socials.discord },
-        { trait_type: "Farcaster", value: data.socials.farcaster },
-        { trait_type: "Telegram", value: data.socials.telegram },
-        { trait_type: "Github", value: data.socials.github },
-        { trait_type: "Tags", value: data.socials.tags },
+        { trait_type: "Twitter", value: data.socials?.twitter },
+        { trait_type: "Discord", value: data.socials?.discord },
+        { trait_type: "Farcaster", value: data.socials?.farcaster },
+        { trait_type: "Telegram", value: data.socials?.telegram },
+        { trait_type: "Github", value: data.socials?.github },
+        { trait_type: "Tags", value: data.socials?.tags },
       ],
       isWhiteLabeled: data.requestWhiteLabel
     };
@@ -110,60 +121,56 @@ export function useDeployer() {
       let tx;
       let metadataURI = "";
 
-      // ADDED 'b20' to IPFS condition check
       if (data.isAdvancedMode && (data.activeTab === 'token' || data.activeTab === 'b20' || data.activeTab === 'nft' || data.activeTab === 'erc1155')) {
         metadataURI = await uploadToIPFS(data);
       }
 
       if (data.activeTab === 'message') {
-        tx = await factoryContract.deployMessage(data.msgText, { value: fee });
+        tx = await factoryContract.deployMessage(data.msgText || "", { value: fee });
       } else if (data.activeTab === 'simple') {
-        tx = await factoryContract.deploySimpleContract(data.simpleName, { value: fee });
+        tx = await factoryContract.deploySimpleContract(data.simpleName || "", { value: fee });
       } else if (data.activeTab === 'token') {
         if (data.isAdvancedMode) {
-          tx = await factoryContract.deployAdvancedERC20(data.tokenName, data.tokenSymbol, data.tokenSupply, metadataURI, data.requestWhiteLabel, { value: fee });
+          tx = await factoryContract.deployAdvancedERC20(data.tokenName || "", data.tokenSymbol || "", data.tokenSupply || "0", metadataURI, data.requestWhiteLabel, { value: fee });
         } else {
-          tx = await factoryContract.deploySimpleERC20(data.tokenName, data.tokenSymbol, data.tokenSupply, data.requestWhiteLabel, { value: fee });
+          tx = await factoryContract.deploySimpleERC20(data.tokenName || "", data.tokenSymbol || "", data.tokenSupply || "0", data.requestWhiteLabel, { value: fee });
         }
       } else if (data.activeTab === 'b20') {
         const salt = keccak256(toBytes(`forgenix-b20-${data.tokenName}-${Date.now()}`));
 
         if (data.b20Type === 'stablecoin') {
-          // Le Stablecoin est strictement limité à 6 décimales par le précompilé Base
-          const b20SupplyCap = ethers.parseUnits(data.tokenSupply, 6);
-
+          const b20SupplyCap = ethers.parseUnits(data.tokenSupply || "0", 6);
           tx = await factoryContract.deployAdvancedB20Stablecoin(
             salt,
-            data.tokenName,
-            data.tokenSymbol,
-            data.currencyCode,
+            data.tokenName || "",
+            data.tokenSymbol || "",
+            data.currencyCode || "",
             b20SupplyCap,
             metadataURI,
             data.requestWhiteLabel,
             { value: fee }
           );
         } else {
-          // Logique B20 Asset classique
           const b20Decimals = data.decimals || 18;
-          const b20SupplyCap = ethers.parseUnits(data.tokenSupply, b20Decimals);
+          const b20SupplyCap = ethers.parseUnits(data.tokenSupply || "0", b20Decimals);
 
           if (data.isAdvancedMode) {
-            tx = await factoryContract.deployAdvancedB20(salt, data.tokenName, data.tokenSymbol, b20Decimals, b20SupplyCap, metadataURI, data.requestWhiteLabel, { value: fee });
+            tx = await factoryContract.deployAdvancedB20(salt, data.tokenName || "", data.tokenSymbol || "", b20Decimals, b20SupplyCap, metadataURI, data.requestWhiteLabel, { value: fee });
           } else {
-            tx = await factoryContract.deploySimpleB20(salt, data.tokenName, data.tokenSymbol, b20Decimals, b20SupplyCap, data.requestWhiteLabel, { value: fee });
+            tx = await factoryContract.deploySimpleB20(salt, data.tokenName || "", data.tokenSymbol || "", b20Decimals, b20SupplyCap, data.requestWhiteLabel, { value: fee });
           }
         }
       } else if (data.activeTab === 'nft') {
         if (data.isAdvancedMode) {
-          tx = await factoryContract.deployAdvancedNFT(data.nftName, data.nftSymbol, data.nftSupply, metadataURI, data.royaltyFee, data.requestWhiteLabel, { value: fee });
+          tx = await factoryContract.deployAdvancedNFT(data.nftName || "", data.nftSymbol || "", data.nftSupply || "0", metadataURI, data.royaltyFee || "0", data.requestWhiteLabel, { value: fee });
         } else {
-          tx = await factoryContract.deploySimpleNFT(data.nftName, data.nftSymbol, data.nftSupply, data.requestWhiteLabel, { value: fee });
+          tx = await factoryContract.deploySimpleNFT(data.nftName || "", data.nftSymbol || "", data.nftSupply || "0", data.requestWhiteLabel, { value: fee });
         }
       } else if (data.activeTab === 'erc1155') {
         if (data.isAdvancedMode) {
-          tx = await factoryContract.deployAdvancedERC1155(metadataURI, data.erc1155Amount, data.royaltyFee, data.requestWhiteLabel, { value: fee });
+          tx = await factoryContract.deployAdvancedERC1155(metadataURI, data.erc1155Amount || "0", data.royaltyFee || "0", data.requestWhiteLabel, { value: fee });
         } else {
-          tx = await factoryContract.deploySimpleERC1155("", data.erc1155Amount, data.requestWhiteLabel, { value: fee });
+          tx = await factoryContract.deploySimpleERC1155("", data.erc1155Amount || "0", data.requestWhiteLabel, { value: fee });
         }
       }
 
@@ -181,8 +188,7 @@ export function useDeployer() {
         } catch (err) { }
       }
 
-      // ADDED 'b20' to credit deduction condition check
-      if (data.requestWhiteLabel && data.userCredits > 0 && (data.activeTab === 'token' || data.activeTab === 'b20' || data.activeTab === 'nft' || data.activeTab === 'erc1155')) {
+      if (data.requestWhiteLabel && data.userCredits > 0 && data.onCreditDeducted && (data.activeTab === 'token' || data.activeTab === 'b20' || data.activeTab === 'nft' || data.activeTab === 'erc1155')) {
         data.onCreditDeducted(data.userCredits - 1);
       }
 

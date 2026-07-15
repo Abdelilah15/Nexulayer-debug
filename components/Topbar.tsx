@@ -31,6 +31,20 @@ export default function Topbar({ title }: TopbarProps) {
     return null;
   });
 
+  const [copied, setCopied] = useState(false);
+  const handleCopy = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+
+      setTimeout(() => {
+        setCopied(false);
+      }, 1500);
+    } catch (error) {
+      console.error("Failed to copy address:", error);
+    }
+  };
+
   // Close dropdown on outside click (cleaned up duplicate useEffect)
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -145,10 +159,25 @@ export default function Topbar({ title }: TopbarProps) {
                             <p className="text-sm font-bold text-foreground truncate mb-0.5">
                               {userProfile ? userProfile.username : 'Loading...'}
                             </p>
-                            <div className=''>
-                              <p className="text-xs font-mono text-secondary truncate" title={account.address}>
+                            <div className="flex items-center gap-2">
+                              <p
+                                className="flex-1 text-xs font-mono text-secondary truncate"
+                                title={account.address}
+                              >
                                 {account.address}
                               </p>
+
+                              <button
+                                type="button"
+                                onClick={() => handleCopy(account.address)}
+                                className="p-1.5 rounded-lg hover:bg-hover transition-colors"
+                                title={copied ? "Copied!" : "Copy address"}
+                              >
+                                <i
+                                  className={`fi ${copied ? "fi-rr-check" : "fi-rr-copy"
+                                    } text-xs text-secondary`}
+                                />
+                              </button>
                             </div>
                           </div>
                           <div className='pl-2 pr-2 '>

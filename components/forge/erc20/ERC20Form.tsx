@@ -1,0 +1,168 @@
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { useAccount } from 'wagmi';
+import { ethers } from 'ethers';
+import { FACTORY_ADDRESS, FACTORY_ABI } from '@/app/lib/contracts';
+import { useDeployer } from '../../../app/hooks/useDeployer';
+import ForgeLayout from '../common/ForgeLayout';
+import ImageUploader from '../common/ImageUploader';
+import AdvancedSettings from '../common/AdvancedSettings';
+import WhiteLabelSection from '../common/WhiteLabelSection';
+import { DeploymentRecord } from '../common/DeploymentHistory';
+
+export default function ERC20Form() {
+  const { address, isConnected } = useAccount();
+  const {
+    isLoading, txHash, error, explorerUrl, isModalOpen, setIsModalOpen,
+    networkName, deployedAddress, deploy, resetStates
+  } = useDeployer();
+
+  const [activeTab] = useState('token');
+  const [userCredits, setUserCredits] = useState<number>(0);
+  const [selectedRecord, setSelectedRecord] = useState<DeploymentRecord | null>(null);
+
+  // States du formulaire
+  const [tokenName, setTokenName] = useState('My Token');
+  const [tokenSymbol, setTokenSymbol] = useState('MTK');
+  const [tokenSupply, setTokenSupply] = useState('10000');
+  const [isAdvancedMode, setIsAdvancedMode] = useState(false);
+  const [requestWhiteLabel, setRequestWhiteLabel] = useState(false);
+  const [description, setDescription] = useState('');
+  const [socials, setSocials] = useState({ website: '', twitter: '', telegram: '', discord: '', farcaster: '', github: '', tags: '' });
+  
+  // Image handling
+  const [mediaFile, setMediaFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!mediaFile) setPreviewUrl(null);
+  }, [mediaFile]);
+
+  // Fetch Credits
+  useEffect(() => {
+    const fetchCredits = async () => {
+      if (!address) { setUserCredits(0); return; }
+      try {
+        const win = window as any;
+        if (win.ethereum) {
+          const provider = new ethers.BrowserProvider(win.ethereum);
+          const factoryContract = new ethers.Contract(FACTORY_ADDRESS, FACTORY_ABI, provider);
+          const creditsBigInt = await factoryContract.getUserCredits(address);
+          const creditsOnChain = Number(creditsBigInt);
+          setUserCredits(creditsOnChain);
+          if (creditsOnChain > 0) setRequestWhiteLabel(true);
+        }
+      } catch (err) {
+        setUserCredits(0);
+      }
+    };
+    fetchCredits();
+  }, [address]);
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files ? e.target.files[0] : null;
+    setMediaFile(file);
+    if (file) {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+      setPreviewUrl(URL.createObjectURL(file));
+    } else {
+      setPreviewUrl(null);
+    }
+  };
+
+  const calculateFeeWei = (): bigint => {
+    const hasCredits = userCredits > 0;
+    const base = isAdvancedMode ? ethers.parseEther('0.0001') : ethers.parseEther('0.00003');
+    if (!requestWhiteLabel || hasCredits) return base;
+    const wl = isAdvancedMode ? ethers.parseEther('0.00008') : ethers.parseEther('0.00005');
+    return base + wl; // Note: In ethers v6, BigInt addition uses standard operators
+  };
+
+  const feeWei = calculateFeeWei();
+  const currentFeeString = ethers.formatEther(feeWei);
+  
+  const shareText = `🚀 I just deployed an ERC-20 Token contract on ${networkName}!\n\nCreate yours: https://forgnix.vercel.app/forge/erc20\nTrack onchain activity: https://forgnix.vercel.app\n@monx`;
+  const encodedShareText = encodeURIComponent(shareText);
+
+  const handleSubmit = async (e: React.FormEvent | React.MouseEvent) => {
+    e.preventDefault();
+    const success = await deploy({
+      activeTab, isAdvancedMode, mediaFile, description, tokenName,
+      socials, requestWhiteLabel, tokenSymbol, tokenSupply,
+      feeWei, currentFeeString, userCredits,
+      decimals: 18,
+      address: address as string | undefined,
+      onCreditDeducted: (newCredits) => {
+        setUserCredits(newCredits);
+        if (newCredits === 0) setRequestWhiteLabel(false);
+      }
+    });
+
+    if (success) {
+      setMediaFile(null);
+      setDescription('');
+    }
+  };
+
+  return (
+    <div className="animate-in fade-in duration-500">
+      <ForgeLayout
+        onSubmit={handleSubmit} isLoading={isLoading} isConnected={isConnected}
+        currentFeeString={currentFeeString} error={error} isModalOpen={isModalOpen}
+        setIsModalOpen={setIsModalOpen} elementType="ERC-20 Token" networkName={networkName}
+        shareText={shareText} encodedShareText={encodedShareText} deployedAddress={deployedAddress}
+        txHash={txHash} explorerUrl={explorerUrl} activeTab={activeTab}
+        isAdvancedMode={isAdvancedMode} setIsAdvancedMode={setIsAdvancedMode}
+        address={address} selectedRecord={selectedRecord} setSelectedRecord={setSelectedRecord}
+      >
+        {/* Toggles */}
+        <div className="mb-6 flex items-center">
+          <label className="flex items-center cursor-pointer">
+            <div className="relative">
+              <input type="checkbox" className="sr-only" checked={isAdvancedMode} onChange={() => setIsAdvancedMode(!isAdvancedMode)} />
+              <div className={`block w-12 h-7 rounded-full transition-colors ${isAdvancedMode ? 'bg-[#2b7fff]' : 'bg-[#1c398e]'}`}></div>
+              <div className={`absolute left-1 top-1 bg-white w-5 h-5 rounded-full transition-transform transform ${isAdvancedMode ? 'translate-x-5' : ''}`}></div>
+            </div>
+            <div className="ml-3 text-sm font-medium text-secondary">
+              Advanced Mode <span className="opacity-70 ml-1">(Metadata & Artwork)</span>
+            </div>
+          </label>
+        </div>
+
+        <WhiteLabelSection userCredits={userCredits} requestWhiteLabel={requestWhiteLabel} setRequestWhiteLabel={setRequestWhiteLabel} />
+
+        {/* Main Fields */}
+        <div className={isAdvancedMode ? "grid grid-cols-1 md:grid-cols-3 gap-6 mt-6" : "grid grid-cols-1 md:grid-cols-2 gap-6 mt-6"}>
+          <div className={isAdvancedMode ? "md:col-span-2 flex flex-col gap-4" : "contents"}>
+            <div>
+              <label className="block text-sm font-medium text-secondary mb-2">Token Name</label>
+              <input type="text" value={tokenName} onChange={(e) => setTokenName(e.target.value)} className="w-full border border-card rounded-xl p-4 text-foreground focus:outline-none focus:ring-2 focus:ring-accent/20 transition-all" placeholder="e.g. Forgenix Coin" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-secondary mb-2">Symbol</label>
+              <input type="text" value={tokenSymbol} onChange={(e) => setTokenSymbol(e.target.value)} className="w-full border border-card rounded-xl p-4 text-foreground focus:outline-none focus:ring-2 focus:ring-accent/20 transition-all" placeholder="e.g. FRGX" />
+            </div>
+            <div className={isAdvancedMode ? "" : "md:col-span-2"}>
+              <label className="block text-sm font-medium text-secondary mb-2">Total Supply</label>
+              <input type="number" value={tokenSupply} onChange={(e) => setTokenSupply(e.target.value)} className="w-full border border-card rounded-xl p-4 text-foreground focus:outline-none focus:ring-2 focus:ring-accent/20 transition-all" placeholder="e.g. 1000000" />
+            </div>
+          </div>
+          
+          {isAdvancedMode && (
+            <div className="md:col-span-1 flex flex-col">
+              <ImageUploader label="Token Logo (PNG, JPG)" previewUrl={previewUrl} onImageChange={handleImageChange} />
+            </div>
+          )}
+        </div>
+
+        {isAdvancedMode && (
+          <AdvancedSettings 
+            activeTab={activeTab} description={description} setDescription={setDescription} 
+            socials={socials} setSocials={setSocials} royaltyFee="0" setRoyaltyFee={() => {}} 
+          />
+        )}
+      </ForgeLayout>
+    </div>
+  );
+}

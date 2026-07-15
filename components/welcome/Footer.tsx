@@ -129,6 +129,10 @@ export default function Footer() {
                                 </FooterLink>
 
                                 <FooterLink href="#" disabled>
+                                    Farcaster
+                                </FooterLink>
+
+                                <FooterLink href="#" disabled>
                                     Telegram
                                 </FooterLink>
 
