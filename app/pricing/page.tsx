@@ -517,57 +517,57 @@ export default function PricingPage() {
   };
 
   return (
-    <DashboardLayout>
-    <div className="max-w-5xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-      <div className="text-center mb-12">
-        <h2 className="text-3xl font-extrabold text-foreground sm:text-4xl">
+  <DashboardLayout>
+    <div className="max-w-5xl mx-auto py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
+      <div className="text-center mb-8 sm:mb-12">
+        <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-foreground">
           Deploy with White Label
         </h2>
-        <p className="mt-4 text-xl text-secondary">
+        <p className="mt-3 sm:mt-4 text-base sm:text-xl text-secondary">
           Purchase USDC credits to remove "Created with Forgenix" from your future Smart Contracts.
         </p>
       </div>
 
       {error && (
-        <div className="mb-8 p-4 bg-red-500/10 text-red-500 rounded-xl text-center font-medium">
+        <div className="mb-6 sm:mb-8 p-3 sm:p-4 bg-red-500/10 text-red-500 rounded-lg sm:rounded-xl text-center text-sm sm:text-base font-medium">
           {error}
         </div>
       )}
       
       {statusMsg && (
-        <div className="mb-8 p-4 bg-accent/10 text-accent rounded-xl text-center flex justify-center items-center gap-3 font-medium">
-          <div className="w-4 h-4 rounded-full border-2 border-accent border-t-transparent animate-spin"></div>
+        <div className="mb-6 sm:mb-8 p-3 sm:p-4 bg-accent/10 text-accent rounded-lg sm:rounded-xl text-center flex justify-center items-center gap-2 sm:gap-3 text-sm sm:text-base font-medium">
+          <div className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full border-2 border-accent border-t-transparent animate-spin"></div>
           {statusMsg}
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
         {TIERS.map((tier) => (
           // Flat design card
-          <div key={tier.id} className="bg-card border border-card rounded-2xl p-6 flex flex-col relative overflow-hidden">
+          <div key={tier.id} className="bg-card border border-card rounded-xl sm:rounded-2xl p-5 sm:p-6 flex flex-col relative overflow-hidden">
             {tier.badge && (
-              <div className="absolute top-0 right-0 bg-[#2b7fff] text-white text-xs font-bold px-3 py-1 rounded-bl-lg">
+              <div className="absolute top-0 right-0 bg-[#2b7fff] text-white text-[10px] sm:text-xs font-bold px-2 sm:px-3 py-1 rounded-bl-lg">
                 {tier.badge}
               </div>
             )}
             
-            <h3 className="text-2xl font-semibold text-foreground">{tier.name}</h3>
-            <div className="mt-4 flex items-baseline text-5xl font-extrabold text-accent">
-              {tier.price} <span className="ml-2 text-xl font-medium text-secondary">USDC</span>
+            <h3 className="text-xl sm:text-2xl font-semibold text-foreground">{tier.name}</h3>
+            <div className="mt-3 sm:mt-4 flex items-baseline text-4xl sm:text-5xl font-extrabold text-accent">
+              {tier.price} <span className="ml-1.5 sm:ml-2 text-lg sm:text-xl font-medium text-secondary">USDC</span>
             </div>
-            <p className="mt-4 text-secondary">
+            <p className="mt-3 sm:mt-4 text-sm sm:text-base text-secondary">
               Get <strong className="text-foreground">{tier.credits} credits</strong> for white-label deployments.
             </p>
             
-            <div className="mt-8 flex-1">
-              <ul className="space-y-3">
-                <li className="flex items-center text-secondary">
+            <div className="mt-6 sm:mt-8 flex-1">
+              <ul className="space-y-2 sm:space-y-3">
+                <li className="flex items-center text-sm sm:text-base text-secondary">
                   <span className="text-emerald-500 mr-2">✔</span> No Forgenix branding
                 </li>
-                <li className="flex items-center text-secondary">
+                <li className="flex items-center text-sm sm:text-base text-secondary">
                   <span className="text-emerald-500 mr-2">✔</span> 5 credits per deployment
                 </li>
-                <li className="flex items-center text-secondary">
+                <li className="flex items-center text-sm sm:text-base text-secondary">
                   <span className="text-emerald-500 mr-2">✔</span> Valid for life
                 </li>
               </ul>
@@ -576,7 +576,7 @@ export default function PricingPage() {
             <button
               onClick={() => handlePurchase(tier.id, tier.credits, tier.price)}
               disabled={isLoading !== null || !isConnected}
-              className={`mt-8 w-full py-3 px-4 bg-[#2b7fff] hover:bg-[#1a5fc0] text-white rounded-xl font-bold transition-colors cursor-pointer ${
+              className={`mt-6 sm:mt-8 w-full py-2.5 sm:py-3 px-4 bg-[#2b7fff] hover:bg-[#1a5fc0] text-white rounded-lg sm:rounded-xl text-sm sm:text-base font-bold transition-colors cursor-pointer ${
                 isLoading === tier.id 
                   ? 'bg-background text-secondary cursor-wait' 
                   : !isConnected 
@@ -590,6 +590,6 @@ export default function PricingPage() {
         ))}
       </div>
     </div>
-    </DashboardLayout>
-  );
+  </DashboardLayout>
+);
 }

@@ -321,65 +321,67 @@ export default function DeploymentHistory({ address, activeTab, explorerUrl, ref
   if (!address) return null;
 
   return (
-    <div className="bg-card border border-card rounded-2xl overflow-hidden mt-2 animate-in fade-in duration-500">
-      <div className={`p-6 flex justify-between items-center ${filteredDeployments.length === 0 ? 'border-b border-card' : ''}`}>
-        <div>
-          <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
-            <i className="fi fi-rr-time-past text-accent"></i> On-Chain History
-          </h3>
-        </div>
-        {isLoading ? (
-          <div className="text-accent flex items-center gap-2 text-sm">
-            <i className="fi fi-rr-spinner animate-spin"></i> Reading Contracts...
-          </div>
-        ) : (
-          <div className="text-secondary text-sm">
-            {filteredDeployments.length} contracts forged
-          </div>
-        )}
+  <div className="bg-card border border-card rounded-xl sm:rounded-2xl overflow-hidden mt-2 animate-in fade-in duration-500">
+    <div className={`p-4 sm:p-6 flex justify-between items-center ${filteredDeployments.length === 0 ? 'border-b border-card' : ''}`}>
+      <div>
+        <h3 className="text-base sm:text-lg font-bold text-foreground flex items-center gap-1.5 sm:gap-2">
+          <i className="fi fi-rr-time-past text-accent"></i> On-Chain History
+        </h3>
       </div>
-
-      {!isLoading && filteredDeployments.length === 0 ? (
-        <div className="p-6 text-sm text-secondary text-center">Aucun déploiement pour cet onglet pour le moment.</div>
+      {isLoading ? (
+        <div className="text-accent flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
+          <i className="fi fi-rr-spinner animate-spin"></i> Reading Contracts...
+        </div>
       ) : (
-        <div className="px-2 max-h-[500px] overflow-y-auto">
-          {filteredDeployments.map((record) => (
-            <div
-              key={record.id}
-              onClick={() => onSelectRecord(record)}
-              className="p-4 border-t border-card flex items-center justify-between gap-4 hover:bg-background/50 transition-colors cursor-pointer"
-            >
-              <div className="flex items-center gap-4">
-                {record.imageUrl ? (
-                  <div className="w-12 h-12 rounded-xl overflow-hidden bg-background shrink-0 border border-card">
-                    <img src={record.imageUrl} alt="Token logo" className="w-full h-full object-cover" />
-                  </div>
-                ) : (
-                  <div className="w-12 h-12 rounded-xl bg-accent/10 text-accent flex items-center justify-center text-xl shrink-0 border border-accent/20">
-                    <i className="fi fi-rr-document-signed flex"></i>
-                  </div>
-                )}
-
-                <div>
-                  <h4 className="text-foreground font-medium flex items-center gap-2">
-                    {record.name ? `${record.name} ${record.symbol ? `(${record.symbol})` : ''}` : record.type}
-                  </h4>
-                  <div className="text-sm text-secondary flex items-center gap-2 mt-1">
-                    <span className="text-xs font-semibold bg-card border border-card px-2 py-0.5 rounded-md text-accent">
-                      {record.type}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Icône de navigation pour indiquer que c'est cliquable */}
-              <div className="text-secondary opacity-50 flex items-center">
-                <i className="fi fi-rr-angle-right"></i>
-              </div>
-            </div>
-          ))}
+        <div className="text-secondary text-xs sm:text-sm">
+          {filteredDeployments.length} contracts forged
         </div>
       )}
     </div>
-  );
+
+    {!isLoading && filteredDeployments.length === 0 ? (
+      <div className="p-4 sm:p-6 text-xs sm:text-sm text-secondary text-center">
+        Aucun déploiement pour cet onglet pour le moment.
+      </div>
+    ) : (
+      <div className="px-1 sm:px-2 max-h-[400px] sm:max-h-[500px] overflow-y-auto">
+        {filteredDeployments.map((record) => (
+          <div
+            key={record.id}
+            onClick={() => onSelectRecord(record)}
+            className="p-3 sm:p-4 border-t border-card flex items-center justify-between gap-3 sm:gap-4 hover:bg-background/50 transition-colors cursor-pointer"
+          >
+            <div className="flex items-center gap-3 sm:gap-4">
+              {record.imageUrl ? (
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl overflow-hidden bg-background shrink-0 border border-card">
+                  <img src={record.imageUrl} alt="Token logo" className="w-full h-full object-cover" />
+                </div>
+              ) : (
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-accent/10 text-accent flex items-center justify-center text-lg sm:text-xl shrink-0 border border-accent/20">
+                  <i className="fi fi-rr-document-signed flex"></i>
+                </div>
+              )}
+
+              <div>
+                <h4 className="text-sm sm:text-base text-foreground font-medium flex items-center gap-1.5 sm:gap-2">
+                  {record.name ? `${record.name} ${record.symbol ? `(${record.symbol})` : ''}` : record.type}
+                </h4>
+                <div className="text-xs sm:text-sm text-secondary flex items-center gap-1.5 sm:gap-2 mt-0.5 sm:mt-1">
+                  <span className="text-[10px] sm:text-xs font-semibold bg-card border border-card px-1.5 sm:px-2 py-0.5 rounded-md text-accent">
+                    {record.type}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Icône de navigation pour indiquer que c'est cliquable */}
+            <div className="text-secondary opacity-50 flex items-center text-sm sm:text-base">
+              <i className="fi fi-rr-angle-right"></i>
+            </div>
+          </div>
+        ))}
+      </div>
+    )}
+  </div>
+);
 }

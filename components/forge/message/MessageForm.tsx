@@ -65,16 +65,34 @@ export default function MessageForm() {
         setSelectedRecord={setSelectedRecord}
       >
         <div>
-          <label className="block text-sm font-medium text-secondary mb-2">Message to engrave</label>
-          <input 
-            type="text" 
-            value={msgText} 
-            onChange={(e) => setMsgText(e.target.value)} 
-            className="w-full border border-card rounded-xl p-4 text-foreground focus:outline-none focus:ring-2 focus:ring-accent/20 transition-all" 
-            placeholder="e.g. GM Base!" 
-          />
-          <p className="mt-3 text-sm text-secondary">Engrave a message in blockchain</p>
-        </div>
+  <label className="block text-xs sm:text-sm font-medium text-secondary mb-1.5 sm:mb-2">
+    Message to engrave
+  </label>
+
+  <input
+    type="text"
+    value={msgText}
+    onChange={(e) => setMsgText(e.target.value)}
+    className="
+      w-full
+      border border-card
+      rounded-lg sm:rounded-xl
+      p-3 sm:p-4
+      text-sm sm:text-base
+      text-foreground
+      placeholder:text-sm sm:placeholder:text-base
+      focus:outline-none
+      focus:ring-2
+      focus:ring-accent/20
+      transition-all
+    "
+    placeholder="e.g. GM Base!"
+  />
+
+  <p className="mt-2 sm:mt-3 text-xs sm:text-sm text-secondary">
+    Engrave a message in blockchain
+  </p>
+</div>
       </ForgeLayout>
     </div>
   );

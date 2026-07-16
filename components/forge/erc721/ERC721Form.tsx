@@ -96,61 +96,145 @@ export default function ERC721Form() {
   };
 
   return (
-    <div className="animate-in fade-in duration-500">
-      <ForgeLayout
-        onSubmit={handleSubmit} isLoading={isLoading} isConnected={isConnected}
-        currentFeeString={currentFeeString} error={error} isModalOpen={isModalOpen}
-        setIsModalOpen={setIsModalOpen} elementType="NFT" networkName={networkName}
-        shareText={shareText} encodedShareText={encodedShareText} deployedAddress={deployedAddress}
-        txHash={txHash} explorerUrl={explorerUrl} activeTab={activeTab}
-        isAdvancedMode={isAdvancedMode} setIsAdvancedMode={setIsAdvancedMode}
-        address={address} selectedRecord={selectedRecord} setSelectedRecord={setSelectedRecord}
-      >
-        <div className="mb-6 flex items-center">
-          <label className="flex items-center cursor-pointer">
-            <div className="relative">
-              <input type="checkbox" className="sr-only" checked={isAdvancedMode} onChange={() => setIsAdvancedMode(!isAdvancedMode)} />
-              <div className={`block w-12 h-7 rounded-full transition-colors ${isAdvancedMode ? 'bg-[#2b7fff]' : 'bg-[#1c398e]'}`}></div>
-              <div className={`absolute left-1 top-1 bg-white w-5 h-5 rounded-full transition-transform transform ${isAdvancedMode ? 'translate-x-5' : ''}`}></div>
-            </div>
-            <div className="ml-3 text-sm font-medium text-secondary">
-              Advanced Mode <span className="opacity-70 ml-1">(Metadata & Artwork)</span>
-            </div>
-          </label>
-        </div>
+  <div className="animate-in fade-in duration-500">
+    <ForgeLayout
+      onSubmit={handleSubmit}
+      isLoading={isLoading}
+      isConnected={isConnected}
+      currentFeeString={currentFeeString}
+      error={error}
+      isModalOpen={isModalOpen}
+      setIsModalOpen={setIsModalOpen}
+      elementType="NFT"
+      networkName={networkName}
+      shareText={shareText}
+      encodedShareText={encodedShareText}
+      deployedAddress={deployedAddress}
+      txHash={txHash}
+      explorerUrl={explorerUrl}
+      activeTab={activeTab}
+      isAdvancedMode={isAdvancedMode}
+      setIsAdvancedMode={setIsAdvancedMode}
+      address={address}
+      selectedRecord={selectedRecord}
+      setSelectedRecord={setSelectedRecord}
+    >
+      <div className="mb-4 sm:mb-6 flex items-center">
+        <label className="flex items-center cursor-pointer">
+          <div className="relative">
+            <input
+              type="checkbox"
+              className="sr-only"
+              checked={isAdvancedMode}
+              onChange={() => setIsAdvancedMode(!isAdvancedMode)}
+            />
 
-        <WhiteLabelSection userCredits={userCredits} requestWhiteLabel={requestWhiteLabel} setRequestWhiteLabel={setRequestWhiteLabel} />
+            <div
+              className={`block w-10 h-6 sm:w-12 sm:h-7 rounded-full transition-colors ${
+                isAdvancedMode ? "bg-[#2b7fff]" : "bg-[#1c398e]"
+              }`}
+            ></div>
 
-        <div className={isAdvancedMode ? "grid grid-cols-1 md:grid-cols-3 gap-6 mt-6" : "grid grid-cols-1 md:grid-cols-2 gap-6 mt-6"}>
-          <div className={isAdvancedMode ? "md:col-span-2 flex flex-col gap-4" : "contents"}>
-            <div>
-              <label className="block text-sm font-medium text-secondary mb-2">Collection Name</label>
-              <input type="text" value={nftName} onChange={(e) => setNftName(e.target.value)} className="w-full border border-card rounded-xl p-4 text-foreground focus:outline-none focus:ring-2 focus:ring-accent/20 transition-all" placeholder="e.g. Bored Ape" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-secondary mb-2">Symbol</label>
-              <input type="text" value={nftSymbol} onChange={(e) => setNftSymbol(e.target.value)} className="w-full border border-card rounded-xl p-4 text-foreground focus:outline-none focus:ring-2 focus:ring-accent/20 transition-all" placeholder="e.g. BAPE" />
-            </div>
-            <div className={isAdvancedMode ? "" : "md:col-span-2"}>
-              <label className="block text-sm font-medium text-secondary mb-2">Number of NFTs to mint</label>
-              <input type="number" value={nftSupply} onChange={(e) => setNftSupply(e.target.value)} className="w-full border border-card rounded-xl p-4 text-foreground focus:outline-none focus:ring-2 focus:ring-accent/20 transition-all" placeholder="e.g. 10" />
-            </div>
+            <div
+              className={`absolute left-1 top-1 bg-white w-4 h-4 sm:w-5 sm:h-5 rounded-full transition-transform transform ${
+                isAdvancedMode ? "translate-x-4 sm:translate-x-5" : ""
+              }`}
+            ></div>
           </div>
-          
-          {isAdvancedMode && (
-            <div className="md:col-span-1 flex flex-col">
-              <ImageUploader label="Artwork (PNG, JPG, GIF)" previewUrl={previewUrl} onImageChange={handleImageChange} />
-            </div>
-          )}
+
+          <div className="ml-2.5 sm:ml-3 text-xs sm:text-sm font-medium text-secondary">
+            Advanced Mode
+            <span className="opacity-70 ml-1">(Metadata & Artwork)</span>
+          </div>
+        </label>
+      </div>
+
+      <WhiteLabelSection
+        userCredits={userCredits}
+        requestWhiteLabel={requestWhiteLabel}
+        setRequestWhiteLabel={setRequestWhiteLabel}
+      />
+
+      <div
+        className={
+          isAdvancedMode
+            ? "grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 mt-4 sm:mt-6"
+            : "grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mt-4 sm:mt-6"
+        }
+      >
+        <div
+          className={
+            isAdvancedMode
+              ? "md:col-span-2 flex flex-col gap-3 sm:gap-4"
+              : "contents"
+          }
+        >
+          <div>
+            <label className="block text-xs sm:text-sm font-medium text-secondary mb-1.5 sm:mb-2">
+              Collection Name
+            </label>
+
+            <input
+              type="text"
+              value={nftName}
+              onChange={(e) => setNftName(e.target.value)}
+              className="w-full border border-card rounded-lg sm:rounded-xl p-3 sm:p-4 text-sm sm:text-base text-foreground focus:outline-none focus:ring-2 focus:ring-accent/20 transition-all"
+              placeholder="e.g. Bored Ape"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs sm:text-sm font-medium text-secondary mb-1.5 sm:mb-2">
+              Symbol
+            </label>
+
+            <input
+              type="text"
+              value={nftSymbol}
+              onChange={(e) => setNftSymbol(e.target.value)}
+              className="w-full border border-card rounded-lg sm:rounded-xl p-3 sm:p-4 text-sm sm:text-base text-foreground focus:outline-none focus:ring-2 focus:ring-accent/20 transition-all"
+              placeholder="e.g. BAPE"
+            />
+          </div>
+
+          <div className={isAdvancedMode ? "" : "md:col-span-2"}>
+            <label className="block text-xs sm:text-sm font-medium text-secondary mb-1.5 sm:mb-2">
+              Number of NFTs to mint
+            </label>
+
+            <input
+              type="number"
+              value={nftSupply}
+              onChange={(e) => setNftSupply(e.target.value)}
+              className="w-full border border-card rounded-lg sm:rounded-xl p-3 sm:p-4 text-sm sm:text-base text-foreground focus:outline-none focus:ring-2 focus:ring-accent/20 transition-all"
+              placeholder="e.g. 10"
+            />
+          </div>
         </div>
 
         {isAdvancedMode && (
-          <AdvancedSettings 
-            activeTab={activeTab} description={description} setDescription={setDescription} 
-            socials={socials} setSocials={setSocials} royaltyFee={royaltyFee} setRoyaltyFee={setRoyaltyFee} 
-          />
+          <div className="md:col-span-1 flex flex-col">
+            <ImageUploader
+              label="Artwork (PNG, JPG, GIF)"
+              previewUrl={previewUrl}
+              onImageChange={handleImageChange}
+            />
+          </div>
         )}
-      </ForgeLayout>
-    </div>
-  );
+      </div>
+
+      {isAdvancedMode && (
+        <AdvancedSettings
+          activeTab={activeTab}
+          description={description}
+          setDescription={setDescription}
+          socials={socials}
+          setSocials={setSocials}
+          royaltyFee={royaltyFee}
+          setRoyaltyFee={setRoyaltyFee}
+        />
+      )}
+    </ForgeLayout>
+  </div>
+);
 }

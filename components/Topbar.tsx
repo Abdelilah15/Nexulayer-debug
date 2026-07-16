@@ -178,7 +178,7 @@ export default function Topbar({ title, setIsMobileMenuOpen }: TopbarProps) {
                     <button 
                       onClick={openChainModal} 
                       type="button" 
-                      className="flex items-center justify-center gap-0 md:gap-2 border border-[#2b7fff] w-8 h-8 md:w-auto md:h-auto md:py-1.5 md:px-4 rounded-full transition-colors text-foreground font-medium text-sm cursor-pointer"
+                      className="flex items-center justify-center gap-0 md:gap-2 border border-[#2b7fff] w-8.5 h-8.5 md:w-auto md:h-auto md:py-1.5 md:px-4 rounded-full transition-colors text-foreground font-medium text-sm cursor-pointer"
                     >
                       {chain.hasIcon ? (
                         <div style={{ background: chain.iconBackground, width: 28, height: 28, borderRadius: 999, overflow: 'hidden' }}>

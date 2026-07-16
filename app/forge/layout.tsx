@@ -7,12 +7,12 @@ import DashboardLayout from '@/components/DashboardLayout';
 // Titre affiché dans le Topbar selon la route active.
 // Remplace l'ancien calcul basé sur `activeTab` dans app/forge/page.tsx.
 const FORGE_PAGE_TITLES: Record<string, string> = {
-  simple: 'Déployer un Contrat de Base',
-  message: 'Graver un Message',
-  erc20: 'Créer un Token ERC-20',
-  b20: 'Lancer un Token B20',
-  erc721: 'Lancer un NFT ERC-721A',
-  erc1155: 'Lancer un NFT ERC-1155',
+  simple: 'Basic Contract',
+  message: 'Store Message',
+  erc20: 'ERC20 Token',
+  b20: 'B20 Token',
+  erc721: 'ERC721A NFT',
+  erc1155: 'ERC1155 NFT',
 };
 
 export default function ForgeSectionLayout({ children }: { children: React.ReactNode }) {

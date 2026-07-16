@@ -20,8 +20,12 @@ export default function DashboardLayout({ children, title }: { children: React.R
           setIsMobileMenuOpen={setIsMobileMenuOpen} 
         />
         
-        {/* 2. LE FAMEUX COIN : C'est ici que l'on restaure le bg-background, les bordures et l'arrondi */}
-        <main className="flex-1 overflow-y-auto p-4 md:p-8 relative bg-background border-t border-l border-card rounded-tl-2xl md:rounded-tl-3xl shadow-sm">
+        {/* 
+          - border-t est toujours là
+          - border-l n'apparaît que sur sm:
+          - l'arrondi en haut à gauche n'apparaît que sur sm: / md:
+        */}
+        <main className="flex-1 overflow-y-auto p-4 md:p-8 relative bg-background border-t border-card sm:border-l rounded-tl-none sm:rounded-tl-2xl md:rounded-tl-3xl shadow-sm">
           <div className="max-w-7xl w-full mx-auto pb-24">
             {children}
           </div>
