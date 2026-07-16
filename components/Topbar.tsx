@@ -2,6 +2,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { useDisconnect, useAccount } from 'wagmi';
 import { useRouter } from 'next/navigation';
+import { DailyStreakModal } from '@/components/streak';
+import { createPortal } from "react-dom";
 
 interface TopbarProps {
   title?: string;
@@ -22,6 +24,8 @@ export default function Topbar({ title, setIsMobileMenuOpen }: TopbarProps) {
 
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const [isStreakModalOpen, setIsStreakModalOpen] = useState(false);
 
   const [userProfile, setUserProfile] = useState<UserProfile | null>(() => {
     if (typeof window !== 'undefined') {
@@ -83,10 +87,10 @@ export default function Topbar({ title, setIsMobileMenuOpen }: TopbarProps) {
 
   return (
     <header className="h-16 md:h-20 px-4 md:px-8 flex justify-between items-center z-10 flex-shrink-0 bg-bar">
-      
+
       <div className="flex items-center gap-3">
         {/* BOUTON MENU MOBILE */}
-        <button 
+        <button
           onClick={() => setIsMobileMenuOpen && setIsMobileMenuOpen(true)}
           className="md:hidden p-2 text-foreground rounded-lg bg-card border border-card"
         >
@@ -124,7 +128,16 @@ export default function Topbar({ title, setIsMobileMenuOpen }: TopbarProps) {
 
                 return (
                   <div className="flex items-center gap-2 md:gap-4 relative" ref={dropdownRef}>
-                    
+
+                    {/* Bouton Streak (Fire) */}
+                    <button
+                      onClick={() => setIsStreakModalOpen(true)}
+                      className="p-2 md:p-2.5 rounded-full bg-orange-500/10 text-orange-500 hover:bg-orange-500/20 transition-all border border-orange-500/20"
+                      title="Daily Streak"
+                    >
+                      <i className="fi fi-rr-flame flex text-sm md:text-base"></i>
+                    </button>
+
                     {/* User Profile Dropdown */}
                     <div className="relative">
                       <button
@@ -175,9 +188,9 @@ export default function Topbar({ title, setIsMobileMenuOpen }: TopbarProps) {
                     </div>
 
                     {/* Network Selector - MODIFIÉ POUR MOBILE */}
-                    <button 
-                      onClick={openChainModal} 
-                      type="button" 
+                    <button
+                      onClick={openChainModal}
+                      type="button"
                       className="flex items-center justify-center gap-0 md:gap-2 border border-[#2b7fff] w-8.5 h-8.5 md:w-auto md:h-auto md:py-1.5 md:px-4 rounded-full transition-colors text-foreground font-medium text-sm cursor-pointer"
                     >
                       {chain.hasIcon ? (
@@ -189,19 +202,28 @@ export default function Topbar({ title, setIsMobileMenuOpen }: TopbarProps) {
                           {chain.name?.charAt(0) || '?'}
                         </div>
                       )}
-                      
+
                       {/* Texte et flèche masqués sur mobile, affichés sur desktop */}
                       <span className="hidden md:block">{chain.name}</span>
                       <i className="fi fi-rr-angle-small-down text-secondary mt-1 hidden md:block"></i>
                     </button>
 
+
                   </div>
+
                 );
               })()}
             </div>
           );
         }}
       </ConnectButton.Custom>
+      
+      <DailyStreakModal
+        isOpen={isStreakModalOpen}
+        onClose={() => setIsStreakModalOpen(false)}
+        address={address}
+      />
+
     </header>
   );
 }

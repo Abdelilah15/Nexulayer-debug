@@ -14,6 +14,7 @@
   --card-background: #FAFAFA;
   --modal-background: #eff6ff;
   --modal-border: #8ec5ff;
+  --streak-background: #d3d3d3;
 
   --area-background: oklch(0.97 0.014 254.604);
   --element-background: oklch(0.97 0.014 254.604);
@@ -42,6 +43,7 @@
   --card-background: #18181b;
   --modal-background: #162456;
   --modal-border: #193cb8;
+  --streak-background: #313131;
 
 
   --area-background: oklch(0.97 0.014 254.604);
@@ -79,6 +81,8 @@ body {
   .bg-bar-top { background-color: var(--bar-top-background); }
   .bg-bar-button { background-color: var(--bar-button-background); }
   .bg-modal { background-color: var(--modal-background); }
+  .bg-streak { background-color: var(--streak-background); }
+
   .text-modal { color: var(--modal-text); }
   .text-accent { color: var(--accent); }
   .text-secondary { color: var(--text-secondary); }
