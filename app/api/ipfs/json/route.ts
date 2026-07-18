@@ -6,7 +6,7 @@ export async function POST(request: Request) {
     const { isWhiteLabeled, ...metadata } = body;
 
     if (!isWhiteLabeled) {
-      const branding = "\n\n---\n*Créé avec Forgenix, https://forgenix.vercel.app*";
+      const branding = "\n\n---\n*Created by Nexulayer, https://forgenix.vercel.app*";
       metadata.description = metadata.description ? metadata.description + branding : branding;
     }
 

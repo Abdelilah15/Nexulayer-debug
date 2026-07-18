@@ -29,7 +29,7 @@ export default function Topbar({ title, setIsMobileMenuOpen }: TopbarProps) {
 
   const [userProfile, setUserProfile] = useState<UserProfile | null>(() => {
     if (typeof window !== 'undefined') {
-      const cached = localStorage.getItem('forgenix_profile');
+      const cached = localStorage.getItem('nexulayer_profile');
       if (cached) return JSON.parse(cached);
     }
     return null;
@@ -67,14 +67,14 @@ export default function Topbar({ title, setIsMobileMenuOpen }: TopbarProps) {
         if (response.ok) {
           const data = await response.json();
           setUserProfile(data);
-          localStorage.setItem('forgenix_profile', JSON.stringify(data));
+          localStorage.setItem('nexulayer_profile', JSON.stringify(data));
         }
       } catch (error) {
         console.error("Profile sync error", error);
       }
     } else {
       setUserProfile(null);
-      localStorage.removeItem('forgenix_profile');
+      localStorage.removeItem('nexulayer_profile');
     }
   };
 
@@ -98,7 +98,7 @@ export default function Topbar({ title, setIsMobileMenuOpen }: TopbarProps) {
         </button>
 
         <h2 className="text-base md:text-lg font-semibold text-foreground truncate max-w-[120px] md:max-w-none">
-          {title || "Forgenix"}
+          {title || "Nexulayer"}
         </h2>
       </div>
 
@@ -217,7 +217,7 @@ export default function Topbar({ title, setIsMobileMenuOpen }: TopbarProps) {
           );
         }}
       </ConnectButton.Custom>
-      
+
       <DailyStreakModal
         isOpen={isStreakModalOpen}
         onClose={() => setIsStreakModalOpen(false)}

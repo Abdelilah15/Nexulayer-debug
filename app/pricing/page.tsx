@@ -5,8 +5,8 @@ import { ethers } from 'ethers';
 import DashboardLayout from '../../components/DashboardLayout';
 
 // --- CONFIGURATION ---
-const FEE_MANAGER_ADDRESS = "0x4ed665705b7afcd6c7d5b464944077f4874fa53b"; 
-const USDC_ADDRESS = "0x036CbD53842c5426634e7929541eC2318f3dCF7e"; 
+const FEE_MANAGER_ADDRESS = "0x4ed665705b7afcd6c7d5b464944077f4874fa53b";
+const USDC_ADDRESS = "0x036CbD53842c5426634e7929541eC2318f3dCF7e";
 
 const FEE_MANAGER_ABI = [
     {
@@ -478,7 +478,7 @@ export default function PricingPage() {
 
       const provider = new ethers.BrowserProvider(win.ethereum);
       const signer = await provider.getSigner();
-      
+
       const usdcContract = new ethers.Contract(USDC_ADDRESS, USDC_ABI, signer);
       const feeManagerContract = new ethers.Contract(FEE_MANAGER_ADDRESS, FEE_MANAGER_ABI, signer);
 
@@ -493,7 +493,7 @@ export default function PricingPage() {
 
       setStatusMsg('Checking allowances...');
       const allowance = await usdcContract.allowance(address, FEE_MANAGER_ADDRESS);
-      
+
       if (allowance < amountToApprove) {
         setStatusMsg('Please approve USDC spending in your wallet...');
         const txApprove = await usdcContract.approve(FEE_MANAGER_ADDRESS, amountToApprove);
@@ -524,7 +524,7 @@ export default function PricingPage() {
           Deploy with White Label
         </h2>
         <p className="mt-3 sm:mt-4 text-base sm:text-xl text-secondary">
-          Purchase USDC credits to remove "Created with Forgenix" from your future Smart Contracts.
+          Purchase USDC credits to remove "Created with Nexulayer" from your future Smart Contracts.
         </p>
       </div>
 
@@ -533,7 +533,7 @@ export default function PricingPage() {
           {error}
         </div>
       )}
-      
+
       {statusMsg && (
         <div className="mb-6 sm:mb-8 p-3 sm:p-4 bg-accent/10 text-accent rounded-lg sm:rounded-xl text-center flex justify-center items-center gap-2 sm:gap-3 text-sm sm:text-base font-medium">
           <div className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full border-2 border-accent border-t-transparent animate-spin"></div>
@@ -550,7 +550,7 @@ export default function PricingPage() {
                 {tier.badge}
               </div>
             )}
-            
+
             <h3 className="text-xl sm:text-2xl font-semibold text-foreground">{tier.name}</h3>
             <div className="mt-3 sm:mt-4 flex items-baseline text-4xl sm:text-5xl font-extrabold text-accent">
               {tier.price} <span className="ml-1.5 sm:ml-2 text-lg sm:text-xl font-medium text-secondary">USDC</span>
@@ -558,11 +558,11 @@ export default function PricingPage() {
             <p className="mt-3 sm:mt-4 text-sm sm:text-base text-secondary">
               Get <strong className="text-foreground">{tier.credits} credits</strong> for white-label deployments.
             </p>
-            
+
             <div className="mt-6 sm:mt-8 flex-1">
               <ul className="space-y-2 sm:space-y-3">
                 <li className="flex items-center text-sm sm:text-base text-secondary">
-                  <span className="text-emerald-500 mr-2">✔</span> No Forgenix branding
+                  <span className="text-emerald-500 mr-2">✔</span> No Nexulayer branding
                 </li>
                 <li className="flex items-center text-sm sm:text-base text-secondary">
                   <span className="text-emerald-500 mr-2">✔</span> 5 credits per deployment
@@ -577,9 +577,9 @@ export default function PricingPage() {
               onClick={() => handlePurchase(tier.id, tier.credits, tier.price)}
               disabled={isLoading !== null || !isConnected}
               className={`mt-6 sm:mt-8 w-full py-2.5 sm:py-3 px-4 bg-[#2b7fff] hover:bg-[#1a5fc0] text-white rounded-lg sm:rounded-xl text-sm sm:text-base font-bold transition-colors cursor-pointer ${
-                isLoading === tier.id 
-                  ? 'bg-background text-secondary cursor-wait' 
-                  : !isConnected 
+                isLoading === tier.id
+                  ? 'bg-background text-secondary cursor-wait'
+                  : !isConnected
                     ? 'bg-background text-secondary cursor-not-allowed'
                     : 'bg-accent text-white hover:bg-accent-hover'
               }`}

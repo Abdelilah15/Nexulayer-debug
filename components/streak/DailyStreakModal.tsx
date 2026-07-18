@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
+import { ethers } from 'ethers';
 import DailyStreakHeader from './DailyStreakHeader';
 import WeeklyProgress from './WeeklyProgress';
 import MotivationQuote from './MotivationQuote';
 import DailyDeployButton from './DailyDeployButton';
 import { useStreak } from '@/app/hooks/useStreak';
 import { useDeployer } from '@/app/hooks/useDeployer';
-import { useReadContract } from 'wagmi';
-import { FACTORY_ADDRESS, FACTORY_ABI } from '../app/lib/contracts.ts';
 
 interface DailyStreakModalProps {
     isOpen: boolean;
@@ -16,25 +15,17 @@ interface DailyStreakModalProps {
 }
 
 export default function DailyStreakModal({ isOpen, onClose, address }: DailyStreakModalProps) {
-    // ---------------------------------------------------------
-    // 1. TOUS LES HOOKS DOIVENT ÊTRE ICI (AVANT LE IF)
-    // ---------------------------------------------------------
     const [choice, setChoice] = useState<'GM' | 'GN'>('GM');
     const [isDeploying, setIsDeploying] = useState(false);
     
     const { streakData, isLoading: isStreakLoading, updateStreak } = useStreak(address);
-    
-    // Le hook useDeployer doit être appelé inconditionnellement, ici :
     const { deploy } = useDeployer(); 
 
-    // ---------------------------------------------------------
-    // 2. LES RETOURS CONDITIONNELS DOIVENT ÊTRE EN DESSOUS
-    // ---------------------------------------------------------
     if (!isOpen) return null;
 
     const handleShare = () => {
-        const text = `I just hit a ${streakData?.currentCount || 0}-day on-chain streak on Base with Forgenix! 🔥\n\nDeploy your first contract today:`;
-        window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=https://forgenix.com`, '_blank');
+        const text = `I just hit a ${streakData?.currentCount || 0}-day on-chain streak on Base with Nexulayer! 🔥\n\nDeploy your first contract today:`;
+        window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=https://nexulayer.com`, '_blank');
     };
 
     const handleDeploy = async () => {
@@ -42,18 +33,25 @@ export default function DailyStreakModal({ isOpen, onClose, address }: DailyStre
 
         setIsDeploying(true);
         try {
+            // Création d'un message unique avec la date pour éviter le rejet du contrat Factory 
+            // au cas où il bloquerait les déploiements de messages identiques consécutifs.
+            const uniqueMessage = `${choice} - ${new Date().toISOString().split('T')[0]}`;
+            
+            // On utilise exactement la même logique que dans MessageForm.tsx
+            const feeWei = ethers.parseEther('0.00003');
+
             // Appel au Smart Contract via useDeployer
             const success = await deploy({
                 activeTab: 'message',
-                msgText: choice,
-                feeWei: BigInt(0), 
+                msgText: uniqueMessage,
+                feeWei: feeWei,
                 isAdvancedMode: false,
                 requestWhiteLabel: false,
                 userCredits: 0,
                 address: address
             } as any); 
 
-            // Mise à jour de la BDD SEULEMENT SI le déploiement a réussi
+            // Mise à jour de la BDD SEULEMENT SI le déploiement a réussi sur la blockchain
             if (success) {
                 console.log("Transaction confirmée, mise à jour de la streak...");
                 await updateStreak(); 
@@ -61,19 +59,26 @@ export default function DailyStreakModal({ isOpen, onClose, address }: DailyStre
                 throw new Error("Le déploiement a échoué.");
             }
 
-        } catch (error) {
+        } catch (error: any) {
             console.error("Erreur lors du processus:", error);
-            // On peut enlever l'alert ici si useDeployer gère déjà l'affichage des erreurs
+            
+            if (error?.code === "ACTION_REJECTED") {
+                alert("Transaction annulée par l'utilisateur.");
+            } else if (error?.message?.includes("InsufficientFee") || error?.message?.includes("0xa458261b")) {
+                alert("Erreur de frais : Le montant envoyé ne correspond pas aux frais requis par le contrat.");
+            } else if (error?.message?.includes("execution reverted") || error?.code === "CALL_EXCEPTION") {
+                alert("La blockchain a rejeté la transaction. Vérifiez que vous avez assez d'ETH pour payer le gaz.");
+            } else {
+                alert(error.reason || error.message || "Une erreur est survenue lors de l'interaction avec le contrat.");
+            }
         } finally {
             setIsDeploying(false);
         }
     };
 
     return createPortal(
-        // ... (votre code d'affichage de la modale ne change pas)
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
             <div className="bg-card w-full max-w-md rounded-2xl sm:rounded-3xl border border-card shadow-2xl p-5 sm:p-8 animate-in zoom-in-95 duration-300 relative overflow-hidden">
-                {/* ... le reste de la modale ... */}
                 
                 <div className="relative z-10">
                     <DailyStreakHeader

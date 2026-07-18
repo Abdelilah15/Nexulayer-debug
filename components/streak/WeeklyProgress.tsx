@@ -21,6 +21,9 @@ export default function WeeklyProgress({ history }: WeeklyProgressProps) {
     return date.toISOString().split('T')[0];
   };
 
+  // Date d'aujourd'hui pour vérifier si un jour vide est "raté" (passé) ou "en attente" (aujourd'hui)
+  const todayStr = getDateString(new Date());
+
   return (
     <div>
       <h3 className="text-sm sm:text-base font-bold text-foreground mb-4">
@@ -30,6 +33,9 @@ export default function WeeklyProgress({ history }: WeeklyProgressProps) {
         {last7Days.map((date, index) => {
           const dateStr = getDateString(date);
           const isDone = history.includes(dateStr);
+          
+          // Un jour est raté s'il n'est pas validé ET qu'il est strictement dans le passé (pas aujourd'hui)
+          const isMissed = !isDone && dateStr !== todayStr;
 
           return (
             <div key={index} className="flex flex-col items-center gap-2">
@@ -39,11 +45,14 @@ export default function WeeklyProgress({ history }: WeeklyProgressProps) {
               <div 
                 className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-all duration-500 border-2 ${
                   isDone 
-                    ? 'bg-[#2b7fff] border-[#2b7fff] text-white shadow-[0_0_10px_rgba(43,127,255,0.4)]' 
-                    : 'bg-streak border-card text-transparent'
+                    ? 'bg-[#0055FF] border-[#0055FF] text-white shadow-[0_0_10px_rgba(0,85,255,0.4)]' // Validé : Bleu Nexulayer
+                    : isMissed
+                    ? 'bg-red-500/10 border-red-500/50 text-red-500' // Raté : Fond rouge clair, bordure rouge
+                    : 'bg-streak border-card text-transparent' // Aujourd'hui en attente : Vide
                 }`}
               >
-                {isDone && <i className="fi fi-rr-check text-sm sm:text-base"></i>}
+                {isDone && <i className="fi fi-rr-check flex text-sm sm:text-base"></i>}
+                {isMissed && <i className="fi fi-rr-cross flex text-[10px] sm:text-xs"></i>}
               </div>
             </div>
           );

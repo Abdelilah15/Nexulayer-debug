@@ -19,13 +19,13 @@ export default function DailyStreakHeader({ currentStreak, onClose, onShare }: D
                     onClick={onShare}
                     className="text-secondary hover:text-foreground transition-colors flex items-center gap-2 text-sm font-medium bg-background px-3 py-1.5 rounded-lg border border-card"
                 >
-                    <i className="fi fi-rr-share"></i> Share
+                    <i className="fi fi-rr-share flex"></i> Share
                 </button>
                 <button
                     onClick={onClose}
                     className="w-8 h-8 flex items-center justify-center rounded-full bg-background border border-card text-secondary hover:text-foreground hover:bg-card transition-all"
                 >
-                    <i className="fi fi-rr-cross-small text-xl"></i>
+                    <i className="fi fi-rr-cross-small flex text-xl"></i>
                 </button>
             </div>
 
@@ -41,10 +41,10 @@ export default function DailyStreakHeader({ currentStreak, onClose, onShare }: D
                     </div>
                 </div>
 
-                <div className="relative flex items-center justify-center mr-5 mb-5">
+                <div className="relative flex items-center justify-center mr-2">
                     <FireIcon
                         active={currentStreak > 0}
-                        className="w-16 h-16 sm:w-30 sm:h-30"
+                        className="w-30 h-30 sm:w-32 sm:h-32"
                     />
                 </div>
             </div>

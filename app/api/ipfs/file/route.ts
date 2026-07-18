@@ -19,7 +19,7 @@ export async function POST(request: Request) {
       method: "POST",
       headers: {
         Authorization: `Bearer ${process.env.PINATA_JWT}`,
-        // ⚠️ TRÈS IMPORTANT : Ne mettez PAS de "Content-Type" ici. 
+        // ⚠️ TRÈS IMPORTANT : Ne mettez PAS de "Content-Type" ici.
         // Laissez `fetch` générer automatiquement le boundary pour le multipart/form-data.
       },
       body: pinataFormData,
@@ -32,7 +32,7 @@ export async function POST(request: Request) {
     }
 
     const data = await res.json();
-    
+
     // 4. On renvoie le hash IPFS au frontend pour qu'il puisse l'inclure dans les métadonnées
     return NextResponse.json({ ipfsHash: data.IpfsHash }, { status: 200 });
 

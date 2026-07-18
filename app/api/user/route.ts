@@ -15,7 +15,7 @@ export async function POST(request: Request) {
 
         // Database connection
         const client = await clientPromise;
-        const db = client.db('Forgenix');
+        const db = client.db('Nexulayer');
         const collection = db.collection('users');
 
         // Search for user
@@ -30,19 +30,18 @@ export async function POST(request: Request) {
                 "https://api.dicebear.com/9.x/bottts-neutral/svg?seed=Gamma",
                 "https://api.dicebear.com/9.x/bottts-neutral/svg?seed=Delta"
             ];
-            
+
             // Randomly select one of the 4 avatars
             const randomAvatar = defaultAvatars[Math.floor(Math.random() * defaultAvatars.length)];
 
             const newUser = {
                 address: address,
-                username: `Forger_${address.substring(2, 6).toUpperCase()}`,
-                role: "Creator",
-                domain: "", 
-                avatar: randomAvatar, 
+                username: `Nexulayer_${address.substring(2, 6).toUpperCase()}`,
+                domain: "",
+                avatar: randomAvatar,
                 joinedAt: new Date().toISOString()
             };
-            
+
             await collection.insertOne(newUser);
             user = newUser as any;
             console.log("Profile created successfully:", newUser.username);
@@ -69,7 +68,7 @@ export async function PUT(request: Request) {
         }
 
         const client = await clientPromise;
-        const db = client.db('Forgenix');
+        const db = client.db('Nexulayer');
         const collection = db.collection('users');
 
         // Prepare data to update

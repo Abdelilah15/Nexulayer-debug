@@ -55,7 +55,7 @@ export default function DailyDeployButton({ choice, setChoice, onDeploy, isLoadi
         disabled={isLoading}
         className={`w-full py-3.5 sm:py-4 rounded-xl font-bold text-white transition-all flex items-center justify-center gap-2 ${
           isLoading 
-            ? 'bg-background text-secondary border border-card cursor-wait' 
+            ? 'bg-[#2b7fff] text-secondary border border-card cursor-wait' 
             : 'bg-[#2b7fff] hover:bg-[#1a5fc0] cursor-pointer shadow-lg shadow-blue-500/20'
         }`}
       >
