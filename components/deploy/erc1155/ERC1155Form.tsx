@@ -18,7 +18,7 @@ export default function ERC1155Form() {
     networkName, deployedAddress, deploy, resetStates
   } = useDeployer();
 
-  const [activeTab] = useState('erc1155');
+  const contractType = 'erc1155' as const;
   const [userCredits, setUserCredits] = useState<number>(0);
   const [selectedRecord, setSelectedRecord] = useState<DeploymentRecord | null>(null);
 
@@ -78,7 +78,7 @@ export default function ERC1155Form() {
   const handleSubmit = async (e: React.FormEvent | React.MouseEvent) => {
     e.preventDefault();
     const success = await deploy({
-      activeTab, isAdvancedMode, mediaFile, description, nftName,
+      contractType, isAdvancedMode, mediaFile, description, nftName,
       socials, requestWhiteLabel, erc1155Amount,
       royaltyFee, feeWei, currentFeeString, userCredits,
       address: address as string | undefined,
@@ -111,7 +111,7 @@ export default function ERC1155Form() {
         deployedAddress={deployedAddress}
         txHash={txHash}
         explorerUrl={explorerUrl}
-        activeTab={activeTab}
+        contractType={contractType}
         isAdvancedMode={isAdvancedMode}
         setIsAdvancedMode={setIsAdvancedMode}
         address={address}
@@ -208,7 +208,7 @@ export default function ERC1155Form() {
 
         {isAdvancedMode && (
           <AdvancedSettings
-            activeTab={activeTab}
+            contractType={contractType}
             description={description}
             setDescription={setDescription}
             socials={socials}

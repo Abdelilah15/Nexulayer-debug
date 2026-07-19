@@ -17,7 +17,7 @@ export default function MessageForm() {
   const [msgText, setMsgText] = useState('GM Base!');
   const [selectedRecord, setSelectedRecord] = useState<DeploymentRecord | null>(null);
 
-  const activeTab = 'message';
+  const contractType = 'message' as const;
   const feeWei = ethers.parseEther('0.00003');
   const currentFeeString = ethers.formatEther(feeWei);
 
@@ -27,7 +27,7 @@ export default function MessageForm() {
   const handleSubmit = async (e: React.FormEvent | React.MouseEvent) => {
     e.preventDefault();
     await deploy({
-      activeTab,
+      contractType,
       isAdvancedMode: false,
       msgText,
       feeWei,
@@ -57,7 +57,7 @@ export default function MessageForm() {
         deployedAddress={deployedAddress}
         txHash={txHash}
         explorerUrl={explorerUrl}
-        activeTab={activeTab}
+        contractType={contractType}
         isAdvancedMode={false}
         setIsAdvancedMode={() => {}}
         address={address}

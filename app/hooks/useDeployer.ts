@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { ethers } from 'ethers';
 import { keccak256, toBytes } from 'viem';
+import { useWalletClient } from 'wagmi';
 import { FACTORY_ADDRESS, FACTORY_ABI, ContractType } from '../lib/contracts';
 
 // We define exactly what data the hook needs to execute a deployment
@@ -43,6 +44,7 @@ export interface DeployFormData {
 }
 
 export function useDeployer() {
+  const { data: walletClient } = useWalletClient();
   const [isLoading, setIsLoading] = useState(false);
   const [txHash, setTxHash] = useState('');
   const [error, setError] = useState('');
@@ -100,10 +102,12 @@ export function useDeployer() {
     resetStates();
 
     try {
+      // 1. UTILISATION DIRECTE DE METAMASK POUR L'ÉCRITURE
       const win = window as any;
       if (!win.ethereum) throw new Error('Wallet not detected');
 
       const provider = new ethers.BrowserProvider(win.ethereum);
+      const signer = await provider.getSigner();
       const network = await provider.getNetwork();
 
       if (Number(network.chainId) === 8453) {
@@ -114,7 +118,6 @@ export function useDeployer() {
         setNetworkName('Base Sepolia');
       }
 
-      const signer = await provider.getSigner();
       const factoryContract = new ethers.Contract(FACTORY_ADDRESS, FACTORY_ABI, signer);
       const fee = data.feeWei;
 
@@ -265,8 +268,19 @@ export function useDeployer() {
 
       return true;
     } catch (error: any) {
-      console.error(error);
-      setError(error.reason || error.message || 'A transaction error occurred.');
+      console.error('Erreur brute de déploiement:', error);
+
+      // 2. GESTION DYNAMIQUE DES ERREURS
+      if (error.code === 'CALL_EXCEPTION' && error.action === 'estimateGas') {
+        // Cela permet d'afficher 0.00002 pour un streak et 0.00003 pour un ERC20
+        const expectedFee = data.currentFeeString ? `${data.currentFeeString} ETH` : 'les frais requis';
+        setError(
+          `La simulation de la transaction a échoué. Vérifiez que vous êtes sur le bon réseau, que vous avez assez d'ETH pour le gaz, et que le montant envoyé (${expectedFee}) est exact.`,
+        );
+      } else {
+        setError(error.reason || error.message || 'Une erreur est survenue lors de la transaction.');
+      }
+
       return false;
     } finally {
       setIsLoading(false);

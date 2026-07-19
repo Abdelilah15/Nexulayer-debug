@@ -32,6 +32,20 @@ export async function GET(request: Request) {
     const today = getTodayString();
     const isTodayDone = streak.history.includes(today);
 
+    if (streak.lastActive && !isTodayDone) {
+      const todayDate = new Date(today);
+      const lastActiveDate = new Date(streak.lastActive.toISOString().split('T')[0]);
+      const diffTime = Math.abs(todayDate.getTime() - lastActiveDate.getTime());
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+      if (diffDays > 1) {
+        streak = await prisma.streak.update({
+          where: { walletAddress: address },
+          data: { currentCount: 0 }, // Reset to 0 since they haven't deployed yet today
+        });
+      }
+    }
+
     return NextResponse.json({ ...streak, isTodayDone });
   } catch (error) {
     console.error('Erreur GET streak:', error);
@@ -58,10 +72,10 @@ export async function POST(request: Request) {
 
     const today = getTodayString();
     const todayDate = new Date(today);
-    
+
     // Si déjà validé aujourd'hui, on ne fait rien
     if (streak.history.includes(today)) {
-      return NextResponse.json({ message: 'Déjà validé aujourd\'hui', streak });
+      return NextResponse.json({ ...streak, isTodayDone: true });
     }
 
     let newCount = streak.currentCount;

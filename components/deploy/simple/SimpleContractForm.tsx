@@ -17,7 +17,7 @@ export default function SimpleContractForm() {
   const [simpleName, setSimpleName] = useState('My Contract');
   const [selectedRecord, setSelectedRecord] = useState<DeploymentRecord | null>(null);
 
-  const activeTab = 'simple';
+  const contractType = 'simple' as const;
   const feeWei = ethers.parseEther('0.00003');
   const currentFeeString = ethers.formatEther(feeWei);
 
@@ -27,7 +27,7 @@ export default function SimpleContractForm() {
   const handleSubmit = async (e: React.FormEvent | React.MouseEvent) => {
     e.preventDefault();
     await deploy({
-      activeTab,
+      contractType,
       isAdvancedMode: false,
       simpleName,
       feeWei,
@@ -55,7 +55,7 @@ export default function SimpleContractForm() {
         deployedAddress={deployedAddress}
         txHash={txHash}
         explorerUrl={explorerUrl}
-        activeTab={activeTab}
+        contractType={contractType}
         isAdvancedMode={false}
         setIsAdvancedMode={() => {}} /* Non utilisé en mode simple */
         address={address}
