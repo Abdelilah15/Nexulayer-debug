@@ -1,4 +1,4 @@
-export const FACTORY_ADDRESS = "0x795c98dc5f6cc9c9baaf89e8b69c832ac1ce8984";
+export const FACTORY_ADDRESS = "0x79f862007fa9b065086c98692358297e7761aaec";
 
 export const FACTORY_ABI = [
     {
@@ -125,6 +125,37 @@ export const FACTORY_ABI = [
         }
       ],
       "name": "B20Deployed",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "user",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "streakContract",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "timestamp",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "string",
+          "name": "greeting",
+          "type": "string"
+        }
+      ],
+      "name": "DailyStreakDeployed",
       "type": "event"
     },
     {
@@ -492,6 +523,25 @@ export const FACTORY_ABI = [
       "inputs": [
         {
           "internalType": "string",
+          "name": "greeting",
+          "type": "string"
+        }
+      ],
+      "name": "deployDailyStreak",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "payable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "string",
           "name": "text",
           "type": "string"
         }
@@ -709,6 +759,25 @@ export const FACTORY_ABI = [
         }
       ],
       "name": "getUserCredits",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "lastStreakDay",
       "outputs": [
         {
           "internalType": "uint256",

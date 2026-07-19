@@ -5,7 +5,7 @@ import { ethers } from 'ethers';
 import DashboardLayout from '../../components/DashboardLayout';
 
 // --- CONFIGURATION ---
-const FEE_MANAGER_ADDRESS = "0x4ed665705b7afcd6c7d5b464944077f4874fa53b";
+const FEE_MANAGER_ADDRESS = "0xc590bccfa61cf43e439d3a2f8e7f52bc545588d1";
 const USDC_ADDRESS = "0x036CbD53842c5426634e7929541eC2318f3dCF7e";
 
 const FEE_MANAGER_ABI = [
