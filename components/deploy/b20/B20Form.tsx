@@ -5,7 +5,7 @@ import { useAccount } from 'wagmi';
 import { ethers } from 'ethers';
 import { FACTORY_ADDRESS, FACTORY_ABI } from '@/app/lib/contracts';
 import { useDeployer } from '../../../app/hooks/useDeployer';
-import ForgeLayout from '../common/NexuLayout';
+import NexuLayout from '../common/NexuLayout';
 import ImageUploader from '../common/ImageUploader';
 import AdvancedSettings from '../common/AdvancedSettings';
 import WhiteLabelSection from '../common/WhiteLabelSection';
@@ -14,11 +14,19 @@ import { DeploymentRecord } from '../common/DeploymentHistory';
 export default function B20Form() {
   const { address, isConnected } = useAccount();
   const {
-    isLoading, txHash, error, explorerUrl, isModalOpen, setIsModalOpen,
-    networkName, deployedAddress, deploy, resetStates
+    isLoading,
+    txHash,
+    error,
+    explorerUrl,
+    isModalOpen,
+    setIsModalOpen,
+    networkName,
+    deployedAddress,
+    deploy,
+    resetStates,
   } = useDeployer();
 
-  const [activeTab] = useState('b20');
+  const contractType = 'b20' as const;
   const [b20Type, setB20Type] = useState<'asset' | 'stablecoin'>('asset');
   const [userCredits, setUserCredits] = useState<number>(0);
   const [selectedRecord, setSelectedRecord] = useState<DeploymentRecord | null>(null);
@@ -31,12 +39,22 @@ export default function B20Form() {
   const [isAdvancedMode, setIsAdvancedMode] = useState(false);
   const [requestWhiteLabel, setRequestWhiteLabel] = useState(false);
   const [description, setDescription] = useState('');
-  const [socials, setSocials] = useState({ website: '', twitter: '', telegram: '', discord: '', farcaster: '', github: '', tags: '' });
+  const [socials, setSocials] = useState({
+    website: '',
+    twitter: '',
+    telegram: '',
+    discord: '',
+    farcaster: '',
+    github: '',
+    tags: '',
+  });
 
   const [mediaFile, setMediaFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
-  useEffect(() => { if (!mediaFile) setPreviewUrl(null); }, [mediaFile]);
+  useEffect(() => {
+    if (!mediaFile) setPreviewUrl(null);
+  }, [mediaFile]);
 
   // Si on désactive le mode avancé, on repasse obligatoirement en 'asset'
   useEffect(() => {
@@ -46,7 +64,10 @@ export default function B20Form() {
   // Fetch Credits
   useEffect(() => {
     const fetchCredits = async () => {
-      if (!address) { setUserCredits(0); return; }
+      if (!address) {
+        setUserCredits(0);
+        return;
+      }
       try {
         const win = window as any;
         if (win.ethereum) {
@@ -56,7 +77,9 @@ export default function B20Form() {
           setUserCredits(Number(creditsBigInt));
           if (Number(creditsBigInt) > 0) setRequestWhiteLabel(true);
         }
-      } catch (err) { setUserCredits(0); }
+      } catch (err) {
+        setUserCredits(0);
+      }
     };
     fetchCredits();
   }, [address]);
@@ -67,7 +90,9 @@ export default function B20Form() {
     if (file) {
       if (previewUrl) URL.revokeObjectURL(previewUrl);
       setPreviewUrl(URL.createObjectURL(file));
-    } else { setPreviewUrl(null); }
+    } else {
+      setPreviewUrl(null);
+    }
   };
 
   const calculateFeeWei = (): bigint => {
@@ -87,15 +112,26 @@ export default function B20Form() {
   const handleSubmit = async (e: React.FormEvent | React.MouseEvent) => {
     e.preventDefault();
     const success = await deploy({
-      activeTab, isAdvancedMode, mediaFile, description, tokenName,
-      socials, requestWhiteLabel, tokenSymbol, tokenSupply,
-      feeWei, currentFeeString, userCredits, b20Type, currencyCode,
+      contractType,
+      isAdvancedMode,
+      mediaFile,
+      description,
+      tokenName,
+      socials,
+      requestWhiteLabel,
+      tokenSymbol,
+      tokenSupply,
+      feeWei,
+      currentFeeString,
+      userCredits,
+      b20Type,
+      currencyCode,
       decimals: parseInt(decimals) || 18,
       address: address as string | undefined,
       onCreditDeducted: (newCredits) => {
         setUserCredits(newCredits);
         if (newCredits === 0) setRequestWhiteLabel(false);
-      }
+      },
     });
 
     if (success) {
@@ -106,7 +142,7 @@ export default function B20Form() {
 
   return (
     <div className="animate-in fade-in duration-500">
-      <ForgeLayout
+      <NexuLayout
         onSubmit={handleSubmit}
         isLoading={isLoading}
         isConnected={isConnected}
@@ -121,7 +157,7 @@ export default function B20Form() {
         deployedAddress={deployedAddress}
         txHash={txHash}
         explorerUrl={explorerUrl}
-        activeTab={activeTab}
+        contractType={contractType}
         isAdvancedMode={isAdvancedMode}
         setIsAdvancedMode={setIsAdvancedMode}
         address={address}
@@ -137,8 +173,12 @@ export default function B20Form() {
                 checked={isAdvancedMode}
                 onChange={() => setIsAdvancedMode(!isAdvancedMode)}
               />
-              <div className={`block w-10 h-6 sm:w-12 sm:h-7 rounded-full transition-colors ${isAdvancedMode ? 'bg-[#2b7fff]' : 'bg-[#1c398e]'}`}></div>
-              <div className={`absolute left-1 top-1 bg-white w-4 h-4 sm:w-5 sm:h-5 rounded-full transition-transform transform ${isAdvancedMode ? 'translate-x-4 sm:translate-x-5' : ''}`}></div>
+              <div
+                className={`block w-10 h-6 sm:w-12 sm:h-7 rounded-full transition-colors ${isAdvancedMode ? 'bg-[#2b7fff]' : 'bg-[#1c398e]'}`}
+              ></div>
+              <div
+                className={`absolute left-1 top-1 bg-white w-4 h-4 sm:w-5 sm:h-5 rounded-full transition-transform transform ${isAdvancedMode ? 'translate-x-4 sm:translate-x-5' : ''}`}
+              ></div>
             </div>
             <div className="ml-2.5 sm:ml-3 text-xs sm:text-sm font-medium text-secondary">
               Advanced Mode <span className="opacity-70 ml-1">(Metadata & Artwork)</span>
@@ -155,10 +195,9 @@ export default function B20Form() {
         {isAdvancedMode && (
           <div className="mt-4 flex w-full rounded-full border border-card bg-transparent p-1.5 sm:mt-6 gap-4">
             <label
-              className={`flex flex-1 cursor-pointer items-center justify-center rounded-full py-2.5 text-xs font-medium transition-all duration-300 sm:text-sm ${b20Type === 'asset'
-                ? 'bg-[#2b7fff] text-white shadow-md'
-                : 'bg-[#1c398e] text-white'
-                }`}
+              className={`flex flex-1 cursor-pointer items-center justify-center rounded-full py-2.5 text-xs font-medium transition-all duration-300 sm:text-sm ${
+                b20Type === 'asset' ? 'bg-[#2b7fff] text-white shadow-md' : 'bg-[#1c398e] text-white'
+              }`}
             >
               <input
                 type="radio"
@@ -172,10 +211,9 @@ export default function B20Form() {
             </label>
 
             <label
-              className={`flex flex-1 cursor-pointer items-center justify-center rounded-full py-2.5 text-xs font-medium transition-all duration-300 sm:text-sm ${b20Type === 'stablecoin'
-                ? 'bg-[#2b7fff] text-white shadow-md'
-                : 'bg-[#1c398e] text-white'
-                }`}
+              className={`flex flex-1 cursor-pointer items-center justify-center rounded-full py-2.5 text-xs font-medium transition-all duration-300 sm:text-sm ${
+                b20Type === 'stablecoin' ? 'bg-[#2b7fff] text-white shadow-md' : 'bg-[#1c398e] text-white'
+              }`}
             >
               <input
                 type="radio"
@@ -190,10 +228,18 @@ export default function B20Form() {
           </div>
         )}
 
-        <div className={isAdvancedMode ? "grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 mt-4 sm:mt-6" : "grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mt-4 sm:mt-6"}>
-          <div className={isAdvancedMode ? "md:col-span-2 flex flex-col gap-3 sm:gap-4" : "contents"}>
+        <div
+          className={
+            isAdvancedMode
+              ? 'grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 mt-4 sm:mt-6'
+              : 'grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mt-4 sm:mt-6'
+          }
+        >
+          <div className={isAdvancedMode ? 'md:col-span-2 flex flex-col gap-3 sm:gap-4' : 'contents'}>
             <div>
-              <label className="block text-xs sm:text-sm font-medium text-secondary mb-1.5 sm:mb-2">{b20Type === 'stablecoin' ? 'Stablecoin Name' : 'B20 Asset Name'}</label>
+              <label className="block text-xs sm:text-sm font-medium text-secondary mb-1.5 sm:mb-2">
+                {b20Type === 'stablecoin' ? 'Stablecoin Name' : 'B20 Asset Name'}
+              </label>
               <input
                 type="text"
                 value={tokenName}
@@ -214,9 +260,17 @@ export default function B20Form() {
               />
             </div>
 
-            <div className={isAdvancedMode ? "grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4" : "grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 md:col-span-2"}>
+            <div
+              className={
+                isAdvancedMode
+                  ? 'grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4'
+                  : 'grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 md:col-span-2'
+              }
+            >
               <div>
-                <label className="block text-xs sm:text-sm font-medium text-secondary mb-1.5 sm:mb-2">Initial Supply Cap</label>
+                <label className="block text-xs sm:text-sm font-medium text-secondary mb-1.5 sm:mb-2">
+                  Initial Supply Cap
+                </label>
                 <input
                   type="number"
                   value={tokenSupply}
@@ -228,7 +282,9 @@ export default function B20Form() {
 
               {b20Type === 'asset' && (
                 <div>
-                  <label className="block text-xs sm:text-sm font-medium text-secondary mb-1.5 sm:mb-2">Decimals (6 - 18)</label>
+                  <label className="block text-xs sm:text-sm font-medium text-secondary mb-1.5 sm:mb-2">
+                    Decimals (6 - 18)
+                  </label>
                   <input
                     type="number"
                     min="6"
@@ -243,7 +299,9 @@ export default function B20Form() {
 
               {isAdvancedMode && b20Type === 'stablecoin' && (
                 <div>
-                  <label className="block text-xs sm:text-sm font-medium text-secondary mb-1.5 sm:mb-2">Currency Code</label>
+                  <label className="block text-xs sm:text-sm font-medium text-secondary mb-1.5 sm:mb-2">
+                    Currency Code
+                  </label>
                   <input
                     type="text"
                     value={currencyCode}
@@ -258,27 +316,23 @@ export default function B20Form() {
 
           {isAdvancedMode && (
             <div className="md:col-span-1 flex flex-col">
-              <ImageUploader
-                label="Token Logo (PNG, JPG)"
-                previewUrl={previewUrl}
-                onImageChange={handleImageChange}
-              />
+              <ImageUploader label="Token Logo (PNG, JPG)" previewUrl={previewUrl} onImageChange={handleImageChange} />
             </div>
           )}
         </div>
 
         {isAdvancedMode && (
           <AdvancedSettings
-            activeTab={activeTab}
+            contractType={contractType}
             description={description}
             setDescription={setDescription}
             socials={socials}
             setSocials={setSocials}
             royaltyFee="0"
-            setRoyaltyFee={() => { }}
+            setRoyaltyFee={() => {}}
           />
         )}
-      </ForgeLayout>
+      </NexuLayout>
     </div>
   );
 }

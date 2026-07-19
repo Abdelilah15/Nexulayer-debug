@@ -44,7 +44,7 @@ export default function Topbar({ title, setIsMobileMenuOpen }: TopbarProps) {
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
     } catch (error) {
-      console.error("Failed to copy address:", error);
+      console.error('Failed to copy address:', error);
     }
   };
 
@@ -54,8 +54,8 @@ export default function Topbar({ title, setIsMobileMenuOpen }: TopbarProps) {
         setIsDropdownOpen(false);
       }
     }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   // ✅ Fix: useCallback pour éviter les stale closures
@@ -65,7 +65,7 @@ export default function Topbar({ title, setIsMobileMenuOpen }: TopbarProps) {
         const response = await fetch('/api/user', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ address })
+          body: JSON.stringify({ address }),
         });
         if (response.ok) {
           const data = await response.json();
@@ -73,7 +73,7 @@ export default function Topbar({ title, setIsMobileMenuOpen }: TopbarProps) {
           localStorage.setItem('nexulayer_profile', JSON.stringify(data));
         }
       } catch (error) {
-        console.error("Profile sync error", error);
+        console.error('Profile sync error', error);
       }
     } else {
       setUserProfile(null);
@@ -82,7 +82,9 @@ export default function Topbar({ title, setIsMobileMenuOpen }: TopbarProps) {
   }, [isConnected, address]);
 
   // ✅ Fix: fetchUser dans les deps
-  useEffect(() => { fetchUser(); }, [fetchUser]);
+  useEffect(() => {
+    fetchUser();
+  }, [fetchUser]);
 
   useEffect(() => {
     window.addEventListener('profileUpdated', fetchUser);
@@ -91,7 +93,6 @@ export default function Topbar({ title, setIsMobileMenuOpen }: TopbarProps) {
 
   return (
     <header className="h-16 md:h-20 px-4 md:px-8 flex justify-between items-center z-10 flex-shrink-0 bg-bar">
-
       <div className="flex items-center gap-3">
         <button
           onClick={() => setIsMobileMenuOpen && setIsMobileMenuOpen(true)}
@@ -101,17 +102,20 @@ export default function Topbar({ title, setIsMobileMenuOpen }: TopbarProps) {
         </button>
 
         <h2 className="text-base md:text-lg font-semibold text-foreground truncate max-w-[120px] md:max-w-none">
-          {title || "Nexulayer"}
+          {title || 'Nexulayer'}
         </h2>
       </div>
 
       <ConnectButton.Custom>
         {({ account, chain, openChainModal, openConnectModal, authenticationStatus, mounted }) => {
           const ready = mounted && authenticationStatus !== 'loading';
-          const connected = ready && account && chain && (!authenticationStatus || authenticationStatus === 'authenticated');
+          const connected =
+            ready && account && chain && (!authenticationStatus || authenticationStatus === 'authenticated');
 
           return (
-            <div {...(!ready && { 'aria-hidden': true, 'style': { opacity: 0, pointerEvents: 'none', userSelect: 'none' } })}>
+            <div
+              {...(!ready && { 'aria-hidden': true, style: { opacity: 0, pointerEvents: 'none', userSelect: 'none' } })}
+            >
               {(() => {
                 if (!connected) {
                   return (
@@ -141,7 +145,6 @@ export default function Topbar({ title, setIsMobileMenuOpen }: TopbarProps) {
 
                 return (
                   <div className="flex items-center gap-2 md:gap-4 relative" ref={dropdownRef}>
-
                     {/* 1. Bouton Streak */}
                     <button
                       onClick={() => setIsStreakModalOpen(true)}
@@ -158,9 +161,21 @@ export default function Topbar({ title, setIsMobileMenuOpen }: TopbarProps) {
                       className="w-9 h-9 md:w-auto md:h-auto md:py-1.5 md:px-4 flex items-center justify-center gap-0 md:gap-2 border border-[#2b7fff] rounded-full transition-colors text-foreground font-medium text-sm cursor-pointer"
                     >
                       {chain.hasIcon ? (
-                        <div style={{ background: chain.iconBackground, width: 30, height: 30, borderRadius: 999, overflow: 'hidden' }}>
+                        <div
+                          style={{
+                            background: chain.iconBackground,
+                            width: 30,
+                            height: 30,
+                            borderRadius: 999,
+                            overflow: 'hidden',
+                          }}
+                        >
                           {chain.iconUrl && (
-                            <img alt={chain.name ?? 'Chain icon'} src={chain.iconUrl} style={{ width: 30, height: 30 }} />
+                            <img
+                              alt={chain.name ?? 'Chain icon'}
+                              src={chain.iconUrl}
+                              style={{ width: 30, height: 30 }}
+                            />
                           )}
                         </div>
                       ) : (
@@ -195,13 +210,15 @@ export default function Topbar({ title, setIsMobileMenuOpen }: TopbarProps) {
                       </button>
 
                       {isDropdownOpen && (
-                        <div className="
+                        <div
+                          className="
                           absolute right-0 mt-3 z-50
                           w-[calc(100vw-2rem)] max-w-xs
                           sm:w-72
                           bg-bar border border-card rounded-2xl py-2
                           animate-in fade-in slide-in-from-top-2 duration-200 drop-shadow-xl
-                        ">
+                        "
+                        >
                           {/* En-tête profil */}
                           <div className="px-4 py-3 mb-2 bg-hover/30 border-b border-card">
                             <p className="text-sm font-bold text-foreground truncate mb-0.5">
@@ -216,7 +233,7 @@ export default function Topbar({ title, setIsMobileMenuOpen }: TopbarProps) {
                                 onClick={() => handleCopy(account.address)}
                                 className="shrink-0 p-1.5 rounded-lg hover:bg-hover transition-colors"
                               >
-                                <i className={`fi ${copied ? "fi-rr-check" : "fi-rr-copy"} text-xs text-secondary`} />
+                                <i className={`fi ${copied ? 'fi-rr-check' : 'fi-rr-copy'} text-xs text-secondary`} />
                               </button>
                             </div>
                           </div>
@@ -224,13 +241,20 @@ export default function Topbar({ title, setIsMobileMenuOpen }: TopbarProps) {
                           {/* Actions */}
                           <div className="px-2">
                             <button
-                              onClick={() => { router.push('/Profile'); setIsDropdownOpen(false); }}
+                              onClick={() => {
+                                router.push('/Profile');
+                                setIsDropdownOpen(false);
+                              }}
                               className="w-full text-left px-4 py-3 text-sm text-secondary rounded-xl hover:bar-button-hover hover:text-foreground transition-colors flex items-center gap-3"
                             >
                               <i className="fi fi-rr-user text-secondary"></i> Profile
                             </button>
                             <button
-                              onClick={() => { disconnect(); localStorage.removeItem('nexulayer_profile'); setIsDropdownOpen(false); }}
+                              onClick={() => {
+                                disconnect();
+                                localStorage.removeItem('nexulayer_profile');
+                                setIsDropdownOpen(false);
+                              }}
                               className="w-full text-left px-4 py-3 text-sm text-red-500 rounded-xl hover:bg-red-500/10 transition-colors flex items-center gap-3"
                             >
                               <i className="fi fi-rr-exit"></i> Disconnect
@@ -239,7 +263,6 @@ export default function Topbar({ title, setIsMobileMenuOpen }: TopbarProps) {
                         </div>
                       )}
                     </div>
-
                   </div>
                 );
               })()}
@@ -248,12 +271,7 @@ export default function Topbar({ title, setIsMobileMenuOpen }: TopbarProps) {
         }}
       </ConnectButton.Custom>
 
-      <DailyStreakModal
-        isOpen={isStreakModalOpen}
-        onClose={() => setIsStreakModalOpen(false)}
-        address={address}
-      />
-
+      <DailyStreakModal isOpen={isStreakModalOpen} onClose={() => setIsStreakModalOpen(false)} address={address} />
     </header>
   );
 }

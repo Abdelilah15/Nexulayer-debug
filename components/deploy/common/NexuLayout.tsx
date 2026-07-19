@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { useAccount } from 'wagmi';
+import { ContractType } from '@/app/lib/contracts';
 import SuccessModal from '../modals/SuccessModal';
 import DeploymentHistory, { DeploymentRecord } from './DeploymentHistory';
 import DeploymentModal from '../modals/DeploymentModal';
@@ -25,7 +26,7 @@ interface NexuLayoutProps {
   txHash: string;
   explorerUrl: string;
 
-  activeTab: string;
+  contractType: ContractType;
   isAdvancedMode: boolean;
   setIsAdvancedMode: (isAdvanced: boolean) => void;
 
@@ -51,7 +52,7 @@ export default function NexuLayout({
   deployedAddress,
   txHash,
   explorerUrl,
-  activeTab,
+  contractType,
   isAdvancedMode,
   setIsAdvancedMode,
   address,
@@ -82,11 +83,10 @@ export default function NexuLayout({
               type="button"
               onClick={onSubmit}
               disabled={isLoading}
-              className={`w-full py-2.5 md:py-4 rounded-xl font-bold text-base md:text-lg transition-colors ${
-                isLoading
+              className={`w-full py-2.5 md:py-4 rounded-xl font-bold text-base md:text-lg transition-colors ${isLoading
                   ? 'bg-[#2b7fff] text-white cursor-not-allowed'
                   : 'bg-[#2b7fff] hover:bg-[#155dfc] text-white'
-              }`}
+                }`}
             >
               {isLoading ? 'Forging in progress...' : '⚡ Forge on Blockchain'}
             </button>
@@ -110,7 +110,7 @@ export default function NexuLayout({
           deployedAddress={deployedAddress}
           txHash={txHash}
           explorerUrl={explorerUrl}
-          activeTab={activeTab}
+          contractType={contractType}
           isAdvancedMode={isAdvancedMode}
         />
       </div>
@@ -118,7 +118,7 @@ export default function NexuLayout({
       {/* Deployment History */}
       <DeploymentHistory
         address={address}
-        activeTab={activeTab}
+        contractType={contractType}
         explorerUrl={explorerUrl}
         refreshTrigger={txHash || "init"}
         onSelectRecord={setSelectedRecord}

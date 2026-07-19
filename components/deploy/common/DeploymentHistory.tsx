@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { createPublicClient, http, parseAbi, parseAbiItem, hexToString, type Log } from 'viem';
 import { baseSepolia } from 'viem/chains';
-import { FACTORY_ADDRESS } from '@/app/lib/contracts';
+import { FACTORY_ADDRESS, ContractType } from '@/app/lib/contracts';
 
 
 const PROXY_DEPLOYED_EVENT = parseAbiItem(
@@ -45,7 +45,7 @@ export interface DeploymentRecord {
 
 interface DeploymentHistoryProps {
   address?: `0x${string}`;
-  activeTab: string;
+  contractType: ContractType;
   explorerUrl: string;
   refreshTrigger: string;
   onSelectRecord: (record: DeploymentRecord) => void;
@@ -101,7 +101,7 @@ const mapTypeToTab = (typeName: string): string => {
   return 'simple';
 };
 
-export default function DeploymentHistory({ address, activeTab, explorerUrl, refreshTrigger, onSelectRecord }: DeploymentHistoryProps) {
+export default function DeploymentHistory({ address, contractType, explorerUrl, refreshTrigger, onSelectRecord }: DeploymentHistoryProps) {
   const [deployments, setDeployments] = useState<DeploymentRecord[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const seenIds = useRef<Set<string>>(new Set());
@@ -286,7 +286,7 @@ export default function DeploymentHistory({ address, activeTab, explorerUrl, ref
     };
   }, [address, refreshTrigger, enrichLog]);
 
-  const filteredDeployments = deployments.filter((dep) => dep.tabCategory === activeTab);
+  const filteredDeployments = deployments.filter((dep) => dep.tabCategory === contractType);
 
   if (!address) return null;
 

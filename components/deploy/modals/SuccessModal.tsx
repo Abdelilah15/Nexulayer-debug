@@ -1,4 +1,5 @@
 import React from 'react';
+import { ContractType } from '@/app/lib/contracts';
 
 interface SuccessModalProps {
   isOpen: boolean;
@@ -10,7 +11,7 @@ interface SuccessModalProps {
   deployedAddress: string;
   txHash: string;
   explorerUrl: string;
-  activeTab: string;
+  contractType: ContractType;
   isAdvancedMode: boolean;
 }
 
@@ -24,7 +25,7 @@ export default function SuccessModal({
   deployedAddress,
   txHash,
   explorerUrl,
-  activeTab,
+  contractType,
   isAdvancedMode
 }: SuccessModalProps) {
 
@@ -122,7 +123,7 @@ export default function SuccessModal({
               </a>
             </div>
 
-            {activeTab === 'nft'  && isAdvancedMode && deployedAddress && (
+            {contractType === 'nft' && isAdvancedMode && deployedAddress && (
               <a
                 href={networkName === 'Base Mainnet'
                   ? `https://opensea.io/assets/base/${deployedAddress}`

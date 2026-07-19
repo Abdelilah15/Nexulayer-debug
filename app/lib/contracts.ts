@@ -1,3 +1,5 @@
+export type ContractType = 'token' | 'nft' | 'b20' | 'erc1155' | 'message' | 'simple' | 'daily';
+
 export const FACTORY_ADDRESS = "0x79f862007fa9b065086c98692358297e7761aaec";
 
 export const FACTORY_ABI = [

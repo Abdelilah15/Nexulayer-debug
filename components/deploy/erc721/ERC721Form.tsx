@@ -5,7 +5,7 @@ import { useAccount } from 'wagmi';
 import { ethers } from 'ethers';
 import { FACTORY_ADDRESS, FACTORY_ABI } from '@/app/lib/contracts';
 import { useDeployer } from '../../../app/hooks/useDeployer';
-import ForgeLayout from '../common/NexuLayout';
+import NexuLayout from '../common/NexuLayout';
 import ImageUploader from '../common/ImageUploader';
 import AdvancedSettings from '../common/AdvancedSettings';
 import WhiteLabelSection from '../common/WhiteLabelSection';
@@ -18,7 +18,7 @@ export default function ERC721Form() {
     networkName, deployedAddress, deploy, resetStates
   } = useDeployer();
 
-  const [activeTab] = useState('nft');
+  const contractType = 'nft' as const;
   const [userCredits, setUserCredits] = useState<number>(0);
   const [selectedRecord, setSelectedRecord] = useState<DeploymentRecord | null>(null);
 
@@ -79,7 +79,7 @@ export default function ERC721Form() {
   const handleSubmit = async (e: React.FormEvent | React.MouseEvent) => {
     e.preventDefault();
     const success = await deploy({
-      activeTab, isAdvancedMode, mediaFile, description, nftName,
+      contractType, isAdvancedMode, mediaFile, description, nftName,
       socials, requestWhiteLabel, nftSymbol, nftSupply,
       royaltyFee, feeWei, currentFeeString, userCredits,
       address: address as string | undefined,
@@ -97,7 +97,7 @@ export default function ERC721Form() {
 
   return (
     <div className="animate-in fade-in duration-500">
-      <ForgeLayout
+      <NexuLayout
         onSubmit={handleSubmit}
         isLoading={isLoading}
         isConnected={isConnected}
@@ -112,7 +112,7 @@ export default function ERC721Form() {
         deployedAddress={deployedAddress}
         txHash={txHash}
         explorerUrl={explorerUrl}
-        activeTab={activeTab}
+        contractType={contractType}
         isAdvancedMode={isAdvancedMode}
         setIsAdvancedMode={setIsAdvancedMode}
         address={address}
@@ -223,7 +223,7 @@ export default function ERC721Form() {
 
         {isAdvancedMode && (
           <AdvancedSettings
-            activeTab={activeTab}
+            contractType={contractType}
             description={description}
             setDescription={setDescription}
             socials={socials}
@@ -232,7 +232,7 @@ export default function ERC721Form() {
             setRoyaltyFee={setRoyaltyFee}
           />
         )}
-      </ForgeLayout>
+      </NexuLayout>
     </div>
   );
 }

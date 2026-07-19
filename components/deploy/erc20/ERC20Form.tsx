@@ -5,7 +5,7 @@ import { useAccount } from 'wagmi';
 import { ethers } from 'ethers';
 import { FACTORY_ADDRESS, FACTORY_ABI } from '@/app/lib/contracts';
 import { useDeployer } from '../../../app/hooks/useDeployer';
-import ForgeLayout from '../common/NexuLayout';
+import NexuLayout from '../common/NexuLayout';
 import ImageUploader from '../common/ImageUploader';
 import AdvancedSettings from '../common/AdvancedSettings';
 import WhiteLabelSection from '../common/WhiteLabelSection';
@@ -18,7 +18,7 @@ export default function ERC20Form() {
     networkName, deployedAddress, deploy, resetStates
   } = useDeployer();
 
-  const [activeTab] = useState('token');
+  const contractType = 'token' as const;
   const [userCredits, setUserCredits] = useState<number>(0);
   const [selectedRecord, setSelectedRecord] = useState<DeploymentRecord | null>(null);
 
@@ -88,7 +88,7 @@ export default function ERC20Form() {
   const handleSubmit = async (e: React.FormEvent | React.MouseEvent) => {
     e.preventDefault();
     const success = await deploy({
-      activeTab, isAdvancedMode, mediaFile, description, tokenName,
+      contractType, isAdvancedMode, mediaFile, description, tokenName,
       socials, requestWhiteLabel, tokenSymbol, tokenSupply,
       feeWei, currentFeeString, userCredits,
       decimals: 18,
@@ -107,7 +107,7 @@ export default function ERC20Form() {
 
   return (
     <div className="animate-in fade-in duration-500">
-      <ForgeLayout
+      <NexuLayout
         onSubmit={handleSubmit}
         isLoading={isLoading}
         isConnected={isConnected}
@@ -122,7 +122,7 @@ export default function ERC20Form() {
         deployedAddress={deployedAddress}
         txHash={txHash}
         explorerUrl={explorerUrl}
-        activeTab={activeTab}
+        contractType={contractType}
         isAdvancedMode={isAdvancedMode}
         setIsAdvancedMode={setIsAdvancedMode}
         address={address}
@@ -235,7 +235,7 @@ export default function ERC20Form() {
 
         {isAdvancedMode && (
           <AdvancedSettings
-            activeTab={activeTab}
+            contractType={contractType}
             description={description}
             setDescription={setDescription}
             socials={socials}
@@ -244,7 +244,7 @@ export default function ERC20Form() {
             setRoyaltyFee={() => { }}
           />
         )}
-      </ForgeLayout>
+      </NexuLayout>
     </div>
   );
 }

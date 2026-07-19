@@ -1,23 +1,23 @@
 import { useState } from 'react';
 import { ethers } from 'ethers';
 import { keccak256, toBytes } from 'viem';
-import { FACTORY_ADDRESS, FACTORY_ABI } from '../lib/contracts';
+import { FACTORY_ADDRESS, FACTORY_ABI, ContractType } from '../lib/contracts';
 
 // We define exactly what data the hook needs to execute a deployment
 // Correction : Les propriétés spécifiques sont désormais optionnelles (?)
 export interface DeployFormData {
-  activeTab: string;
+  contractType: ContractType;
   isAdvancedMode: boolean;
   requestWhiteLabel: boolean;
   currentFeeString: string;
   userCredits: number;
   address: string | undefined;
   feeWei: bigint;
-  
+
   // Rendu optionnel : B20
   b20Type?: 'asset' | 'stablecoin';
   currencyCode?: string;
-  
+
   // Rendu optionnel : Formulaires avancés
   mediaFile?: File | null;
   description?: string;
@@ -29,7 +29,7 @@ export interface DeployFormData {
   tokenName?: string;
   tokenSymbol?: string;
   nftSymbol?: string;
-  
+
   // Rendu optionnel : Supply / Amounts
   tokenSupply?: string;
   decimals?: number;
@@ -58,39 +58,39 @@ export function useDeployer() {
   };
 
   const uploadToIPFS = async (data: DeployFormData): Promise<string> => {
-    if (!data.mediaFile) throw new Error("Please select a file (Artwork or Logo).");
+    if (!data.mediaFile) throw new Error('Please select a file (Artwork or Logo).');
 
     const formData = new FormData();
-    formData.append("file", data.mediaFile);
+    formData.append('file', data.mediaFile);
 
-    const fileRes = await fetch("/api/ipfs/file", { method: "POST", body: formData });
-    if (!fileRes.ok) throw new Error("Image upload failed.");
+    const fileRes = await fetch('/api/ipfs/file', { method: 'POST', body: formData });
+    if (!fileRes.ok) throw new Error('Image upload failed.');
     const fileData = await fileRes.json();
     const imageUrl = `ipfs://${fileData.ipfsHash}`;
 
     const metadata = {
-      name: (data.activeTab === 'nft' || data.activeTab === 'erc1155') ? data.nftName : data.tokenName,
+      name: data.contractType === 'nft' || data.contractType === 'erc1155' ? data.nftName : data.tokenName,
       description: data.description,
       image: imageUrl,
       external_link: data.socials?.website,
       attributes: [
-        { trait_type: "Twitter", value: data.socials?.twitter },
-        { trait_type: "Discord", value: data.socials?.discord },
-        { trait_type: "Farcaster", value: data.socials?.farcaster },
-        { trait_type: "Telegram", value: data.socials?.telegram },
-        { trait_type: "Github", value: data.socials?.github },
-        { trait_type: "Tags", value: data.socials?.tags },
+        { trait_type: 'Twitter', value: data.socials?.twitter },
+        { trait_type: 'Discord', value: data.socials?.discord },
+        { trait_type: 'Farcaster', value: data.socials?.farcaster },
+        { trait_type: 'Telegram', value: data.socials?.telegram },
+        { trait_type: 'Github', value: data.socials?.github },
+        { trait_type: 'Tags', value: data.socials?.tags },
       ],
-      isWhiteLabeled: data.requestWhiteLabel
+      isWhiteLabeled: data.requestWhiteLabel,
     };
 
-    const jsonRes = await fetch("/api/ipfs/json", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+    const jsonRes = await fetch('/api/ipfs/json', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(metadata),
     });
 
-    if (!jsonRes.ok) throw new Error("Metadata upload failed.");
+    if (!jsonRes.ok) throw new Error('Metadata upload failed.');
     const jsonData = await jsonRes.json();
     return `ipfs://${jsonData.ipfsHash}`;
   };
@@ -101,7 +101,7 @@ export function useDeployer() {
 
     try {
       const win = window as any;
-      if (!win.ethereum) throw new Error("Wallet not detected");
+      if (!win.ethereum) throw new Error('Wallet not detected');
 
       const provider = new ethers.BrowserProvider(win.ethereum);
       const network = await provider.getNetwork();
@@ -119,58 +119,118 @@ export function useDeployer() {
       const fee = data.feeWei;
 
       let tx;
-      let metadataURI = "";
+      let metadataURI = '';
 
-      if (data.isAdvancedMode && (data.activeTab === 'token' || data.activeTab === 'b20' || data.activeTab === 'nft' || data.activeTab === 'erc1155')) {
+      if (
+        data.isAdvancedMode &&
+        (data.contractType === 'token' ||
+          data.contractType === 'b20' ||
+          data.contractType === 'nft' ||
+          data.contractType === 'erc1155')
+      ) {
         metadataURI = await uploadToIPFS(data);
       }
 
-      if (data.activeTab === 'message') {
-        tx = await factoryContract.deployMessage(data.msgText || "", { value: fee });
-      } else if (data.activeTab === 'simple') {
-        tx = await factoryContract.deploySimpleContract(data.simpleName || "", { value: fee });
-      } else if (data.activeTab === 'token') {
+      if (data.contractType === 'daily') {
+        tx = await factoryContract.deployDailyStreak(data.msgText || 'GM', { value: fee });
+      } else if (data.contractType === 'message') {
+        tx = await factoryContract.deployMessage(data.msgText || '', { value: fee });
+      } else if (data.contractType === 'simple') {
+        tx = await factoryContract.deploySimpleContract(data.simpleName || '', { value: fee });
+      } else if (data.contractType === 'token') {
         if (data.isAdvancedMode) {
-          tx = await factoryContract.deployAdvancedERC20(data.tokenName || "", data.tokenSymbol || "", data.tokenSupply || "0", metadataURI, data.requestWhiteLabel, { value: fee });
+          tx = await factoryContract.deployAdvancedERC20(
+            data.tokenName || '',
+            data.tokenSymbol || '',
+            data.tokenSupply || '0',
+            metadataURI,
+            data.requestWhiteLabel,
+            { value: fee },
+          );
         } else {
-          tx = await factoryContract.deploySimpleERC20(data.tokenName || "", data.tokenSymbol || "", data.tokenSupply || "0", data.requestWhiteLabel, { value: fee });
+          tx = await factoryContract.deploySimpleERC20(
+            data.tokenName || '',
+            data.tokenSymbol || '',
+            data.tokenSupply || '0',
+            data.requestWhiteLabel,
+            { value: fee },
+          );
         }
-      } else if (data.activeTab === 'b20') {
+      } else if (data.contractType === 'b20') {
         const salt = keccak256(toBytes(`forgenix-b20-${data.tokenName}-${Date.now()}`));
 
         if (data.b20Type === 'stablecoin') {
-          const b20SupplyCap = ethers.parseUnits(data.tokenSupply || "0", 6);
+          const b20SupplyCap = ethers.parseUnits(data.tokenSupply || '0', 6);
           tx = await factoryContract.deployAdvancedB20Stablecoin(
             salt,
-            data.tokenName || "",
-            data.tokenSymbol || "",
-            data.currencyCode || "",
+            data.tokenName || '',
+            data.tokenSymbol || '',
+            data.currencyCode || '',
             b20SupplyCap,
             metadataURI,
             data.requestWhiteLabel,
-            { value: fee }
+            { value: fee },
           );
         } else {
           const b20Decimals = data.decimals || 18;
-          const b20SupplyCap = ethers.parseUnits(data.tokenSupply || "0", b20Decimals);
+          const b20SupplyCap = ethers.parseUnits(data.tokenSupply || '0', b20Decimals);
 
           if (data.isAdvancedMode) {
-            tx = await factoryContract.deployAdvancedB20(salt, data.tokenName || "", data.tokenSymbol || "", b20Decimals, b20SupplyCap, metadataURI, data.requestWhiteLabel, { value: fee });
+            tx = await factoryContract.deployAdvancedB20(
+              salt,
+              data.tokenName || '',
+              data.tokenSymbol || '',
+              b20Decimals,
+              b20SupplyCap,
+              metadataURI,
+              data.requestWhiteLabel,
+              { value: fee },
+            );
           } else {
-            tx = await factoryContract.deploySimpleB20(salt, data.tokenName || "", data.tokenSymbol || "", b20Decimals, b20SupplyCap, data.requestWhiteLabel, { value: fee });
+            tx = await factoryContract.deploySimpleB20(
+              salt,
+              data.tokenName || '',
+              data.tokenSymbol || '',
+              b20Decimals,
+              b20SupplyCap,
+              data.requestWhiteLabel,
+              { value: fee },
+            );
           }
         }
-      } else if (data.activeTab === 'nft') {
+      } else if (data.contractType === 'nft') {
         if (data.isAdvancedMode) {
-          tx = await factoryContract.deployAdvancedNFT(data.nftName || "", data.nftSymbol || "", data.nftSupply || "0", metadataURI, data.royaltyFee || "0", data.requestWhiteLabel, { value: fee });
+          tx = await factoryContract.deployAdvancedNFT(
+            data.nftName || '',
+            data.nftSymbol || '',
+            data.nftSupply || '0',
+            metadataURI,
+            data.royaltyFee || '0',
+            data.requestWhiteLabel,
+            { value: fee },
+          );
         } else {
-          tx = await factoryContract.deploySimpleNFT(data.nftName || "", data.nftSymbol || "", data.nftSupply || "0", data.requestWhiteLabel, { value: fee });
+          tx = await factoryContract.deploySimpleNFT(
+            data.nftName || '',
+            data.nftSymbol || '',
+            data.nftSupply || '0',
+            data.requestWhiteLabel,
+            { value: fee },
+          );
         }
-      } else if (data.activeTab === 'erc1155') {
+      } else if (data.contractType === 'erc1155') {
         if (data.isAdvancedMode) {
-          tx = await factoryContract.deployAdvancedERC1155(metadataURI, data.erc1155Amount || "0", data.royaltyFee || "0", data.requestWhiteLabel, { value: fee });
+          tx = await factoryContract.deployAdvancedERC1155(
+            metadataURI,
+            data.erc1155Amount || '0',
+            data.royaltyFee || '0',
+            data.requestWhiteLabel,
+            { value: fee },
+          );
         } else {
-          tx = await factoryContract.deploySimpleERC1155("", data.erc1155Amount || "0", data.requestWhiteLabel, { value: fee });
+          tx = await factoryContract.deploySimpleERC1155('', data.erc1155Amount || '0', data.requestWhiteLabel, {
+            value: fee,
+          });
         }
       }
 
@@ -181,14 +241,22 @@ export function useDeployer() {
       for (const log of receipt.logs) {
         try {
           const parsed = factoryContract.interface.parseLog(log);
-          if (parsed && parsed.name === 'ProxyDeployed') {
-            extractedAddress = parsed.args[0];
+          if (parsed && (parsed.name === 'ProxyDeployed' || parsed.name === 'DailyStreakDeployed')) {
+            extractedAddress = parsed.name === 'DailyStreakDeployed' ? parsed.args[1] : parsed.args[0];
             break;
           }
-        } catch (err) { }
+        } catch (err) {}
       }
 
-      if (data.requestWhiteLabel && data.userCredits > 0 && data.onCreditDeducted && (data.activeTab === 'token' || data.activeTab === 'b20' || data.activeTab === 'nft' || data.activeTab === 'erc1155')) {
+      if (
+        data.requestWhiteLabel &&
+        data.userCredits > 0 &&
+        data.onCreditDeducted &&
+        (data.contractType === 'token' ||
+          data.contractType === 'b20' ||
+          data.contractType === 'nft' ||
+          data.contractType === 'erc1155')
+      ) {
         data.onCreditDeducted(data.userCredits - 1);
       }
 
@@ -196,10 +264,9 @@ export function useDeployer() {
       setDeployedAddress(extractedAddress);
 
       return true;
-
     } catch (error: any) {
       console.error(error);
-      setError(error.reason || error.message || "A transaction error occurred.");
+      setError(error.reason || error.message || 'A transaction error occurred.');
       return false;
     } finally {
       setIsLoading(false);
@@ -207,7 +274,15 @@ export function useDeployer() {
   };
 
   return {
-    isLoading, txHash, error, explorerUrl, isModalOpen, setIsModalOpen,
-    networkName, deployedAddress, deploy, resetStates
+    isLoading,
+    txHash,
+    error,
+    explorerUrl,
+    isModalOpen,
+    setIsModalOpen,
+    networkName,
+    deployedAddress,
+    deploy,
+    resetStates,
   };
 }
