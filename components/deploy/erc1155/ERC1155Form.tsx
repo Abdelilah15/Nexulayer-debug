@@ -12,7 +12,7 @@ import WhiteLabelSection from '../common/WhiteLabelSection';
 import { DeploymentRecord } from '../common/DeploymentHistory';
 
 export default function ERC1155Form() {
-  const { address, isConnected } = useAccount();
+  const { address, isConnected, chainId } = useAccount();
   const {
     isLoading, txHash, error, explorerUrl, isModalOpen, setIsModalOpen,
     networkName, deployedAddress, deploy, resetStates
@@ -51,7 +51,7 @@ export default function ERC1155Form() {
       } catch (err) { setUserCredits(0); }
     };
     fetchCredits();
-  }, [address]);
+  }, [address, chainId]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files ? e.target.files[0] : null;

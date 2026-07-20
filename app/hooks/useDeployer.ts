@@ -4,8 +4,6 @@ import { keccak256, toBytes } from 'viem';
 import { useWalletClient } from 'wagmi';
 import { FACTORY_ADDRESS, FACTORY_ABI, ContractType } from '../lib/contracts';
 
-// We define exactly what data the hook needs to execute a deployment
-// Correction : Les propriétés spécifiques sont désormais optionnelles (?)
 export interface DeployFormData {
   contractType: ContractType;
   isAdvancedMode: boolean;
@@ -15,30 +13,25 @@ export interface DeployFormData {
   address: string | undefined;
   feeWei: bigint;
 
-  // Rendu optionnel : B20
   b20Type?: 'asset' | 'stablecoin';
   currencyCode?: string;
 
-  // Rendu optionnel : Formulaires avancés
   mediaFile?: File | null;
   description?: string;
   socials?: any;
   onCreditDeducted?: (newCredits: number) => void;
 
-  // Rendu optionnel : Nommage Token/NFT
   nftName?: string;
   tokenName?: string;
   tokenSymbol?: string;
   nftSymbol?: string;
 
-  // Rendu optionnel : Supply / Amounts
   tokenSupply?: string;
   decimals?: number;
   nftSupply?: string;
   royaltyFee?: string;
   erc1155Amount?: string;
 
-  // Rendu optionnel : Message / Simple
   msgText?: string;
   simpleName?: string;
 }
@@ -67,6 +60,7 @@ export function useDeployer() {
 
     const fileRes = await fetch('/api/ipfs/file', { method: 'POST', body: formData });
     if (!fileRes.ok) throw new Error('Image upload failed.');
+
     const fileData = await fileRes.json();
     const imageUrl = `ipfs://${fileData.ipfsHash}`;
 
@@ -93,6 +87,7 @@ export function useDeployer() {
     });
 
     if (!jsonRes.ok) throw new Error('Metadata upload failed.');
+
     const jsonData = await jsonRes.json();
     return `ipfs://${jsonData.ipfsHash}`;
   };
@@ -102,9 +97,8 @@ export function useDeployer() {
     resetStates();
 
     try {
-      // 1. UTILISATION DIRECTE DE METAMASK POUR L'ÉCRITURE
       const win = window as any;
-      if (!win.ethereum) throw new Error('Wallet not detected');
+      if (!win.ethereum) throw new Error('Wallet not detected.');
 
       const provider = new ethers.BrowserProvider(win.ethereum);
       const signer = await provider.getSigner();
@@ -268,17 +262,22 @@ export function useDeployer() {
 
       return true;
     } catch (error: any) {
-      console.error('Erreur brute de déploiement:', error);
+      console.error('Raw deployment error:', error);
 
-      // 2. GESTION DYNAMIQUE DES ERREURS
+      const errorMessage = error.reason || error.message || '';
+
+      if (errorMessage.includes('already claimed today')) {
+        setError('already claimed today');
+        return false;
+      }
+
       if (error.code === 'CALL_EXCEPTION' && error.action === 'estimateGas') {
-        // Cela permet d'afficher 0.00002 pour un streak et 0.00003 pour un ERC20
-        const expectedFee = data.currentFeeString ? `${data.currentFeeString} ETH` : 'les frais requis';
+        const expectedFee = data.currentFeeString ? `${data.currentFeeString} ETH` : 'the required fee';
         setError(
-          `La simulation de la transaction a échoué. Vérifiez que vous êtes sur le bon réseau, que vous avez assez d'ETH pour le gaz, et que le montant envoyé (${expectedFee}) est exact.`,
+          `Transaction simulation failed. Ensure you have enough ETH for gas, and the exact fee amount (${expectedFee}) was sent.`
         );
       } else {
-        setError(error.reason || error.message || 'Une erreur est survenue lors de la transaction.');
+        setError(errorMessage || 'An error occurred during the transaction.');
       }
 
       return false;

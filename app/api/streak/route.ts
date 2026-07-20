@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/app/lib/prisma';
 
-// Fonction utilitaire pour obtenir la date du jour au format YYYY-MM-DD
 const getTodayString = () => new Date().toISOString().split('T')[0];
 
 export async function GET(request: Request) {
@@ -10,28 +9,30 @@ export async function GET(request: Request) {
     const address = searchParams.get('address')?.toLowerCase();
 
     if (!address) {
-      return NextResponse.json({ error: 'Adresse requise' }, { status: 400 });
+      return NextResponse.json({ error: 'Address required' }, { status: 400 });
     }
 
-    let streak = await prisma.streak.findUnique({
+    const streak = await prisma.streak.findUnique({
       where: { walletAddress: address },
     });
 
-    // Si l'utilisateur n'a pas encore de Streak, on l'initialise
+    const today = getTodayString();
+
+    // 🌟 CORRECTION 1 : Si le streak n'existe pas, on renvoie un état vide SANS l'écrire dans la base.
     if (!streak) {
-      streak = await prisma.streak.create({
-        data: {
-          walletAddress: address,
-          currentCount: 0,
-          history: [],
-        },
+      return NextResponse.json({
+        walletAddress: address,
+        currentCount: 0,
+        history: [],
+        isTodayDone: false
       });
     }
 
-    // Vérifier si le déploiement a déjà été fait aujourd'hui
-    const today = getTodayString();
     const isTodayDone = streak.history.includes(today);
+    let currentCount = streak.currentCount;
 
+    // Si le streak est brisé, on le signale virtuellement sans écrire dans la base
+    // (La base sera mise à jour lors du prochain vrai POST)
     if (streak.lastActive && !isTodayDone) {
       const todayDate = new Date(today);
       const lastActiveDate = new Date(streak.lastActive.toISOString().split('T')[0]);
@@ -39,17 +40,14 @@ export async function GET(request: Request) {
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
       if (diffDays > 1) {
-        streak = await prisma.streak.update({
-          where: { walletAddress: address },
-          data: { currentCount: 0 }, // Reset to 0 since they haven't deployed yet today
-        });
+        currentCount = 0;
       }
     }
 
-    return NextResponse.json({ ...streak, isTodayDone });
+    return NextResponse.json({ ...streak, currentCount, isTodayDone });
   } catch (error) {
-    console.error('Erreur GET streak:', error);
-    return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
+    console.error('GET streak error:', error);
+    return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
 }
 
@@ -59,21 +57,25 @@ export async function POST(request: Request) {
     const walletAddress = address?.toLowerCase();
 
     if (!walletAddress) {
-      return NextResponse.json({ error: 'Adresse requise' }, { status: 400 });
+      return NextResponse.json({ error: 'Address required' }, { status: 400 });
     }
 
-    const streak = await prisma.streak.findUnique({
+    let streak = await prisma.streak.findUnique({
       where: { walletAddress },
     });
 
     if (!streak) {
-      return NextResponse.json({ error: 'Streak non trouvée' }, { status: 404 });
+      streak = await prisma.streak.create({
+        data: {
+          walletAddress: walletAddress,
+          currentCount: 0,
+          history: [],
+        },
+      });
     }
 
     const today = getTodayString();
-    const todayDate = new Date(today);
 
-    // Si déjà validé aujourd'hui, on ne fait rien
     if (streak.history.includes(today)) {
       return NextResponse.json({ ...streak, isTodayDone: true });
     }
@@ -82,23 +84,20 @@ export async function POST(request: Request) {
     let newHistory = [...streak.history];
 
     if (streak.lastActive) {
+      const todayDate = new Date(today);
       const lastActiveDate = new Date(streak.lastActive.toISOString().split('T')[0]);
       const diffTime = Math.abs(todayDate.getTime() - lastActiveDate.getTime());
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
       if (diffDays === 1) {
-        // C'était hier, on incrémente !
         newCount += 1;
       } else if (diffDays > 1) {
-        // Le joueur a raté un ou plusieurs jours, on réinitialise
         newCount = 1;
       }
     } else {
-      // Première fois
       newCount = 1;
     }
 
-    // Ajouter aujourd'hui à l'historique et garder seulement les 7 derniers jours
     newHistory.push(today);
     if (newHistory.length > 7) {
       newHistory = newHistory.slice(newHistory.length - 7);
@@ -114,8 +113,8 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json({ ...updatedStreak, isTodayDone: true });
-  } catch (error) {
-    console.error('Erreur POST streak:', error);
-    return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
+  } catch (error: any) {
+    console.error('POST streak error details:', error);
+    return NextResponse.json({ error: error.message || 'Server error' }, { status: 500 });
   }
 }

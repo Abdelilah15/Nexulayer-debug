@@ -1,31 +1,29 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
   previewFeatures = ["driverAdapters"]
 }
 
 datasource db {
-  provider  = "postgresql"
+  provider = "postgresql"
 }
 
-// La table de notre Indexeur qui stockera l'historique exact
 model PortfolioSnapshot {
   id        String   @id @default(uuid())
-  address   String   // L'adresse du Wallet
-  timestamp DateTime // La date et l'heure du snapshot
-  balance   Float    // Le solde total exact en USD
-  
+  address   String
+  timestamp DateTime
+  balance   Float
+
   @@unique([address, timestamp])
   @@index([address, timestamp])
 }
 
-// NOUVEAU : La table pour le Daily Streak (GM/GN)
 model Streak {
-  id            String   @id @default(uuid())
-  walletAddress String   @unique
-  currentCount  Int      @default(0)
+  id            String    @id @default(uuid())
+  walletAddress String    @unique
+  currentCount  Int       @default(0)
   lastActive    DateTime?
-  history       String[] // Stocke les dates des 7 derniers jours validés
-  
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  history       String[]
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 }

@@ -61,7 +61,6 @@ export default function WhiteLabelSection({
       </div>
     )}
 
-    {/* MODAL (Uniquement injectée si on coche le toggle payant) */}
     <PricingWarningModal
       isOpen={isPricingModalOpen}
       onClose={() => setIsPricingModalOpen(false)}

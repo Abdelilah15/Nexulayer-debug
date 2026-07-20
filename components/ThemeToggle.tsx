@@ -7,7 +7,6 @@ export default function ThemeToggle() {
   const [mounted, setMounted] = useState(false);
   const { theme, setTheme } = useTheme();
 
-  // Prevent hydration mismatch
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -19,7 +18,6 @@ export default function ThemeToggle() {
   return (
     <button
       onClick={() => setTheme(isDark ? 'light' : 'dark')}
-      // Removed borders and shadows. Added flat background and hover state.
       className="cursor-pointer relative p-2 w-10 h-10 rounded-xl bg-bar hover:bar-button-hover transition-colors duration-200 flex items-center justify-center text-secondary hover:text-foreground"
       title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
     >

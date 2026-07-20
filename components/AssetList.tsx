@@ -79,7 +79,6 @@ export default function AssetList({ assets }: { assets: any[] }) {
   return (
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row gap-3">
-        {/* Flat Tabs */}
         <div className="flex bg-background rounded-xl border border-card p-1 overflow-hidden">
           <button
             onClick={() => setSelectedAsset('Tokens')}
@@ -156,7 +155,6 @@ export default function AssetList({ assets }: { assets: any[] }) {
         </div>
       </div>
 
-      {/* BLOCK 1: TOKENS */}
       {selectedAsset === 'Tokens' && (
         <div className="space-y-2">
           <div className="grid grid-cols-3 gap-3 px-4 py-2">
@@ -217,7 +215,6 @@ export default function AssetList({ assets }: { assets: any[] }) {
         </div>
       )}
 
-      {/* BLOCK 2: DEFI */}
       {selectedAsset === 'DeFi' && (
         <div className="space-y-4">
           <div className="flex flex-wrap gap-2 overflow-x-auto scrollbar-none">
@@ -309,7 +306,6 @@ export default function AssetList({ assets }: { assets: any[] }) {
         </div>
       )}
 
-      {/* BLOCK 3: NFTs */}
       {selectedAsset === 'NFTs' && <div></div>}
     </div>
   );

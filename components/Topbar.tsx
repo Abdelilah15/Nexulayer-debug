@@ -5,6 +5,7 @@ import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { useDisconnect, useAccount } from 'wagmi';
 import { useRouter } from 'next/navigation';
 import { DailyStreakModal } from '@/components/streak';
+import { useEthBalance } from '@/app/hooks/useEthBalance';
 
 interface TopbarProps {
   title?: string;
@@ -21,6 +22,7 @@ interface UserProfile {
 export default function Topbar({ title, setIsMobileMenuOpen }: TopbarProps) {
   const { disconnect } = useDisconnect();
   const { address, isConnected } = useAccount();
+  const ethBalance = useEthBalance(address);
   const router = useRouter();
 
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -58,7 +60,6 @@ export default function Topbar({ title, setIsMobileMenuOpen }: TopbarProps) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // ✅ Fix: useCallback pour éviter les stale closures
   const fetchUser = useCallback(async () => {
     if (isConnected && address) {
       try {
@@ -81,7 +82,6 @@ export default function Topbar({ title, setIsMobileMenuOpen }: TopbarProps) {
     }
   }, [isConnected, address]);
 
-  // ✅ Fix: fetchUser dans les deps
   useEffect(() => {
     fetchUser();
   }, [fetchUser]);
@@ -145,7 +145,6 @@ export default function Topbar({ title, setIsMobileMenuOpen }: TopbarProps) {
 
                 return (
                   <div className="flex items-center gap-2 md:gap-4 relative" ref={dropdownRef}>
-                    {/* 1. Bouton Streak */}
                     <button
                       onClick={() => setIsStreakModalOpen(true)}
                       className="w-9 h-9 md:w-auto md:h-auto md:p-3.5 flex items-center justify-center rounded-full bg-orange-500/10 text-orange-500 hover:bg-orange-500/20 transition-all border border-orange-500/20"
@@ -154,7 +153,6 @@ export default function Topbar({ title, setIsMobileMenuOpen }: TopbarProps) {
                       <i className="fi fi-rr-flame flex text-sm md:text-base"></i>
                     </button>
 
-                    {/* 2. Network Selector */}
                     <button
                       onClick={openChainModal}
                       type="button"
@@ -187,7 +185,6 @@ export default function Topbar({ title, setIsMobileMenuOpen }: TopbarProps) {
                       <i className="fi fi-rr-angle-small-down text-secondary mt-1 hidden md:block"></i>
                     </button>
 
-                    {/* 3. User Profile Dropdown */}
                     <div className="relative">
                       <button
                         onClick={() => setIsDropdownOpen(!isDropdownOpen)}
@@ -210,20 +207,17 @@ export default function Topbar({ title, setIsMobileMenuOpen }: TopbarProps) {
                       </button>
 
                       {isDropdownOpen && (
-                        <div
-                          className="
-                          absolute right-0 mt-3 z-50
-                          w-[calc(100vw-2rem)] max-w-xs
-                          sm:w-72
-                          bg-bar border border-card rounded-2xl py-2
-                          animate-in fade-in slide-in-from-top-2 duration-200 drop-shadow-xl
-                        "
-                        >
-                          {/* En-tête profil */}
+                        <div className="absolute right-0 mt-3 z-50 w-[calc(100vw-2rem)] sm:w-72 max-w-[280px] sm:max-w-none origin-top-right bg-bar border border-card rounded-2xl py-2 animate-in fade-in slide-in-from-top-2 duration-200 drop-shadow-xl">
                           <div className="px-4 py-3 mb-2 bg-hover/30 border-b border-card">
-                            <p className="text-sm font-bold text-foreground truncate mb-0.5">
-                              {userProfile ? userProfile.username : 'Loading...'}
-                            </p>
+                            <div className="flex items-center justify-between mb-0.5">
+                              <p className="text-sm font-bold text-foreground truncate">
+                                {userProfile ? userProfile.username : 'Loading...'}
+                              </p>
+                              {/* Le badge du solde */}
+                              <span className="text-[14px] bg-blue-500/10 text-blue-500 px-2 py-0.5 rounded-full font-mono font-bold">
+                                {ethBalance} ETH
+                              </span>
+                            </div>
                             <div className="flex items-center gap-2">
                               <p className="flex-1 text-xs font-mono text-secondary truncate" title={account.address}>
                                 {account.address}
@@ -238,17 +232,20 @@ export default function Topbar({ title, setIsMobileMenuOpen }: TopbarProps) {
                             </div>
                           </div>
 
-                          {/* Actions */}
                           <div className="px-2">
-                            <button
-                              onClick={() => {
-                                router.push('/Profile');
-                                setIsDropdownOpen(false);
-                              }}
-                              className="w-full text-left px-4 py-3 text-sm text-secondary rounded-xl hover:bar-button-hover hover:text-foreground transition-colors flex items-center gap-3"
-                            >
-                              <i className="fi fi-rr-user text-secondary"></i> Profile
-                            </button>
+                            {/* Bouton Profile : Caché temporairement sans être supprimé. Pour le réafficher, il suffit d'enlever les symboles de commentaires {/* et *} */}
+                            {/*
+                              <button
+                                onClick={() => {
+                                  router.push('/Profile');
+                                  setIsDropdownOpen(false);
+                                }}
+                                className="w-full text-left px-4 py-3 text-sm text-secondary rounded-xl hover:bar-button-hover hover:text-foreground transition-colors flex items-center gap-3"
+                              >
+                                <i className="fi fi-rr-user text-secondary"></i> Profile
+                              </button>
+                            */}
+
                             <button
                               onClick={() => {
                                 disconnect();

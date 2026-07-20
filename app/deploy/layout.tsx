@@ -4,8 +4,7 @@ import React from 'react';
 import { usePathname } from 'next/navigation';
 import DashboardLayout from '@/components/DashboardLayout';
 
-// Titre affiché dans le Topbar selon la route active.
-// Remplace l'ancien calcul basé sur `activeTab` dans app/forge/page.tsx.
+
 const DEPLOY_PAGE_TITLES: Record<string, string> = {
   simple: 'Basic Contract',
   message: 'Store Message',
@@ -17,7 +16,6 @@ const DEPLOY_PAGE_TITLES: Record<string, string> = {
 
 export default function NexuSectionLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  // ex: "/forge/erc20" -> "erc20"
   const segment = pathname.split('/')[2] ?? 'simple';
   const title = DEPLOY_PAGE_TITLES[segment] ?? 'Deploy';
 

@@ -12,7 +12,7 @@ import WhiteLabelSection from '../common/WhiteLabelSection';
 import { DeploymentRecord } from '../common/DeploymentHistory';
 
 export default function B20Form() {
-  const { address, isConnected } = useAccount();
+  const { address, isConnected, chainId } = useAccount();
   const {
     isLoading,
     txHash,
@@ -56,12 +56,10 @@ export default function B20Form() {
     if (!mediaFile) setPreviewUrl(null);
   }, [mediaFile]);
 
-  // Si on désactive le mode avancé, on repasse obligatoirement en 'asset'
   useEffect(() => {
     if (!isAdvancedMode && b20Type === 'stablecoin') setB20Type('asset');
   }, [isAdvancedMode, b20Type]);
 
-  // Fetch Credits
   useEffect(() => {
     const fetchCredits = async () => {
       if (!address) {
@@ -82,7 +80,7 @@ export default function B20Form() {
       }
     };
     fetchCredits();
-  }, [address]);
+  }, [address, chainId]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files ? e.target.files[0] : null;

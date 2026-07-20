@@ -57,7 +57,7 @@ export default function SimpleContractForm() {
         explorerUrl={explorerUrl}
         contractType={contractType}
         isAdvancedMode={false}
-        setIsAdvancedMode={() => {}} /* Non utilisé en mode simple */
+        setIsAdvancedMode={() => {}}
         address={address}
         selectedRecord={selectedRecord}
         setSelectedRecord={setSelectedRecord}

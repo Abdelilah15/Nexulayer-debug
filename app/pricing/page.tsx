@@ -3,457 +3,8 @@ import React, { useState } from 'react';
 import { useAccount } from 'wagmi';
 import { ethers } from 'ethers';
 import DashboardLayout from '../../components/DashboardLayout';
-
-// --- CONFIGURATION ---
-const FEE_MANAGER_ADDRESS = "0xc590bccfa61cf43e439d3a2f8e7f52bc545588d1";
-const USDC_ADDRESS = "0x036CbD53842c5426634e7929541eC2318f3dCF7e";
-
-const FEE_MANAGER_ABI = [
-    {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "_usdcToken",
-          "type": "address"
-        },
-        {
-          "internalType": "address",
-          "name": "_initialOwner",
-          "type": "address"
-        }
-      ],
-      "stateMutability": "nonpayable",
-      "type": "constructor"
-    },
-    {
-      "inputs": [],
-      "name": "DeploymentFailed",
-      "type": "error"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "expected",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "provided",
-          "type": "uint256"
-        }
-      ],
-      "name": "InsufficientFee",
-      "type": "error"
-    },
-    {
-      "inputs": [],
-      "name": "InvalidAddress",
-      "type": "error"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "owner",
-          "type": "address"
-        }
-      ],
-      "name": "OwnableInvalidOwner",
-      "type": "error"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "account",
-          "type": "address"
-        }
-      ],
-      "name": "OwnableUnauthorizedAccount",
-      "type": "error"
-    },
-    {
-      "inputs": [],
-      "name": "ReentrancyGuardReentrantCall",
-      "type": "error"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "token",
-          "type": "address"
-        }
-      ],
-      "name": "SafeERC20FailedOperation",
-      "type": "error"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "user",
-          "type": "address"
-        }
-      ],
-      "name": "SubscriptionNotActive",
-      "type": "error"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "caller",
-          "type": "address"
-        }
-      ],
-      "name": "UnauthorizedAccess",
-      "type": "error"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": true,
-          "internalType": "address",
-          "name": "user",
-          "type": "address"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "remainingCredits",
-          "type": "uint256"
-        }
-      ],
-      "name": "CreditConsumed",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": true,
-          "internalType": "address",
-          "name": "oldFactory",
-          "type": "address"
-        },
-        {
-          "indexed": true,
-          "internalType": "address",
-          "name": "newFactory",
-          "type": "address"
-        }
-      ],
-      "name": "FactoryUpdated",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": true,
-          "internalType": "address",
-          "name": "oldRecipient",
-          "type": "address"
-        },
-        {
-          "indexed": true,
-          "internalType": "address",
-          "name": "newRecipient",
-          "type": "address"
-        }
-      ],
-      "name": "FeeRecipientUpdated",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": true,
-          "internalType": "address",
-          "name": "previousOwner",
-          "type": "address"
-        },
-        {
-          "indexed": true,
-          "internalType": "address",
-          "name": "newOwner",
-          "type": "address"
-        }
-      ],
-      "name": "OwnershipTransferred",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": true,
-          "internalType": "address",
-          "name": "user",
-          "type": "address"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "creditsAdded",
-          "type": "uint256"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "amountPaid",
-          "type": "uint256"
-        }
-      ],
-      "name": "SubscriptionPurchased",
-      "type": "event"
-    },
-    {
-      "inputs": [],
-      "name": "SUB_100_PRICE",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "SUB_200_PRICE",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "SUB_50_PRICE",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "user",
-          "type": "address"
-        }
-      ],
-      "name": "consumeCredit",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "_tokenAddress",
-          "type": "address"
-        }
-      ],
-      "name": "emergencyWithdrawERC20",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "emergencyWithdrawETH",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "factoryAddress",
-      "outputs": [
-        {
-          "internalType": "address",
-          "name": "",
-          "type": "address"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "feeRecipient",
-      "outputs": [
-        {
-          "internalType": "address",
-          "name": "",
-          "type": "address"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "user",
-          "type": "address"
-        }
-      ],
-      "name": "getUserCredits",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "user",
-          "type": "address"
-        }
-      ],
-      "name": "hasActiveSubscription",
-      "outputs": [
-        {
-          "internalType": "bool",
-          "name": "",
-          "type": "bool"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "owner",
-      "outputs": [
-        {
-          "internalType": "address",
-          "name": "",
-          "type": "address"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "requiredFee",
-          "type": "uint256"
-        }
-      ],
-      "name": "processDirectFee",
-      "outputs": [],
-      "stateMutability": "payable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint8",
-          "name": "tier",
-          "type": "uint8"
-        }
-      ],
-      "name": "purchaseSubscription",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "renounceOwnership",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "_factory",
-          "type": "address"
-        }
-      ],
-      "name": "setFactoryAddress",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "_newRecipient",
-          "type": "address"
-        }
-      ],
-      "name": "setFeeRecipient",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "newOwner",
-          "type": "address"
-        }
-      ],
-      "name": "transferOwnership",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "usdcToken",
-      "outputs": [
-        {
-          "internalType": "contract IERC20",
-          "name": "",
-          "type": "address"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    }
-  ];
-
-const USDC_ABI = [
-  "function approve(address spender, uint256 amount) external returns (bool)",
-  "function allowance(address owner, address spender) external view returns (uint256)",
-  "function balanceOf(address account) external view returns (uint256)",
-  "function decimals() external view returns (uint8)"
-];
+import NetworkAlert from '@/components/deploy/NetworkAlert';
+import { FEE_MANAGER_ADDRESS, getUsdcAddress, FEE_MANAGER_ABI, USDC_ABI } from '../lib/contracts';
 
 const TIERS = [
   { id: 1, name: "Starter", credits: 50, price: 0.3, badge: "Popular" },
@@ -462,10 +13,13 @@ const TIERS = [
 ];
 
 export default function PricingPage() {
-  const { address, isConnected } = useAccount();
+
+  const { address, isConnected, chainId } = useAccount();
   const [isLoading, setIsLoading] = useState<number | null>(null);
   const [statusMsg, setStatusMsg] = useState('');
   const [error, setError] = useState('');
+
+  const currentUsdcAddress = getUsdcAddress(chainId);
 
   const handlePurchase = async (tierId: number, credits: number, priceUSDC: number) => {
     setIsLoading(tierId);
@@ -479,7 +33,8 @@ export default function PricingPage() {
       const provider = new ethers.BrowserProvider(win.ethereum);
       const signer = await provider.getSigner();
 
-      const usdcContract = new ethers.Contract(USDC_ADDRESS, USDC_ABI, signer);
+      // 4. On utilise currentUsdcAddress ici
+      const usdcContract = new ethers.Contract(currentUsdcAddress, USDC_ABI, signer);
       const feeManagerContract = new ethers.Contract(FEE_MANAGER_ADDRESS, FEE_MANAGER_ABI, signer);
 
       const decimals = await usdcContract.decimals();
@@ -517,79 +72,79 @@ export default function PricingPage() {
   };
 
   return (
-  <DashboardLayout>
-    <div className="max-w-5xl mx-auto py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
-      <div className="text-center mb-8 sm:mb-12">
-        <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-foreground">
-          Deploy with White Label
-        </h2>
-        <p className="mt-3 sm:mt-4 text-base sm:text-xl text-secondary">
-          Purchase USDC credits to remove "Created with Nexulayer" from your future Smart Contracts.
-        </p>
-      </div>
-
-      {error && (
-        <div className="mb-6 sm:mb-8 p-3 sm:p-4 bg-red-500/10 text-red-500 rounded-lg sm:rounded-xl text-center text-sm sm:text-base font-medium">
-          {error}
+    <DashboardLayout>
+      <div className="max-w-5xl mx-auto py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
+        <NetworkAlert />
+        <div className="text-center mb-8 sm:mb-12">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-foreground">
+            Deploy with White Label
+          </h2>
+          <p className="mt-3 sm:mt-4 text-base sm:text-xl text-secondary">
+            Purchase USDC credits to remove "Created with Nexulayer" from your future Smart Contracts.
+          </p>
         </div>
-      )}
 
-      {statusMsg && (
-        <div className="mb-6 sm:mb-8 p-3 sm:p-4 bg-accent/10 text-accent rounded-lg sm:rounded-xl text-center flex justify-center items-center gap-2 sm:gap-3 text-sm sm:text-base font-medium">
-          <div className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full border-2 border-accent border-t-transparent animate-spin"></div>
-          {statusMsg}
-        </div>
-      )}
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
-        {TIERS.map((tier) => (
-          // Flat design card
-          <div key={tier.id} className="bg-card border border-card rounded-xl sm:rounded-2xl p-5 sm:p-6 flex flex-col relative overflow-hidden">
-            {tier.badge && (
-              <div className="absolute top-0 right-0 bg-[#2b7fff] text-white text-[10px] sm:text-xs font-bold px-2 sm:px-3 py-1 rounded-bl-lg">
-                {tier.badge}
-              </div>
-            )}
-
-            <h3 className="text-xl sm:text-2xl font-semibold text-foreground">{tier.name}</h3>
-            <div className="mt-3 sm:mt-4 flex items-baseline text-4xl sm:text-5xl font-extrabold text-accent">
-              {tier.price} <span className="ml-1.5 sm:ml-2 text-lg sm:text-xl font-medium text-secondary">USDC</span>
-            </div>
-            <p className="mt-3 sm:mt-4 text-sm sm:text-base text-secondary">
-              Get <strong className="text-foreground">{tier.credits} credits</strong> for white-label deployments.
-            </p>
-
-            <div className="mt-6 sm:mt-8 flex-1">
-              <ul className="space-y-2 sm:space-y-3">
-                <li className="flex items-center text-sm sm:text-base text-secondary">
-                  <span className="text-emerald-500 mr-2">✔</span> No Nexulayer branding
-                </li>
-                <li className="flex items-center text-sm sm:text-base text-secondary">
-                  <span className="text-emerald-500 mr-2">✔</span> 5 credits per deployment
-                </li>
-                <li className="flex items-center text-sm sm:text-base text-secondary">
-                  <span className="text-emerald-500 mr-2">✔</span> Valid for life
-                </li>
-              </ul>
-            </div>
-
-            <button
-              onClick={() => handlePurchase(tier.id, tier.credits, tier.price)}
-              disabled={isLoading !== null || !isConnected}
-              className={`mt-6 sm:mt-8 w-full py-2.5 sm:py-3 px-4 bg-[#2b7fff] hover:bg-[#1a5fc0] text-white rounded-lg sm:rounded-xl text-sm sm:text-base font-bold transition-colors cursor-pointer ${
-                isLoading === tier.id
-                  ? 'bg-background text-secondary cursor-wait'
-                  : !isConnected
-                    ? 'bg-background text-secondary cursor-not-allowed'
-                    : 'bg-accent text-white hover:bg-accent-hover'
-              }`}
-            >
-              {isLoading === tier.id ? 'Processing...' : isConnected ? 'Purchase' : 'Connect Wallet'}
-            </button>
+        {error && (
+          <div className="mb-6 sm:mb-8 p-3 sm:p-4 bg-red-500/10 text-red-500 rounded-lg sm:rounded-xl text-center text-sm sm:text-base font-medium">
+            {error}
           </div>
-        ))}
+        )}
+
+        {statusMsg && (
+          <div className="mb-6 sm:mb-8 p-3 sm:p-4 bg-accent/10 text-accent rounded-lg sm:rounded-xl text-center flex justify-center items-center gap-2 sm:gap-3 text-sm sm:text-base font-medium">
+            <div className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full border-2 border-accent border-t-transparent animate-spin"></div>
+            {statusMsg}
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+          {TIERS.map((tier) => (
+            <div key={tier.id} className="bg-card border border-card rounded-xl sm:rounded-2xl p-5 sm:p-6 flex flex-col relative overflow-hidden">
+              {tier.badge && (
+                <div className="absolute top-0 right-0 bg-[#2b7fff] text-white text-[10px] sm:text-xs font-bold px-2 sm:px-3 py-1 rounded-bl-lg">
+                  {tier.badge}
+                </div>
+              )}
+
+              <h3 className="text-xl sm:text-2xl font-semibold text-foreground">{tier.name}</h3>
+              <div className="mt-3 sm:mt-4 flex items-baseline text-4xl sm:text-5xl font-extrabold text-accent">
+                {tier.price} <span className="ml-1.5 sm:ml-2 text-lg sm:text-xl font-medium text-secondary">USDC</span>
+              </div>
+              <p className="mt-3 sm:mt-4 text-sm sm:text-base text-secondary">
+                Get <strong className="text-foreground">{tier.credits} credits</strong> for white-label deployments.
+              </p>
+
+              <div className="mt-6 sm:mt-8 flex-1">
+                <ul className="space-y-2 sm:space-y-3">
+                  <li className="flex items-center text-sm sm:text-base text-secondary">
+                    <span className="text-emerald-500 mr-2">✔</span> No Nexulayer branding
+                  </li>
+                  <li className="flex items-center text-sm sm:text-base text-secondary">
+                    <span className="text-emerald-500 mr-2">✔</span> 5 credits per deployment
+                  </li>
+                  <li className="flex items-center text-sm sm:text-base text-secondary">
+                    <span className="text-emerald-500 mr-2">✔</span> Valid for life
+                  </li>
+                </ul>
+              </div>
+
+              <button
+                onClick={() => handlePurchase(tier.id, tier.credits, tier.price)}
+                disabled={isLoading !== null || !isConnected}
+                className={`mt-6 sm:mt-8 w-full py-2.5 sm:py-3 px-4 bg-[#2b7fff] hover:bg-[#1a5fc0] text-white rounded-lg sm:rounded-xl text-sm sm:text-base font-bold transition-colors cursor-pointer ${
+                  isLoading === tier.id
+                    ? 'bg-background text-secondary cursor-wait'
+                    : !isConnected
+                      ? 'bg-background text-secondary cursor-not-allowed'
+                      : 'bg-accent text-white hover:bg-accent-hover'
+                }`}
+              >
+                {isLoading === tier.id ? 'Processing...' : isConnected ? 'Purchase' : 'Connect Wallet'}
+              </button>
+            </div>
+          ))}
+        </div>
       </div>
-    </div>
-  </DashboardLayout>
-);
+    </DashboardLayout>
+  );
 }

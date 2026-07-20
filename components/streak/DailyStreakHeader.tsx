@@ -8,12 +8,10 @@ interface DailyStreakHeaderProps {
 }
 
 export default function DailyStreakHeader({ currentStreak, onClose, onShare }: DailyStreakHeaderProps) {
-    // Le flame ne s'allume que si le streak est actif (>= 1 jour)
     const isStreakActive = currentStreak > 0;
 
     return (
         <div className="flex flex-col items-center">
-            {/* Navigation Top */}
             <div className="w-full flex justify-between items-center mb-6">
                 <button
                     onClick={onShare}
@@ -29,7 +27,6 @@ export default function DailyStreakHeader({ currentStreak, onClose, onShare }: D
                 </button>
             </div>
 
-            {/* Hero Score */}
             <div className="w-full flex items-center justify-between py-2">
                 <div className="flex flex-col items-start">
                     <span className="text-6xl sm:text-7xl font-black text-foreground tabular-nums tracking-tighter leading-none">

@@ -1,7 +1,24 @@
 import type { NextConfig } from "next";
-import 'dotenv/config'; 
+import 'dotenv/config';
 
 const nextConfig: NextConfig = {
+
+  async redirects() {
+    return [
+      {
+        source: '/Profile',
+        destination: '/',
+        permanent: false,
+      },
+    ];
+  },
+
+  compiler: {
+    removeConsole: process.env.NODE_ENV === "production" ? {
+      exclude: ["error", "warn"],
+    } : false,
+  },
+
   async headers() {
     return [
       {
@@ -9,7 +26,7 @@ const nextConfig: NextConfig = {
         headers: [
           {
             key: "Cross-Origin-Opener-Policy",
-            value: "same-origin-allow-popups", // Permet à WalletConnect/MetaMask d'ouvrir des pop-ups sans erreur
+            value: "same-origin-allow-popups",
           },
         ],
       },

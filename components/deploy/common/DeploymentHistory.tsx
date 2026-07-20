@@ -1,14 +1,13 @@
 'use client';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { createPublicClient, http, parseAbi, parseAbiItem, hexToString, type Log } from 'viem';
-import { baseSepolia } from 'viem/chains';
+import { createPublicClient, http, parseAbi, parseAbiItem, hexToString, type Log, type PublicClient } from 'viem';
+import { base, baseSepolia } from 'viem/chains';
+import { useAccount, usePublicClient } from 'wagmi';
 import { FACTORY_ADDRESS, ContractType } from '@/app/lib/contracts';
-
 
 const PROXY_DEPLOYED_EVENT = parseAbiItem(
   'event ProxyDeployed(address indexed cloneAddress, address indexed implementation, bytes32 indexed contractType, address deployer, bool isWhiteLabeled)'
 );
-
 
 const CONTRACT_ABI = parseAbi([
   'function name() view returns (string)',
@@ -17,17 +16,11 @@ const CONTRACT_ABI = parseAbi([
   'function uri(uint256) view returns (string)',
 ]);
 
-
-const FACTORY_DEPLOY_BLOCK = 44040000n;
 const CHUNK_SIZE = 2000n;
-
-const createAppPublicClient = () =>
-  createPublicClient({
-    chain: baseSepolia,
-    transport: http(),
-  });
-
-type AppPublicClient = ReturnType<typeof createAppPublicClient>;
+const START_BLOCKS: Record<number, bigint> = {
+  8453: 48889674n,
+  84532: 44399970n,
+};
 
 export interface DeploymentRecord {
   id: string;
@@ -70,17 +63,12 @@ const SOCIAL_BASE_URL: Record<string, string> = {
 const normalizeSocialUrl = (platform: string, raw: string): string => {
   let value = (raw || '').trim();
   if (!value) return '';
-
   if (/^https?:\/\//i.test(value)) return value;
-
   value = value.replace(/^@/, '');
-
   const base = SOCIAL_BASE_URL[platform];
-  if (!base) return `https://${value}`; // website ou plateforme inconnue
-
+  if (!base) return `https://${value}`;
   const domain = base.replace(/^https?:\/\//, '').replace(/\/$/, '');
   if (value.toLowerCase().startsWith(domain)) return `https://${value}`;
-
   return `${base}${value}`;
 };
 
@@ -106,9 +94,12 @@ export default function DeploymentHistory({ address, contractType, explorerUrl, 
   const [isLoading, setIsLoading] = useState(false);
   const seenIds = useRef<Set<string>>(new Set());
 
+  const { chainId } = useAccount();
+  const publicClient = usePublicClient({ chainId });
+
   const enrichLog = useCallback(
     async (
-      publicClient: AppPublicClient,
+      client: PublicClient,
       log: Log<bigint, number, false, typeof PROXY_DEPLOYED_EVENT, true>
     ): Promise<DeploymentRecord> => {
       const args = log.args as unknown as {
@@ -132,27 +123,23 @@ export default function DeploymentHistory({ address, contractType, explorerUrl, 
 
       if (typeName !== 'Message' && typeName !== 'SimpleContract') {
         try {
-          tokenName = (await publicClient.readContract({
+          tokenName = (await client.readContract({
             address: deployedAddress,
             abi: CONTRACT_ABI,
             functionName: 'name',
           })) as string;
-        } catch {
-
-        }
+        } catch {}
         try {
-          tokenSymbol = (await publicClient.readContract({
+          tokenSymbol = (await client.readContract({
             address: deployedAddress,
             abi: CONTRACT_ABI,
             functionName: 'symbol',
           })) as string;
-        } catch {
-          // idem
-        }
+        } catch {}
       }
 
       try {
-        metadataUri = (await publicClient.readContract({
+        metadataUri = (await client.readContract({
           address: deployedAddress,
           abi: CONTRACT_ABI,
           functionName: 'contractURI',
@@ -160,15 +147,13 @@ export default function DeploymentHistory({ address, contractType, explorerUrl, 
       } catch {
         if (typeName.includes('1155')) {
           try {
-            metadataUri = (await publicClient.readContract({
+            metadataUri = (await client.readContract({
               address: deployedAddress,
               abi: CONTRACT_ABI,
               functionName: 'uri',
               args: [0n],
             })) as string;
-          } catch {
-            // pas de metadata disponible
-          }
+          } catch {}
         }
       }
 
@@ -179,9 +164,6 @@ export default function DeploymentHistory({ address, contractType, explorerUrl, 
             const meta = await res.json();
             imageUrl = resolveIpfsUrl(meta.image);
             description = meta.description || '';
-
-            if (meta.external_link) socials.website = meta.external_link;
-
             if (meta.external_link) socials.website = normalizeSocialUrl('website', meta.external_link);
 
             if (Array.isArray(meta.attributes)) {
@@ -194,9 +176,7 @@ export default function DeploymentHistory({ address, contractType, explorerUrl, 
               }
             }
           }
-        } catch {
-          // metadata IPFS injoignable, on affiche quand même le contrat
-        }
+        } catch {}
       }
 
       return {
@@ -217,21 +197,30 @@ export default function DeploymentHistory({ address, contractType, explorerUrl, 
   );
 
   useEffect(() => {
-    if (!address) return;
+    if (!address || !publicClient || !chainId) return;
     let cancelled = false;
 
-    const publicClient = createAppPublicClient();
+    // 1. Client dédié pour lire les logs sans spammer Alchemy
+    const rpcUrl = chainId === 8453 ? 'https://mainnet.base.org' : 'https://sepolia.base.org';
+    const chainConfig = chainId === 8453 ? base : baseSepolia;
+
+    const logClient = createPublicClient({
+      chain: chainConfig,
+      transport: http(rpcUrl),
+    });
 
     const loadHistory = async () => {
       setIsLoading(true);
       try {
-        const latestBlock = await publicClient.getBlockNumber();
+        const latestBlock = await logClient.getBlockNumber();
         let allLogs: Log[] = [];
 
-        for (let from = FACTORY_DEPLOY_BLOCK; from <= latestBlock; from += CHUNK_SIZE) {
+        const startBlock = START_BLOCKS[chainId] || (latestBlock - 100000n);
+
+        for (let from = startBlock; from <= latestBlock; from += CHUNK_SIZE) {
           const to = from + CHUNK_SIZE - 1n > latestBlock ? latestBlock : from + CHUNK_SIZE - 1n;
           try {
-            const logs = await publicClient.getLogs({
+            const logs = await logClient.getLogs({
               address: FACTORY_ADDRESS as `0x${string}`,
               event: PROXY_DEPLOYED_EVENT,
               fromBlock: from,
@@ -259,32 +248,14 @@ export default function DeploymentHistory({ address, contractType, explorerUrl, 
       }
     };
 
+    // On lance le chargement une seule fois (ou quand refreshTrigger change)
     loadHistory();
-
-    const unwatch = publicClient.watchEvent({
-      address: FACTORY_ADDRESS as `0x${string}`,
-      event: PROXY_DEPLOYED_EVENT,
-      onLogs: async (logs) => {
-        const mine = logs.filter(
-          (log) => ((log as any).args?.deployer as string)?.toLowerCase() === address.toLowerCase()
-        );
-        if (mine.length === 0) return;
-
-        const fresh = mine.filter((log) => !seenIds.current.has(`${log.transactionHash}-${log.logIndex}`));
-        if (fresh.length === 0) return;
-
-        const newRecords = await Promise.all(fresh.map((log) => enrichLog(publicClient, log as any)));
-        newRecords.forEach((r) => seenIds.current.add(r.id));
-
-        setDeployments((prev) => [...newRecords, ...prev]);
-      },
-    });
 
     return () => {
       cancelled = true;
-      unwatch();
+      // Plus besoin d'appeler unwatch() puisqu'on a retiré watchEvent
     };
-  }, [address, refreshTrigger, enrichLog]);
+  }, [address, chainId, refreshTrigger, enrichLog, publicClient]);
 
   const filteredDeployments = deployments.filter((dep) => dep.tabCategory === contractType);
 
@@ -311,7 +282,7 @@ export default function DeploymentHistory({ address, contractType, explorerUrl, 
 
       {!isLoading && filteredDeployments.length === 0 ? (
         <div className="p-4 sm:p-6 text-xs sm:text-sm text-secondary text-center">
-          Aucun déploiement pour cet onglet pour le moment.
+          No deployments for this category yet.
         </div>
       ) : (
         <div className="px-1 sm:px-2 max-h-[400px] sm:max-h-[500px] overflow-y-auto">

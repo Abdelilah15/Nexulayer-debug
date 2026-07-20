@@ -12,7 +12,7 @@ import WhiteLabelSection from '../common/WhiteLabelSection';
 import { DeploymentRecord } from '../common/DeploymentHistory';
 
 export default function ERC20Form() {
-  const { address, isConnected } = useAccount();
+  const { address, isConnected, chainId } = useAccount();
   const {
     isLoading, txHash, error, explorerUrl, isModalOpen, setIsModalOpen,
     networkName, deployedAddress, deploy, resetStates
@@ -22,7 +22,6 @@ export default function ERC20Form() {
   const [userCredits, setUserCredits] = useState<number>(0);
   const [selectedRecord, setSelectedRecord] = useState<DeploymentRecord | null>(null);
 
-  // States du formulaire
   const [tokenName, setTokenName] = useState('My Token');
   const [tokenSymbol, setTokenSymbol] = useState('MTK');
   const [tokenSupply, setTokenSupply] = useState('10000');
@@ -31,7 +30,6 @@ export default function ERC20Form() {
   const [description, setDescription] = useState('');
   const [socials, setSocials] = useState({ website: '', twitter: '', telegram: '', discord: '', farcaster: '', github: '', tags: '' });
 
-  // Image handling
   const [mediaFile, setMediaFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
@@ -39,7 +37,6 @@ export default function ERC20Form() {
     if (!mediaFile) setPreviewUrl(null);
   }, [mediaFile]);
 
-  // Fetch Credits
   useEffect(() => {
     const fetchCredits = async () => {
       if (!address) { setUserCredits(0); return; }
@@ -58,7 +55,7 @@ export default function ERC20Form() {
       }
     };
     fetchCredits();
-  }, [address]);
+  }, [address, chainId]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files ? e.target.files[0] : null;
@@ -76,7 +73,7 @@ export default function ERC20Form() {
     const base = isAdvancedMode ? ethers.parseEther('0.0001') : ethers.parseEther('0.00003');
     if (!requestWhiteLabel || hasCredits) return base;
     const wl = isAdvancedMode ? ethers.parseEther('0.00008') : ethers.parseEther('0.00005');
-    return base + wl; // Note: In ethers v6, BigInt addition uses standard operators
+    return base + wl;
   };
 
   const feeWei = calculateFeeWei();
@@ -129,7 +126,7 @@ export default function ERC20Form() {
         selectedRecord={selectedRecord}
         setSelectedRecord={setSelectedRecord}
       >
-        {/* Toggles */}
+
         <div className="mb-4 sm:mb-6 flex items-center">
           <label className="flex items-center cursor-pointer">
             <div className="relative">
@@ -164,7 +161,6 @@ export default function ERC20Form() {
           setRequestWhiteLabel={setRequestWhiteLabel}
         />
 
-        {/* Main Fields */}
         <div
           className={
             isAdvancedMode

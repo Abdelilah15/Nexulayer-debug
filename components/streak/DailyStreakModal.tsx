@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { ethers } from 'ethers';
 import DailyStreakHeader from './DailyStreakHeader';
@@ -17,9 +17,29 @@ interface DailyStreakModalProps {
 export default function DailyStreakModal({ isOpen, onClose, address }: DailyStreakModalProps) {
   const [choice, setChoice] = useState<'GM' | 'GN'>('GM');
   const [isDeploying, setIsDeploying] = useState(false);
+  const hasUpdated = useRef(false);
 
-  const { streakData, isLoading: isStreakLoading, updateStreak } = useStreak(address);
+  const { streakData, isLoading: isStreakLoading, updateStreak, refreshStreak } = useStreak(address);
   const { deploy, error: deployError } = useDeployer();
+
+  useEffect(() => {
+    if (isOpen && !hasUpdated.current) {
+      hasUpdated.current = true;
+      refreshStreak();
+    }
+
+    if (!isOpen) {
+      hasUpdated.current = false;
+    }
+  }, [isOpen, refreshStreak]);
+
+  useEffect(() => {
+    if (deployError && deployError.includes('already claimed today')) {
+      updateStreak().then(() => {
+        alert('Your status has been synchronized! The blockchain indicates you have already claimed your GM/GN today.');
+      });
+    }
+  }, [deployError, updateStreak]);
 
   if (!isOpen) return null;
 
@@ -32,7 +52,7 @@ export default function DailyStreakModal({ isOpen, onClose, address }: DailyStre
   };
 
   const handleDeploy = async () => {
-    if (!address) return alert('Veuillez connecter votre wallet.');
+    if (!address) return alert('Please connect your wallet.');
     setIsDeploying(true);
 
     const uniqueMessage = choice;
@@ -49,11 +69,9 @@ export default function DailyStreakModal({ isOpen, onClose, address }: DailyStre
     } as any);
 
     if (success) {
-      console.log('Transaction confirmée, mise à jour de la streak...');
       await updateStreak();
     } else {
-      // 3. Directly alert the real error captured by the hook
-      alert(deployError || "Une erreur est survenue lors de l'interaction avec le contrat.");
+      alert(deployError || 'An error occurred while interacting with the contract.');
     }
 
     setIsDeploying(false);

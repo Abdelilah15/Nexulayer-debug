@@ -11,15 +11,14 @@ export function useStreak(address: string | undefined) {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Fonction pour charger la streak
   const fetchStreak = useCallback(async () => {
     if (!address) return;
-    
+
     setIsLoading(true);
     try {
       const response = await fetch(`/api/streak?address=${address}`);
-      if (!response.ok) throw new Error('Erreur lors du chargement de la streak');
-      
+      if (!response.ok) throw new Error('Error loading streak data');
+
       const data = await response.json();
       setStreakData(data);
     } catch (err: any) {
@@ -29,12 +28,10 @@ export function useStreak(address: string | undefined) {
     }
   }, [address]);
 
-  // Charger les données au montage si l'adresse est dispo
   useEffect(() => {
     fetchStreak();
   }, [fetchStreak]);
 
-  // Fonction pour valider la streak après un déploiement réussi
   const updateStreak = async () => {
     if (!address) return false;
 
@@ -44,14 +41,20 @@ export function useStreak(address: string | undefined) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ address }),
       });
-      
-      if (!response.ok) throw new Error('Erreur lors de la mise à jour');
-      
+
+      // On essaie de lire le message d'erreur du serveur
+      // Dans useStreak.ts
+if (!response.ok) {
+  const errorData = await response.json().catch(() => ({}));
+  throw new Error(errorData.error || 'Erreur serveur inconnue');
+}
+
       const updatedData = await response.json();
       setStreakData(updatedData);
       return true;
-    } catch (err) {
-      console.error(err);
+    } catch (err: any) {
+      // Affiche l'erreur réelle dans la console du navigateur
+      console.error("Détail de l'erreur API :", err.message);
       return false;
     }
   };

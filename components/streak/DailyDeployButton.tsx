@@ -19,13 +19,13 @@ export default function DailyDeployButton({ choice, setChoice, onDeploy, isLoadi
 
   return (
     <div className="mt-8 flex flex-col gap-4">
-      {/* Cartes GM / GN */}
+
       <div className="grid grid-cols-2 gap-3">
         <button
           onClick={() => setChoice('GM')}
           className={`flex flex-col items-center justify-center gap-1.5 py-4 sm:py-5 rounded-xl border-2 transition-all ${
-            choice === 'GM' 
-              ? 'bg-[#1c398e]/10 border-[#1c398e] shadow-sm' 
+            choice === 'GM'
+              ? 'bg-[#1c398e]/10 border-[#1c398e] shadow-sm'
               : 'bg-background border-card hover:border-secondary/40'
           }`}
         >
@@ -37,8 +37,8 @@ export default function DailyDeployButton({ choice, setChoice, onDeploy, isLoadi
         <button
           onClick={() => setChoice('GN')}
           className={`flex flex-col items-center justify-center gap-1.5 py-4 sm:py-5 rounded-xl border-2 transition-all ${
-            choice === 'GN' 
-              ? 'bg-[#1c398e]/10 border-[#1c398e] shadow-sm' 
+            choice === 'GN'
+              ? 'bg-[#1c398e]/10 border-[#1c398e] shadow-sm'
               : 'bg-background border-card hover:border-secondary/40'
           }`}
         >
@@ -49,13 +49,12 @@ export default function DailyDeployButton({ choice, setChoice, onDeploy, isLoadi
         </button>
       </div>
 
-      {/* Bouton Deploy */}
       <button
         onClick={onDeploy}
         disabled={isLoading}
         className={`w-full py-3.5 sm:py-4 rounded-xl font-bold text-white transition-all flex items-center justify-center gap-2 ${
-          isLoading 
-            ? 'bg-[#2b7fff] text-secondary border border-card cursor-wait' 
+          isLoading
+            ? 'bg-[#2b7fff] text-secondary border border-card cursor-wait'
             : 'bg-[#2b7fff] hover:bg-[#1a5fc0] cursor-pointer shadow-lg shadow-blue-500/20'
         }`}
       >

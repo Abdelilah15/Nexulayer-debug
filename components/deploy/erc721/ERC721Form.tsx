@@ -12,7 +12,7 @@ import WhiteLabelSection from '../common/WhiteLabelSection';
 import { DeploymentRecord } from '../common/DeploymentHistory';
 
 export default function ERC721Form() {
-  const { address, isConnected } = useAccount();
+  const { address, isConnected, chainId } = useAccount();
   const {
     isLoading, txHash, error, explorerUrl, isModalOpen, setIsModalOpen,
     networkName, deployedAddress, deploy, resetStates
@@ -25,7 +25,7 @@ export default function ERC721Form() {
   const [nftName, setNftName] = useState('My Collection');
   const [nftSymbol, setNftSymbol] = useState('MCN');
   const [nftSupply, setNftSupply] = useState('10');
-  const [royaltyFee, setRoyaltyFee] = useState('500'); // 500 basis points = 5%
+  const [royaltyFee, setRoyaltyFee] = useState('500');
 
   const [isAdvancedMode, setIsAdvancedMode] = useState(false);
   const [requestWhiteLabel, setRequestWhiteLabel] = useState(false);
@@ -52,7 +52,7 @@ export default function ERC721Form() {
       } catch (err) { setUserCredits(0); }
     };
     fetchCredits();
-  }, [address]);
+  }, [address, chainId]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files ? e.target.files[0] : null;

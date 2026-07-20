@@ -38,8 +38,6 @@ export default function MessageForm() {
     });
   };
 
-  // Les props inutilisées (comme setIsAdvancedMode) sont passées avec des fonctions vides
-  // car elles ne concernent pas ce composant simple.
   return (
     <div className="animate-in fade-in duration-500">
       <NexuLayout

@@ -21,7 +21,6 @@ interface NexuLayoutProps {
   shareText: string;
   encodedShareText: string;
 
-  // CORRECTION : Forcer le type string pour matcher avec les props de vos modales
   deployedAddress: string;
   txHash: string;
   explorerUrl: string;
@@ -30,7 +29,6 @@ interface NexuLayoutProps {
   isAdvancedMode: boolean;
   setIsAdvancedMode: (isAdvanced: boolean) => void;
 
-  // Correction pour Wagmi
   address: `0x${string}` | undefined;
   selectedRecord: DeploymentRecord | null;
   setSelectedRecord: (record: DeploymentRecord | null) => void;
@@ -61,15 +59,12 @@ export default function NexuLayout({
 }: NexuLayoutProps) {
   return (
     <div className="">
-      {/* RESTAURATION DE LA CARTE MOBILE : bg-card, border et rounded sont appliqués partout. Le padding est p-4 sur mobile et p-8 sur PC */}
       <div className="bg-card border border-card rounded-2xl overflow-hidden mb-4 p-4 md:p-8">
 
-        {/* DYNAMIC FORMS (Injected here) */}
         <div className="space-y-4 md:space-y-6 mb-6 md:mb-8">
           {children}
         </div>
 
-        {/* ACTION ZONE */}
         <div className="py-2 md:p-6 flex flex-col items-center">
           <div className="flex justify-between w-full mb-3 md:mb-4 text-xs md:text-sm">
             <span className="text-secondary">Service Fee</span>
@@ -99,7 +94,7 @@ export default function NexuLayout({
           </div>
         )}
 
-        {/* EXTERNAL MODALS */}
+
         <SuccessModal
           isOpen={isModalOpen}
           onClose={() => { setIsModalOpen(false); setIsAdvancedMode(false); }}
@@ -115,7 +110,6 @@ export default function NexuLayout({
         />
       </div>
 
-      {/* Deployment History */}
       <DeploymentHistory
         address={address}
         contractType={contractType}

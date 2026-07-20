@@ -22,7 +22,6 @@ export default function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: Sideb
   const isERC721 = pathname.includes('/deploy/erc721');
   const isERC1155 = pathname.includes('/deploy/erc1155');
 
-  // Empêcher le scroll sur mobile si le menu est ouvert
   useEffect(() => {
     if (isMobileMenuOpen) {
       document.body.style.overflow = 'hidden';
@@ -31,7 +30,6 @@ export default function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: Sideb
     }
   }, [isMobileMenuOpen]);
 
-  // Fonction pour naviguer ET fermer le menu mobile
   const navigateTo = (path: string) => {
     router.push(path);
     if (setIsMobileMenuOpen) setIsMobileMenuOpen(false);
@@ -39,7 +37,6 @@ export default function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: Sideb
 
   return (
     <>
-      {/* Overlay mobile (Noir transparent) */}
       {isMobileMenuOpen && (
         <div
           className="md:hidden fixed inset-0 bg-black/60 z-30 transition-opacity"
@@ -47,7 +44,6 @@ export default function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: Sideb
         />
       )}
 
-      {/* Sidebar principale */}
       <aside
         className={`
         fixed md:relative top-0 left-0 h-full z-40
@@ -56,7 +52,6 @@ export default function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: Sideb
         ${isCollapsed ? 'md:w-22 w-72' : 'w-72'}
       `}
       >
-        {/* 1. LOGO & TOGGLE BUTTON */}
         <div
           className={`h-16 md:h-20 flex items-center ${isCollapsed ? 'justify-center' : 'justify-between px-4 md:px-6'}`}
         >
@@ -79,7 +74,6 @@ export default function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: Sideb
                 </div>
               </div>
 
-              {/* Bouton fermer sur Mobile */}
               <button
                 className="md:hidden p-2 text-secondary hover:text-foreground"
                 onClick={() => setIsMobileMenuOpen && setIsMobileMenuOpen(false)}
@@ -89,7 +83,6 @@ export default function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: Sideb
                 </svg>
               </button>
 
-              {/* Collapse button sur Desktop */}
               <button
                 type="button"
                 onClick={() => setIsCollapsed(true)}
@@ -103,7 +96,6 @@ export default function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: Sideb
           )}
         </div>
 
-        {/* 2. NAVIGATION MENU */}
         <nav className={`flex-1 overflow-y-auto py-6 space-y-2 md:space-y-3 ${isCollapsed ? 'px-2' : 'px-4'}`}>
           <button
             onClick={() => navigateTo('/dashboard')}
@@ -113,7 +105,6 @@ export default function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: Sideb
             <span className={`ml-3 ${isCollapsed ? 'md:hidden' : 'block'}`}>Dashboard</span>
           </button>
 
-          {/* CORRECTION: Affichage exclusif basé sur isCollapsed */}
           {!isCollapsed && (
             <p className="px-3 mt-5 text-xs font-semibold text-secondary uppercase tracking-wider mb-2">The Forge</p>
           )}
@@ -167,7 +158,6 @@ export default function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: Sideb
           </button>
 
           <div className="mt-8">
-            {/* CORRECTION: Affichage exclusif basé sur isCollapsed */}
             {!isCollapsed && (
               <p className="px-3 text-xs font-semibold text-secondary uppercase tracking-wider mb-2">Other Services</p>
             )}
@@ -175,7 +165,6 @@ export default function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: Sideb
           </div>
         </nav>
 
-        {/* THEME TOGGLE */}
         <div>
           <div
             className={`mb-1 flex items-center px-5 py-4 ${isCollapsed ? 'hidden md:flex flex-col gap-4' : 'gap-4'}`}
@@ -196,18 +185,20 @@ export default function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: Sideb
               <a href="#" className="hover:text-foreground transition-colors whitespace-nowrap">
                 Privacy
               </a>
-              <a href="#" className="hover:text-foreground transition-colors whitespace-nowrap">
+              <a
+                className="hover:text-foreground transition-colors whitespace-nowrap"
+              >
                 Terms
               </a>
             </div>
 
             <div className={`flex ${isCollapsed ? 'flex-col gap-4' : 'justify-center gap-5 mb-4'}`}>
-              <a href="#" title="Discord" className="text-secondary hover:text-accent transition-colors">
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286z" />
-                </svg>
-              </a>
-              <a href="#" title="X (Twitter)" className="text-secondary hover:text-foreground transition-colors">
+              <a
+                href="https://x.com/Nexulayer"
+                target="_blank"
+                rel="noopener noreferrer"
+                title="X (Twitter)"
+                className="text-secondary hover:text-foreground transition-colors">
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
                 </svg>
