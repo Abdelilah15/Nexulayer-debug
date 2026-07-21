@@ -36,7 +36,7 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Address required' }, { status: 400 });
     }
 
-    const streak = await withDbRetry(() =>
+    const streak: any = await withDbRetry(() =>
       prisma.streak.findUnique({ where: { walletAddress: address } })
     );
 
@@ -79,7 +79,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Address required' }, { status: 400 });
     }
 
-    let streak = await withDbRetry(() =>
+    let streak: any = await withDbRetry(() =>
       prisma.streak.findUnique({ where: { walletAddress } })
     );
 
