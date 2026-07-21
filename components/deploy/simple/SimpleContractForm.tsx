@@ -21,7 +21,7 @@ export default function SimpleContractForm() {
   const feeWei = ethers.parseEther('0.00003');
   const currentFeeString = ethers.formatEther(feeWei);
 
-  const shareText = `🚀 I just deployed a Basic Contract on ${networkName}!\n\nCreate yours: https://forgnix.vercel.app/forge/simple\nTrack onchain activity: https://forgnix.vercel.app\n@monx`;
+  const shareText = `🚀 I just deployed a Basic Contract on ${networkName}!\n\nCreate yours: https://forgnix.vercel.app/forge/simple\nTrack onchain activity: https://forgnix.vercel.app\n@Nexulayer`;
   const encodedShareText = encodeURIComponent(shareText);
 
   const handleSubmit = async (e: React.FormEvent | React.MouseEvent) => {

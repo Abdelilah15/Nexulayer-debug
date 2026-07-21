@@ -79,7 +79,7 @@ export default function ERC20Form() {
   const feeWei = calculateFeeWei();
   const currentFeeString = ethers.formatEther(feeWei);
 
-  const shareText = `🚀 I just deployed an ERC-20 Token contract on ${networkName}!\n\nCreate yours: https://forgnix.vercel.app/forge/erc20\nTrack onchain activity: https://forgnix.vercel.app\n@monx`;
+  const shareText = `🚀 I just deployed an ERC-20 Token contract on ${networkName}!\n\nCreate yours: https://forgnix.vercel.app/forge/erc20\nTrack onchain activity: https://forgnix.vercel.app\n@Nexulayer`;
   const encodedShareText = encodeURIComponent(shareText);
 
   const handleSubmit = async (e: React.FormEvent | React.MouseEvent) => {

@@ -73,7 +73,7 @@ export default function ERC721Form() {
 
   const feeWei = calculateFeeWei();
   const currentFeeString = ethers.formatEther(feeWei);
-  const shareText = `🚀 I just deployed an NFT contract on ${networkName}!\n\nCreate yours: https://forgnix.vercel.app/forge/erc721\nTrack onchain activity: https://forgnix.vercel.app\n@monx`;
+  const shareText = `🚀 I just deployed an NFT contract on ${networkName}!\n\nCreate yours: https://forgnix.vercel.app/forge/erc721\nTrack onchain activity: https://forgnix.vercel.app\n@Nexulayer`;
   const encodedShareText = encodeURIComponent(shareText);
 
   const handleSubmit = async (e: React.FormEvent | React.MouseEvent) => {

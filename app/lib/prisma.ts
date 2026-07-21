@@ -1,22 +1,25 @@
 import { PrismaClient } from '@prisma/client';
 import { PrismaNeonHttp } from '@prisma/adapter-neon';
-import { neonConfig } from '@neondatabase/serverless';
 
-// Réutilise les connexions HTTP → réduit l'impact des cold starts
-neonConfig.fetchConnectionCache = true;
+// neonConfig.fetchConnectionCache n'existe plus en @neondatabase/serverless v1.x → supprimé
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
 
 function createPrismaClient(): PrismaClient {
-  // DIRECT_URL pour le driver HTTP (sans pooler)
-  const rawUrl = process.env.DIRECT_URL ?? process.env.DATABASE_URL ?? '';
+  // Priorité : DATABASE_URL (pooler Neon) pour les requêtes runtime serverless
+  // DIRECT_URL sert uniquement aux migrations (prisma.config.ts)
+  const rawUrl =
+    process.env.DATABASE_URL ??
+    process.env.DIRECT_URL ??
+    '';
+
   const dbUrl = rawUrl.replace(/^["']|["']$/g, '').trim();
 
   if (!dbUrl || !dbUrl.startsWith('postgres')) {
     throw new Error(
-      `[Prisma] URL invalide. Reçu : "${rawUrl}". Vérifiez DIRECT_URL dans .env.local`
+      `[Prisma] URL invalide. Reçu : "${rawUrl}". Vérifiez DATABASE_URL dans .env.local`
     );
   }
 

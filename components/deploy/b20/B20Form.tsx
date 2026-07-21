@@ -104,7 +104,7 @@ export default function B20Form() {
   const feeWei = calculateFeeWei();
   const currentFeeString = ethers.formatEther(feeWei);
   const elementType = b20Type === 'stablecoin' ? 'B20 Stablecoin' : 'B20 Native Asset';
-  const shareText = `🚀 I just deployed a ${elementType} contract on ${networkName}!\n\nCreate yours: https://forgnix.vercel.app/forge/b20\nTrack onchain activity: https://forgnix.vercel.app\n@monx`;
+  const shareText = `🚀 I just deployed a ${elementType} contract on ${networkName}!\n\nCreate yours: https://forgnix.vercel.app/forge/b20\nTrack onchain activity: https://forgnix.vercel.app\n@Nexulayer`;
   const encodedShareText = encodeURIComponent(shareText);
 
   const handleSubmit = async (e: React.FormEvent | React.MouseEvent) => {

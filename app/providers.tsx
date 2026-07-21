@@ -8,7 +8,7 @@ import { base, baseSepolia } from 'wagmi/chains';
 import { QueryClientProvider, QueryClient } from '@tanstack/react-query';
 import { ThemeProvider as NextThemesProvider } from 'next-themes';
 
-const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || 'bc9ad5dbb06165a04f7c14743b5b4ccb';
+const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID;
 
 const config = getDefaultConfig({
   appName: 'Nexulayer',

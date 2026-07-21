@@ -1,4 +1,5 @@
 import React from 'react';
+import { useAccount } from 'wagmi';
 
 interface DailyDeployButtonProps {
   choice: 'GM' | 'GN';
@@ -8,17 +9,43 @@ interface DailyDeployButtonProps {
   isTodayDone: boolean;
 }
 
-export default function DailyDeployButton({ choice, setChoice, onDeploy, isLoading, isTodayDone }: DailyDeployButtonProps) {
+export default function DailyDeployButton({
+  choice,
+  setChoice,
+  onDeploy,
+  isLoading,
+  isTodayDone,
+}: DailyDeployButtonProps) {
+  // Récupération dynamique du réseau
+  const { chainId } = useAccount();
+  const isTestnet = chainId === 84532;
+  const networkName = isTestnet ? 'Base Sepolia' : 'Base Mainnet';
+
   if (isTodayDone) {
     return (
       <div className="mt-8 bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-4 text-center text-emerald-500 font-bold flex items-center justify-center gap-2">
-        <i className="fi fi-rr-check-circle"></i> Daily Streak Completed!
+        <i className="fi fi-rr-check-circle flex"></i> Daily Streak Completed!
       </div>
     );
   }
 
   return (
     <div className="mt-8 flex flex-col gap-4">
+      {/* Network Badge */}
+      <div className="flex justify-center -mb-1">
+        <div
+          className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-widest border ${
+            isTestnet
+              ? 'bg-yellow-500/10 text-yellow-600 border-yellow-500/20'
+              : 'bg-[#2b7fff]/10 text-[#2b7fff] border-[#2b7fff]/20'
+          }`}
+        >
+          <div
+            className={`w-1.5 h-1.5 rounded-full ${isTestnet ? 'bg-yellow-500' : 'bg-[#2b7fff]'} animate-pulse`}
+          ></div>
+          {networkName}
+        </div>
+      </div>
 
       <div className="grid grid-cols-2 gap-3">
         <button
