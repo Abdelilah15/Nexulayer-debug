@@ -122,7 +122,7 @@ export async function POST(req: NextRequest) {
             const missingActif = finalTotalBalance - lastChartBalance;
 
             if (Math.abs(missingActif) > 0.1) {
-                dbSnapshots.forEach(snap => {
+                dbSnapshots.forEach((snap: any) => {
                     let adjustedBalance = snap.balance + missingActif;
                     snap.balance = adjustedBalance > 0 ? parseFloat(adjustedBalance.toFixed(2)) : 0;
                 });
@@ -132,16 +132,16 @@ export async function POST(req: NextRequest) {
         // ====================================================================
         // 2) LANCEMENT DE L'ORCHESTRATEUR GLOBAL (API MULTIPLES)
         // ====================================================================
-        
-        let allAssetsResponse: CombinedAssetsResponse = { 
-            assets: [], 
-            native: [], 
-            tokens: [], 
-            defi: [], 
-            partial: false, 
-            errors: [] 
+
+        let allAssetsResponse: CombinedAssetsResponse = {
+            assets: [],
+            native: [],
+            tokens: [],
+            defi: [],
+            partial: false,
+            errors: []
         };
-        
+
         try {
             // C'est désormais l'orchestrateur qui va gérer ses propres limites de temps
             allAssetsResponse = await fetchAllWalletAssets(safeAddress);
