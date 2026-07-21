@@ -3,7 +3,6 @@ import { prisma } from '@/app/lib/prisma';
 
 const getTodayString = () => new Date().toISOString().split('T')[0];
 
-// Retry sur les erreurs de connexion Neon (cold start ETIMEDOUT)
 async function withDbRetry<T>(
   fn: () => Promise<T>,
   retries = 2,
@@ -116,7 +115,7 @@ export async function POST(request: Request) {
     newHistory.push(today);
     if (newHistory.length > 7) newHistory = newHistory.slice(newHistory.length - 7);
 
-    const updatedStreak = await withDbRetry(() =>
+    const updatedStreak: any = await withDbRetry(() =>
       prisma.streak.update({
         where: { walletAddress },
         data: { currentCount: newCount, lastActive: new Date(), history: newHistory },
