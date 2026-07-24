@@ -18,7 +18,7 @@ async function checkAuth() {
 // MISE À JOUR (PUT)
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const isAuth = await checkAuth();
@@ -27,11 +27,12 @@ export async function PUT(
     }
 
     const body = await request.json();
-    await updateAirdrop(params.id, body);
+    const { id } = await params;
+    await updateAirdrop(id, body);
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
-    console.error(`Erreur PUT /api/admin/airdrops/${params.id}:`, error);
+    console.error(`Erreur PUT /api/admin/airdrops/[id]:`, error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
@@ -39,7 +40,7 @@ export async function PUT(
 // SUPPRESSION (DELETE)
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const isAuth = await checkAuth();
@@ -47,11 +48,12 @@ export async function DELETE(
       return NextResponse.json({ error: 'Non autorisé.' }, { status: 401 });
     }
 
-    await deleteAirdrop(params.id);
+    const { id } = await params;
+    await deleteAirdrop(id);
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
-    console.error(`Erreur DELETE /api/admin/airdrops/${params.id}:`, error);
+console.error("Erreur DELETE /api/admin/airdrops/[id]:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

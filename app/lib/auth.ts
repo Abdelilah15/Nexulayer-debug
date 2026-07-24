@@ -1,4 +1,4 @@
-import { createPublicClient, http, recoverMessageAddress } from 'viem';
+import { createPublicClient, http, fallback, recoverMessageAddress } from 'viem';
 import { baseSepolia, base } from 'viem/chains';
 import { SignJWT, jwtVerify } from 'jose';
 
@@ -11,25 +11,37 @@ const PUBLISHER_CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_PUBLISHER_CONTRACT_AD
 
 // Clé secrète pour signer les sessions JWT
 const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || 'nexulayer_fallback_secret_key_change_me_in_production'
+  process.env.JWT_SECRET || 'nexulayer_fallback_secret_key_change_me_in_production',
 );
 
 // ABI minimaliste : nous n'avons besoin que de la fonction de vérification
 const publisherAbi = [
   {
-    inputs: [{ internalType: "address", name: "_account", "type": "address" }],
-    name: "isPublisher",
-    outputs: [{ internalType: "bool", name: "", "type": "bool" }],
-    stateMutability: "view",
-    type: "function"
-  }
+    inputs: [{ internalType: 'address', name: '_account', type: 'address' }],
+    name: 'isPublisher',
+    outputs: [{ internalType: 'bool', name: '', type: 'bool' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
 ] as const;
 
-// Initialisation du client Viem pour lire la blockchain
+/// Initialisation du client Viem avec des RPC alternatifs plus stables
 const publicClient = createPublicClient({
-  // Utilise le réseau principal en production, sinon Sepolia
   chain: process.env.NODE_ENV === 'production' ? base : baseSepolia,
-  transport: http() // Tu pourras passer une URL Alchemy/Infura ici si nécessaire
+  transport: fallback([
+    // 1. Essaye le noeud public alternatif (très stable)
+    http(
+      process.env.NODE_ENV === 'production' ? 'https://mainnet.base.org' : 'https://base-sepolia-rpc.publicnode.com',
+    ),
+    // 2. Si le premier échoue, essaye celui de BlockPI
+    http(
+      process.env.NODE_ENV === 'production'
+        ? 'https://base.blockpi.network/v1/rpc/public'
+        : 'https://base-sepolia.blockpi.network/v1/rpc/public',
+    ),
+    // 3. En dernier recours, le noeud par défaut de Base
+    http(),
+  ]),
 });
 
 // ==========================================

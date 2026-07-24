@@ -1,13 +1,14 @@
 @import url('https://cdn-uicons.flaticon.com/uicons-regular-rounded/css/uicons-regular-rounded.css');
 @import url('https://cdn-uicons.flaticon.com/uicons-brands/css/uicons-brands.css');
 @import "tailwindcss";
+@plugin "@tailwindcss/typography";
 
 :root {
   /* --- LIGHT MODE --- */
   --background: #FFFFFF;
   --foreground: #0e0e11;
   --body-background: #FAFAFA;
-  
+
   --bar-background: #FAFAFA;
   --bar-button-background: #155dfc;
   --bar-button-hover: #dbeafe;
@@ -21,12 +22,12 @@
 
   --button-background: oklch(0.623 0.214 259.815);
   --button-hover: oklch(0.623 0.214 259.815);
-  
+
   --accent: oklch(0.623 0.214 259.815);
   --accent-hover: oklch(0.623 0.214 259.815);
   --text-secondary: #71717A;
   --modal-text: #162456;
-  
+
   --border-color: #00000014;
   --shadow-color: transparent;
 }
@@ -36,7 +37,7 @@
   --background: #0e0e11;
   --foreground: #FAFAFA;
   --body-background: #18181b;
-  
+
   --bar-background: #18181b;
   --bar-button-background: #155dfc;
   --bar-button-hover: #162456;
@@ -48,15 +49,15 @@
 
   --area-background: oklch(0.97 0.014 254.604);
   --element-background: oklch(0.97 0.014 254.604);
-  
+
   --button-background: oklch(0.623 0.214 259.815);
   --button-hover: oklch(0.623 0.214 259.815);
-  
+
   --accent: oklch(0.623 0.214 259.815);
   --accent-hover: oklch(0.623 0.214 259.815);
   --text-secondary: #71717A;
   --modal-text: #dbeafe;
-  
+
   --border-color: #27272a;
   --shadow-color: transparent;
 }
@@ -86,11 +87,11 @@ body {
   .text-modal { color: var(--modal-text); }
   .text-accent { color: var(--accent); }
   .text-secondary { color: var(--text-secondary); }
-  
+
   /* We redefine the border class to enforce the "no border" rule */
   .border-card { border-color: var(--border-color); }
   .border-modal { border-color: var(--modal-border); }
-  
+
 
   /* The hover background for flat elements */
   .hover\:bg-hover:hover { background-color: var(--element-hover); }

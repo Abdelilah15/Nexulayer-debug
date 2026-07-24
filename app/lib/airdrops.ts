@@ -19,7 +19,7 @@ export type Airdrop = {
   status: string | null;
   raised_funds: string | null;
   investors: string | null;
-  minor_score: number | null;
+  moni_score: number | null;
   website: string | null;
   twitter: string | null;
   discord: string | null;
@@ -30,7 +30,7 @@ export type Airdrop = {
 export async function getPublicAirdrops() {
   const { data, error } = await supabase
     .from('airdrops')
-    .select('id, title, slug, logo, category, status, raised_funds, minor_score')
+    .select('id, title, slug, logo, category, status, raised_funds, moni_score')
     .order('created_at', { ascending: false });
 
   if (error) throw new Error(`Erreur lors de la récupération des airdrops: ${error.message}`);
