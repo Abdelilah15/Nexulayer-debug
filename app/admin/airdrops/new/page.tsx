@@ -1,4 +1,4 @@
-import AirdropForm from '@/components/airdrops/AirdropForm';
+import AirdropForm from '@/components/airdrops/form/AirdropForm';
 
 export default function NewAirdropPage() {
   return (

@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
-import { useDisconnect, useAccount } from 'wagmi';
+import { useDisconnect, useAccount, useSignMessage } from 'wagmi';
 import { useRouter } from 'next/navigation';
 import { DailyStreakModal } from '@/components/streak';
 import { useEthBalance } from '@/app/hooks/useEthBalance';
@@ -22,6 +22,7 @@ interface UserProfile {
 export default function Topbar({ title, setIsMobileMenuOpen }: TopbarProps) {
   const { disconnect } = useDisconnect();
   const { address, isConnected } = useAccount();
+  const { signMessageAsync } = useSignMessage(); // Wallet signature hook
   const ethBalance = useEthBalance(address);
   const router = useRouter();
 
@@ -60,27 +61,49 @@ export default function Topbar({ title, setIsMobileMenuOpen }: TopbarProps) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // 🔒 SECURE WALLET AUTHENTICATION & PROFILE FETCH
   const fetchUser = useCallback(async () => {
     if (isConnected && address) {
       try {
-        const response = await fetch('/api/user', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ address }),
-        });
+        // 1. Check if a valid session cookie already exists
+        let response = await fetch('/api/user');
+
+        // 2. If unauthorized, trigger Nonce + Signature authentication
+        if (response.status === 401) {
+          // Fetch nonce & signing message from server
+          const nonceRes = await fetch(`/api/auth/nonce?address=${address}`);
+          if (!nonceRes.ok) throw new Error('Failed to fetch authentication nonce');
+          const { message } = await nonceRes.json();
+
+          // Prompt connected wallet to sign message
+          const signature = await signMessageAsync({ message });
+
+          // Verify signature server-side & create HttpOnly session cookie
+          const verifyRes = await fetch('/api/auth/verify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ address, signature, message }),
+          });
+
+          if (!verifyRes.ok) throw new Error('Wallet authentication failed');
+
+          // Retry fetching user profile with the newly established session cookie
+          response = await fetch('/api/user');
+        }
+
         if (response.ok) {
           const data = await response.json();
           setUserProfile(data);
           localStorage.setItem('nexulayer_profile', JSON.stringify(data));
         }
       } catch (error) {
-        console.error('Profile sync error', error);
+        console.error('Profile sync / authentication error:', error);
       }
     } else {
       setUserProfile(null);
       localStorage.removeItem('nexulayer_profile');
     }
-  }, [isConnected, address]);
+  }, [isConnected, address, signMessageAsync]);
 
   useEffect(() => {
     fetchUser();
@@ -92,7 +115,7 @@ export default function Topbar({ title, setIsMobileMenuOpen }: TopbarProps) {
   }, [fetchUser]);
 
   return (
-    <header className="h-16 md:h-20 px-4 md:px-8 flex justify-between items-center z-10 flex-shrink-0 bg-bar">
+    <header className="h-16 border-b border-card md:h-20 px-4 md:px-8 flex justify-between items-center z-10 flex-shrink-0 bg-bar">
       <div className="flex items-center gap-3">
         <button
           onClick={() => setIsMobileMenuOpen && setIsMobileMenuOpen(true)}
@@ -102,7 +125,7 @@ export default function Topbar({ title, setIsMobileMenuOpen }: TopbarProps) {
         </button>
 
         <h2 className="text-base md:text-lg font-semibold text-foreground truncate max-w-[120px] md:max-w-none">
-          {title || 'Nexulayer'}
+          {title || 'Airdrops'}
         </h2>
       </div>
 
@@ -213,7 +236,6 @@ export default function Topbar({ title, setIsMobileMenuOpen }: TopbarProps) {
                               <p className="text-sm font-bold text-foreground truncate">
                                 {userProfile ? userProfile.username : 'Loading...'}
                               </p>
-                              {/* Le badge du solde */}
                               <span className="text-[14px] bg-blue-500/10 text-blue-500 px-2 py-0.5 rounded-full font-mono font-bold">
                                 {ethBalance} ETH
                               </span>
@@ -233,19 +255,6 @@ export default function Topbar({ title, setIsMobileMenuOpen }: TopbarProps) {
                           </div>
 
                           <div className="px-2">
-                            {/* Bouton Profile : Caché temporairement sans être supprimé. Pour le réafficher, il suffit d'enlever les symboles de commentaires {/* et *} */}
-                            {/*
-                              <button
-                                onClick={() => {
-                                  router.push('/Profile');
-                                  setIsDropdownOpen(false);
-                                }}
-                                className="w-full text-left px-4 py-3 text-sm text-secondary rounded-xl hover:bar-button-hover hover:text-foreground transition-colors flex items-center gap-3"
-                              >
-                                <i className="fi fi-rr-user text-secondary"></i> Profile
-                              </button>
-                            */}
-
                             <button
                               onClick={() => {
                                 disconnect();

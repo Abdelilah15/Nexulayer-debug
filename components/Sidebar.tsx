@@ -37,29 +37,31 @@ export default function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: Sideb
 
   return (
     <>
+      {/* 🌟 ULTRA HIGH Z-INDEX FOR BACKDROP 🌟 */}
       {isMobileMenuOpen && (
         <div
-          className="md:hidden fixed inset-0 bg-black/60 z-30 transition-opacity"
+          className="md:hidden fixed inset-0 bg-black/60 z-[9998] transition-opacity"
           onClick={() => setIsMobileMenuOpen && setIsMobileMenuOpen(false)}
         />
       )}
 
+      {/* 🌟 ULTRA HIGH Z-INDEX FOR SIDEBAR 🌟 */}
       <aside
         className={`
-        fixed md:relative top-0 left-0 h-full z-40
-        flex-shrink-0 flex flex-col transition-all duration-300 bg-bar
+        fixed md:relative top-0 left-0 h-full z-[9999]
+        flex-shrink-0 flex flex-col transition-all duration-300 bg-bar border-r border-card
         ${isMobileMenuOpen ? 'translate-x-0 shadow-2xl md:shadow-none' : '-translate-x-full md:translate-x-0'}
         ${isCollapsed ? 'md:w-22 w-72' : 'w-72'}
       `}
       >
         <div
-          className={`h-16 md:h-20 flex items-center ${isCollapsed ? 'justify-center' : 'justify-between px-4 md:px-6'}`}
+          className={`h-16 md:h-20 flex items-center border-b border-card ${isCollapsed ? 'justify-center' : 'justify-between px-4 md:px-6'}`}
         >
           {isCollapsed ? (
             <button
               type="button"
               onClick={() => setIsCollapsed(false)}
-              className="hidden md:flex h-12 w-12 items-center justify-center rounded-xl cursor-pointer ml-2 mt-4"
+              className="hidden md:flex h-12 w-12 items-center justify-center cursor-pointer"
             >
               <NexulayerLogo className="text-[#0052FF]" size={36} />
             </button>
@@ -175,7 +177,6 @@ export default function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: Sideb
             </span>
           </div>
 
-          {/* 3. FOOTER */}
           <div
             className={`border-t border-card pt-3 pb-6 ${isCollapsed ? 'px-2 hidden md:flex flex-col items-center gap-4' : 'px-5 block'}`}
           >
@@ -185,11 +186,7 @@ export default function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: Sideb
               <a href="#" className="hover:text-foreground transition-colors whitespace-nowrap">
                 Privacy
               </a>
-              <a
-                className="hover:text-foreground transition-colors whitespace-nowrap"
-              >
-                Terms
-              </a>
+              <a className="hover:text-foreground transition-colors whitespace-nowrap">Terms</a>
             </div>
 
             <div className={`flex ${isCollapsed ? 'flex-col gap-4' : 'justify-center gap-5 mb-4'}`}>
@@ -198,7 +195,8 @@ export default function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: Sideb
                 target="_blank"
                 rel="noopener noreferrer"
                 title="X (Twitter)"
-                className="text-secondary hover:text-foreground transition-colors">
+                className="text-secondary hover:text-foreground transition-colors"
+              >
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
                 </svg>

@@ -2,7 +2,7 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { verifyAdminSession } from '@/app/lib/auth';
 import { supabase } from '@/app/lib/supabase';
-import AirdropForm from '@/components/airdrops/AirdropForm';
+import AirdropForm from '@/components/airdrops/form/AirdropForm';
 import { AirdropStep } from '@/app/lib/airdrops';
 
 // Force le rendu dynamique pour avoir les données les plus récentes

@@ -19,7 +19,7 @@ export default function DashboardLayout({ children, title }: { children: React.R
           setIsMobileMenuOpen={setIsMobileMenuOpen}
         />
 
-        <main className="flex-1 overflow-y-auto p-4 md:p-8 relative bg-background border-t border-card sm:border-l rounded-tl-none sm:rounded-tl-2xl md:rounded-tl-3xl shadow-sm">
+        <main className="flex-1 overflow-y-auto p-4 md:p-8 relative bg-background shadow-sm">
           <div className="max-w-7xl w-full mx-auto pb-24">
             {children}
           </div>

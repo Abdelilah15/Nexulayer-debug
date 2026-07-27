@@ -17,8 +17,9 @@
   --modal-border: #8ec5ff;
   --streak-background: #d3d3d3;
 
-  --area-background: oklch(0.97 0.014 254.604);
-  --element-background: oklch(0.97 0.014 254.604);
+  --area-background: #f4f4f5;
+  --element-background: #e5e5e5;
+  --element-hover: #d4d4d8;
 
   --button-background: oklch(0.623 0.214 259.815);
   --button-hover: oklch(0.623 0.214 259.815);
@@ -46,9 +47,9 @@
   --modal-border: #193cb8;
   --streak-background: #313131;
 
-
-  --area-background: oklch(0.97 0.014 254.604);
-  --element-background: oklch(0.97 0.014 254.604);
+  --area-background: #27272a;
+  --element-background: #3f3f46;
+  --element-hover: #535353;
 
   --button-background: oklch(0.623 0.214 259.815);
   --button-hover: oklch(0.623 0.214 259.815);
