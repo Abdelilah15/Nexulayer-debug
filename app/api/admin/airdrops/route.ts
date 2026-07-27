@@ -1,30 +1,19 @@
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
-import { verifyAdminSession } from '@/app/lib/auth';
+import { requireAdmin } from '@/app/lib/auth/admin';
 import { createAirdrop } from '@/app/lib/airdrops';
-
-// Helper function to enforce strict admin JWT validation
-async function enforceAdminAuth() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get('nexulayer_admin_session')?.value;
-  if (!token) return false;
-
-  const payload = await verifyAdminSession(token);
-  return payload && payload.role === 'admin';
-}
 
 export async function POST(request: Request) {
   try {
-    // 1. Security Check (Admin Cookie Verification)
-    const isAuthorized = await enforceAdminAuth();
-    if (!isAuthorized) {
+    // 1. Strict Server-Side Authentication
+    const adminSession = await requireAdmin();
+    if (!adminSession) {
       return NextResponse.json(
-        { error: 'Forbidden. Invalid or expired admin session.' },
-        { status: 403 }
+        { error: 'Unauthorized. Invalid or missing admin session.' },
+        { status: 401 }
       );
     }
 
-    // 2. Request Processing
+    // 2. Process Request
     const body = await request.json();
     const newAirdrop = await createAirdrop(body);
 
@@ -36,7 +25,7 @@ export async function POST(request: Request) {
   } catch (error: any) {
     console.error('POST /api/admin/airdrops error:', error);
     return NextResponse.json(
-      { error: error.message || 'Internal error during creation.' },
+      { error: error.message || 'Internal server error during creation.' },
       { status: 500 }
     );
   }
