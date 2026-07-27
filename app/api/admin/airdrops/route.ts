@@ -3,29 +3,28 @@ import { cookies } from 'next/headers';
 import { verifyAdminSession } from '@/app/lib/auth';
 import { createAirdrop } from '@/app/lib/airdrops';
 
+// Helper function to enforce strict admin JWT validation
+async function enforceAdminAuth() {
+  const cookieStore = await cookies();
+  const token = cookieStore.get('nexulayer_admin_session')?.value;
+  if (!token) return false;
+
+  const payload = await verifyAdminSession(token);
+  return payload && payload.role === 'admin';
+}
+
 export async function POST(request: Request) {
   try {
-    // 1. Récupération et vérification du cookie de session
-    const cookieStore = await cookies();
-    const token = cookieStore.get('nexulayer_admin_session')?.value;
-
-    if (!token) {
+    // 1. Security Check (Admin Cookie Verification)
+    const isAuthorized = await enforceAdminAuth();
+    if (!isAuthorized) {
       return NextResponse.json(
-        { error: 'Non autorisé. Veuillez vous connecter avec votre portefeuille.' },
-        { status: 401 }
+        { error: 'Forbidden. Invalid or expired admin session.' },
+        { status: 403 }
       );
     }
 
-    // 2. Décodage et validation du JWT
-    const payload = await verifyAdminSession(token);
-    if (!payload || payload.role !== 'admin') {
-      return NextResponse.json(
-        { error: 'Session invalide ou expirée.' },
-        { status: 401 }
-      );
-    }
-
-    // 3. Traitement de la requête
+    // 2. Request Processing
     const body = await request.json();
     const newAirdrop = await createAirdrop(body);
 
@@ -35,9 +34,9 @@ export async function POST(request: Request) {
     );
 
   } catch (error: any) {
-    console.error('Erreur POST /api/admin/airdrops:', error);
+    console.error('POST /api/admin/airdrops error:', error);
     return NextResponse.json(
-      { error: error.message || 'Erreur interne lors de la création.' },
+      { error: error.message || 'Internal error during creation.' },
       { status: 500 }
     );
   }

@@ -3,57 +3,47 @@ import { cookies } from 'next/headers';
 import { verifyAdminSession } from '@/app/lib/auth';
 import { updateAirdrop, deleteAirdrop } from '@/app/lib/airdrops';
 
-// Fonction utilitaire pour vérifier l'authentification sur chaque méthode
-async function checkAuth() {
+// Helper function to enforce strict admin JWT validation
+async function enforceAdminAuth() {
   const cookieStore = await cookies();
   const token = cookieStore.get('nexulayer_admin_session')?.value;
   if (!token) return false;
 
   const payload = await verifyAdminSession(token);
-  if (!payload || payload.role !== 'admin') return false;
-
-  return true;
+  return payload && payload.role === 'admin';
 }
 
-// MISE À JOUR (PUT)
-export async function PUT(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PUT(request: Request, { params }: { params: { id: string } }) {
   try {
-    const isAuth = await checkAuth();
-    if (!isAuth) {
-      return NextResponse.json({ error: 'Non autorisé.' }, { status: 401 });
+    // 1. Security Check (Admin Cookie Verification)
+    const isAuthorized = await enforceAdminAuth();
+    if (!isAuthorized) {
+      return NextResponse.json({ error: 'Forbidden. Invalid or expired admin session.' }, { status: 403 });
     }
 
     const body = await request.json();
-    const { id } = await params;
-    await updateAirdrop(id, body);
+    const updatedAirdrop = await updateAirdrop(params.id, body);
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, data: updatedAirdrop }, { status: 200 });
   } catch (error: any) {
-    console.error(`Erreur PUT /api/admin/airdrops/[id]:`, error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error(`PUT /api/admin/airdrops/${params.id} error:`, error);
+    return NextResponse.json({ error: error.message || 'Internal error during update.' }, { status: 500 });
   }
 }
 
-// SUPPRESSION (DELETE)
-export async function DELETE(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function DELETE(request: Request, { params }: { params: { id: string } }) {
   try {
-    const isAuth = await checkAuth();
-    if (!isAuth) {
-      return NextResponse.json({ error: 'Non autorisé.' }, { status: 401 });
+    // 1. Security Check (Admin Cookie Verification)
+    const isAuthorized = await enforceAdminAuth();
+    if (!isAuthorized) {
+      return NextResponse.json({ error: 'Forbidden. Invalid or expired admin session.' }, { status: 403 });
     }
 
-    const { id } = await params;
-    await deleteAirdrop(id);
+    await deleteAirdrop(params.id);
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, message: 'Airdrop deleted successfully.' }, { status: 200 });
   } catch (error: any) {
-console.error("Erreur DELETE /api/admin/airdrops/[id]:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error(`DELETE /api/admin/airdrops/${params.id} error:`, error);
+    return NextResponse.json({ error: error.message || 'Internal error during deletion.' }, { status: 500 });
   }
 }

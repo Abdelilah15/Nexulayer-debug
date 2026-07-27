@@ -18,30 +18,40 @@ export default function AdminLogin() {
     setError('');
 
     try {
-      // 1. Préparation du message
-      const message = `Connexion Admin Nexulayer - ${Date.now()}`;
+      // 1. Fetch the secure, server-generated nonce and exact message format
+      const nonceRes = await fetch(`/api/auth/nonce?address=${address}`);
+      if (!nonceRes.ok) {
+        throw new Error('Failed to fetch security nonce.');
+      }
 
-      // 2. Demande de signature via Wagmi
+      const { message } = await nonceRes.json();
+
+      // 2. Request signature via Wagmi using the exact server message
       const signature = await signMessageAsync({ message });
 
-      // 3. Envoi au backend
+      // 3. Send address, message, and signature to the unified verification endpoint
       const response = await fetch('/api/auth/verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message, signature }),
+        body: JSON.stringify({ address, message, signature }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Accès refusé.');
+        throw new Error(data.error || 'Access denied.');
       }
 
-      // 4. Succès -> Redirection
+      // 4. Verify that the backend explicitly confirmed this wallet has Publisher/Admin rights
+      if (!data.isAdmin) {
+        throw new Error('Access denied. This address is not an authorized administrator.');
+      }
+
+      // 5. Success -> Redirect to the dashboard
       router.push('/admin/airdrops');
     } catch (err: any) {
       console.error(err);
-      setError(err.message || 'Erreur lors de la vérification.');
+      setError(err.message || 'Error during authentication verification.');
     } finally {
       setIsLoading(false);
     }
@@ -51,11 +61,11 @@ export default function AdminLogin() {
     <div className="flex-1 flex flex-col items-center justify-center p-4">
       <div className="max-w-md w-full bg-neutral-900 border border-neutral-800 rounded-xl p-8 shadow-2xl">
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-white mb-2">Portail Administrateur</h1>
+          <h1 className="text-2xl font-bold text-white mb-2">Administrator Portal</h1>
           <p className="text-neutral-400 text-sm">
             {!isConnected
-              ? "Connectez votre portefeuille pour continuer."
-              : "Prouvez que vous possédez ce portefeuille en signant un message."}
+              ? "Connect your wallet to continue."
+              : "Prove ownership of this wallet by signing a message."}
           </p>
         </div>
 
@@ -67,16 +77,16 @@ export default function AdminLogin() {
 
         <div className="flex justify-center">
           {!isConnected ? (
-            // Si non connecté, on affiche le bouton RainbowKit ici aussi pour faciliter l'UX
+            // If disconnected, show RainbowKit ConnectButton for easy UX
             <ConnectButton />
           ) : (
-            // Si connecté, on affiche le bouton de signature
+            // If connected, show the signature button
             <button
               onClick={handleSignAndLogin}
               disabled={isLoading}
               className="w-full flex items-center justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-black bg-white hover:bg-neutral-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-neutral-500 disabled:opacity-50 transition-colors"
             >
-              {isLoading ? 'Vérification on-chain...' : 'Signer pour accéder au Dashboard'}
+              {isLoading ? 'On-chain verification...' : 'Sign to Access Dashboard'}
             </button>
           )}
         </div>
